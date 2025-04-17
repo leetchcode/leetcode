@@ -1,0 +1,46 @@
+import random
+
+class RandomizedSet(object):
+
+    def __init__(self):
+        # List to store all elements
+        self.data_list = []
+        # Dictionary to map each value to its index in data_list
+        self.val_index = {}
+        
+    def insert(self, val):
+        # Only insert if value doesn't already exist
+        if not val in self.val_index:
+            # Append new value to the end of the list
+            self.data_list.append(val)
+            # Store the index of this value in the dictionary
+            self.val_index[val] = len(self.data_list) - 1
+            return True  # Successful insertion
+        return False  # Value already exists
+        
+    def remove(self, val):
+        # Only remove if value exists in the set
+        if val in self.val_index:
+            # Get index of the value to remove
+            idx_to_remove = self.val_index[val]
+            # Replace the value to remove with the last element in the list
+            self.data_list[idx_to_remove] = self.data_list[-1]
+            # Update the index of the last element that was moved
+            self.val_index[self.data_list[-1]] = idx_to_remove
+            # Remove the value from the dictionary
+            del self.val_index[val]
+            # Remove the last element from the list (which is now a duplicate)
+            self.data_list.pop()
+            return True  # Successful removal
+        return False  # Value doesn't exist
+
+    def getRandom(self):
+        # Return a random element from the list
+        return self.data_list[random.randint(0, len(self.data_list)-1)]
+        
+
+# Your RandomizedSet object will be instantiated and called as such:
+# obj = RandomizedSet()
+# param_1 = obj.insert(val)
+# param_2 = obj.remove(val)
+# param_3 = obj.getRandom()
