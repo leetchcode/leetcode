@@ -1,0 +1,18 @@
+class Solution(object):
+    def simplifyPath(self, path):
+        st = []
+        components = path.split("/")
+        for component in components:
+            if component == "..":
+                if st:
+                    st.pop()
+            elif component == '' or component == '.':
+                continue
+            else:
+                st.append(component)
+
+        if st:
+            return "/" + "/".join(st)
+        else:
+            return "/"                        
+        
