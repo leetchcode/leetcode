@@ -1,0 +1,40 @@
+class Solution(object):
+    def letterCombinations(self, digits):
+        # If input string is empty, return empty list
+        if not digits:
+            return []
+
+        # Mapping of digits to corresponding letters on a phone keypad
+        digit_map = {
+            '2': 'abc',
+            '3':'def',
+            '4':'ghi',
+            '5':'jkl',
+            '6':'mno',
+            '7':'pqrs',
+            '8':'tuv',
+            '9': 'wxyz'
+        }
+        
+        # List to store all valid combinations
+        res = []
+        
+        # Recursive DFS function
+        # i: index of the current digit being processed
+        # s_so_far: the string built so far
+        def dfs(i, s_so_far):
+            # Base case: if we've processed all digits, add the complete string to results
+            if i == len(digits):
+                res.append(s_so_far)
+                return
+
+            # Get all possible letters for the current digit and iterate through them
+            for c in digit_map[digits[i]]:
+                # Recurse with next digit index and current string plus the new character
+                dfs(i+1, s_so_far + c)
+
+        # Start the recursion with index 0 and empty string
+        dfs(0, "")
+        
+        # Return all generated combinations
+        return res
