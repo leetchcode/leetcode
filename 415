@@ -1,0 +1,38 @@
+class Solution(object):
+    def addStrings(self, num1, num2):
+        # Initialize pointers at the end of both strings (least significant digits)
+        i = len(num1) - 1
+        j = len(num2) - 1
+
+        # List to store result digits (in reverse order)
+        res = []
+        # Variable to store carry-over for the next position
+        carry = 0
+        
+        # Continue while there are digits left in either string
+        while i >= 0 or j >= 0:
+            # Get current digit from num1, or 0 if we're past the string's start
+            d1 = int(num1[i]) if i >= 0 else 0 
+            # Get current digit from num2, or 0 if we're past the string's start
+            d2 = int(num2[j]) if j >= 0 else 0 
+            
+            # Calculate sum of current position including carry
+            sum = d1 + d2 + carry
+            # Extract rightmost digit (this position's result)
+            d = sum % 10
+            # Calculate new carry (leftmost digit)
+            carry = sum // 10
+            
+            # Add current digit to result
+            res.append(str(d))
+            
+            # Move to next position (more significant digits)
+            i -= 1
+            j -= 1
+
+        # If there's a carry left after processing all digits, add it
+        if carry:
+            res.append(str(carry))
+
+        # Reverse the result since we built it from least to most significant
+        return "".join(res[::-1])
