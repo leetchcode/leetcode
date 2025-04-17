@@ -1,0 +1,13 @@
+class Solution:
+    def maxLength(self, ribbons: List[int], k: int) -> int:
+        l, r = 0, 100000
+        while l < r:
+            mid = (l + r ) // 2
+            cnt = 0
+            for ribbon in ribbons:
+                cnt += ribbon // mid
+            if cnt < k:
+                r = mid - 1
+            else:
+                l = mid
+        return l
