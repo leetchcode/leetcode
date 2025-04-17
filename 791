@@ -1,0 +1,18 @@
+class Solution(object):
+    def customSortString(self, order, s):
+        char_count = defaultdict(int)
+        for c in s:
+            char_count[c]+=1
+
+        res = []
+        for c in order:
+            if c in char_count:
+                res.append(c*char_count[c])
+                del char_count[c]
+
+        for c, f in char_count.items():
+            res.append(c*f)
+
+        return "".join(res)
+
+        
