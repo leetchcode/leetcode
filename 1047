@@ -1,0 +1,15 @@
+class Solution(object):
+    def removeDuplicates(self, s):
+        if not s or len(s)==1:
+            return s
+
+        st = []
+        for c in s:
+            if st and st[-1] == c:
+                st.pop()
+            else:
+                st.append(c)
+
+        return "".join(st)
+
+print(Solution().removeDuplicates("abbaca"))
