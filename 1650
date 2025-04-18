@@ -1,0 +1,33 @@
+class Node:
+    def __init__(self, val):
+        self.val = val
+        self.left = None
+        self.right = None
+        self.parent = None
+
+
+class Solution:
+    def lowestCommonAncestor(self, node_p: 'Node', node_q: 'Node') -> 'Node':
+        """Find the lowest common ancestor of two nodes in a binary tree with parent pointers.
+      
+        Args:
+            node_p (Node): The first node.
+            node_q (Node): The second node.
+          
+        Returns:
+            Node: The lowest common ancestor of node_p and node_q.
+        """
+        # Start both pointers at the given nodes.
+        pointer_a = node_p
+        pointer_b = node_q
+      
+        # Continue traversing up the tree until both pointers meet at the common ancestor.
+        while pointer_a != pointer_b:
+            # If pointer_a has a parent, move to the parent; otherwise, go to the other node's initial position.
+            pointer_a = pointer_a.parent if pointer_a.parent else node_q
+          
+            # Do the same for pointer_b, going to the initial position of node_p if there's no parent.
+            pointer_b = pointer_b.parent if pointer_b.parent else node_p
+      
+        # Once they meet, that's the lowest common ancestor.
+        return pointer_a
