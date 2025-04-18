@@ -1,0 +1,44 @@
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+
+from collections import deque
+
+class Solution:
+    def rightSideView(self, root: Optional[TreeNode]) -> List[int]:
+        # If tree is empty, return empty list
+        if not root:
+            return []
+        
+        # List to store the right side view
+        right_side = []
+        
+        # Use a queue for level order traversal
+        queue = deque([root])
+        
+        # Perform level order traversal
+        while queue:
+            # Get the number of nodes at current level
+            level_size = len(queue)
+            
+            # Process all nodes at current level
+            for i in range(level_size):
+                # Get the next node
+                node = queue.popleft()
+                
+                # If this is the rightmost node of the level, add to result
+                if i == level_size - 1:
+                    right_side.append(node.val)
+                
+                # Add child nodes to queue for next level processing
+                # Note: Add left child first, then right child
+                # This ensures the rightmost node is processed last
+                if node.left:
+                    queue.append(node.left)
+                if node.right:
+                    queue.append(node.right)
+        
+        return right_side
