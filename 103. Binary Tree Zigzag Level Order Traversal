@@ -1,0 +1,52 @@
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+
+from collections import deque
+
+class Solution:
+    def zigzagLevelOrder(self, root: Optional[TreeNode]) -> List[List[int]]:
+        # Return empty list if tree is empty
+        if not root:
+            return []
+        
+        # Initialize result list and queue for BFS
+        result = []
+        queue = deque([root])
+        # Flag to track direction (left-to-right or right-to-left)
+        left_to_right = True
+        
+        # Perform level order traversal
+        while queue:
+            # Get the number of nodes at current level
+            level_size = len(queue)
+            # Create a deque to store the current level's values
+            level_values = deque()
+            
+            # Process all nodes at current level
+            for _ in range(level_size):
+                # Pop the front node from queue
+                node = queue.popleft()
+                
+                # Add current node's value to level deque from appropriate end
+                if left_to_right:
+                    level_values.append(node.val)  # Add to right end if left-to-right
+                else:
+                    level_values.appendleft(node.val)  # Add to left end if right-to-left
+                
+                # Add child nodes to queue for next level processing
+                if node.left:
+                    queue.append(node.left)
+                if node.right:
+                    queue.append(node.right)
+            
+            # Add the current level to result
+            result.append(list(level_values))
+            
+            # Toggle direction for next level
+            left_to_right = not left_to_right
+            
+        return result
