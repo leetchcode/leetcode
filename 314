@@ -1,0 +1,42 @@
+from collections import deque, defaultdict
+from typing import List, Optional
+
+class TreeNode:
+    def __init__(self, val=0, left=None, right=None):
+        self.val = val
+        self.left = left
+        self.right = right
+
+class Solution:
+    def verticalOrder(self, root: Optional[TreeNode]) -> List[List[int]]:
+        if not root:
+            return []
+
+        min_col = float("inf")
+        max_col = float("-inf")
+        column_list = defaultdict(list)
+        q = deque([(root, 0)])
+        while q:
+            node, column = q.popleft()
+            min_col = min(min_col, column)
+            max_col = max(max_col, column)
+            column_list[column].append(node.val)
+            if node.left:
+                q.append((node.left, column-1))
+            if node.right:
+                q.append((node.right, column+1))
+
+        res = []
+        for col in range(min_col, max_col+1):
+            res.append(column_list[col])
+
+        return res
+
+
+root = TreeNode(1)
+root.left = TreeNode(2)
+root.right = TreeNode(3)
+root.left.left = TreeNode(4)
+root.right.right = TreeNode(5)
+
+print(Solution().verticalOrder(root))
