@@ -1,0 +1,37 @@
+class Solution:
+    def shipWithinDays(self, weights: List[int], days: int) -> int:
+        # Helper function to check if we can ship all packages with given capacity
+        def canShip(capacity):
+            # Count the number of days needed with current capacity
+            days_needed = 1
+            current_weight = 0
+            
+            for weight in weights:
+                # If adding this package exceeds capacity, we need a new day
+                if current_weight + weight > capacity:
+                    days_needed += 1
+                    current_weight = weight
+                else:
+                    current_weight += weight
+            
+            # Return True if we can ship within the required days
+            return days_needed <= days
+        
+        # Minimum capacity must be at least the weight of the heaviest package
+        left = max(weights)
+        # Maximum capacity would be sum of all weights (ship all in one day)
+        right = sum(weights)
+        
+        # Binary search for the minimum capacity
+        while left < right:
+            mid = (left + right) // 2
+            
+            if canShip(mid):
+                # If we can ship with this capacity, try a smaller one
+                right = mid
+            else:
+                # If we can't ship with this capacity, try a larger one
+                left = mid + 1
+        
+        # The minimum capacity that allows shipping within 'days' days
+        return left
