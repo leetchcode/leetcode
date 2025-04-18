@@ -1,0 +1,31 @@
+from collections import defaultdict
+
+class Solution(object):
+    def groupAnagrams(self, strs):
+        # Handle edge case: empty input
+        if not strs:
+            return [[""]]
+
+        # Dictionary to map character count to list of anagrams
+        char_count_to_list = defaultdict(list) 
+        
+        # Process each string in the input array
+        for s in strs:
+            # Create a character frequency counter array (for lowercase a-z only)
+            char_count = [0] * 26
+            
+            # Count frequency of each character in the current string
+            for ch in s:
+                # Convert character to index (0-25) and increment count
+                char_count[ord(ch) - ord('a')] += 1
+            
+            # Use character count as key (convert to tuple since lists can't be dictionary keys)
+            # Append current string to the list of strings with same character count
+            char_count_to_list[tuple(char_count)].append(s)
+
+        # Collect all anagram groups into the result list
+        res = []
+        for val in char_count_to_list.values():
+            res.append(val)
+
+        return res
