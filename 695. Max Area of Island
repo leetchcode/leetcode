@@ -1,0 +1,38 @@
+class Solution(object):
+    def maxAreaOfIsland(self, grid):
+        if not grid or not grid[0]:
+            return 0
+        
+        rows, cols = len(grid), len(grid[0])
+        self.max_area = 0
+        self.current_area = 0
+        
+        # Helper function to perform DFS and mark visited cells
+        def dfs(r, c):
+            # Check if current cell is out of bounds or not part of an island
+            if (r < 0 or r >= rows or c < 0 or c >= cols or grid[r][c] == 0):
+                return
+            
+            # Mark current cell as visited by changing it to '0'
+            grid[r][c] = 0
+            # Update the global current area for the current island
+            self.current_area +=1
+            
+            # Explore all 4 adjacent cells (up, right, down, left)
+            dfs(r - 1, c)  # Up
+            dfs(r + 1, c)  # Down
+            dfs(r, c - 1)  # Left
+            dfs(r, c + 1)  # Right
+        
+        # Iterate through each cell in the grid
+        for r in range(rows):
+            for c in range(cols):
+                if grid[r][c] == 1:
+                    # reset the current island area
+                    self.current_area = 0
+                    # Use DFS to mark all connected land cells
+                    dfs(r, c)
+                    # update the max area seen so far
+                    self.max_area = max(self.max_area, self.current_area)
+        
+        return self.max_area        
