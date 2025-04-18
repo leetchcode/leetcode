@@ -1,0 +1,37 @@
+class Solution:
+    def findItinerary(self, tickets: List[List[str]]) -> List[str]:
+        # Create an adjacency list represented as a dictionary of airports and their destinations
+        # We use collections.defaultdict to avoid initializing empty lists
+        from collections import defaultdict
+        graph = defaultdict(list)
+        
+        # Sort the tickets to ensure lexical order
+        tickets.sort()
+        
+        # Build the graph (adjacency list)
+        for src, dst in tickets:
+            graph[src].append(dst)
+        
+        # Initialize the result list
+        itinerary = []
+        
+        def dfs(airport):
+            # While there are destinations from current airport
+            while graph[airport]:
+                # Get the next destination (lexically smallest)
+                next_destination = graph[airport][0]
+                # Remove this destination from the list as we're going to use it
+                graph[airport].pop(0)
+                # Visit the next destination
+                dfs(next_destination)
+            
+            # After visiting all destinations from this airport, add it to the itinerary
+            # Since we're doing post-order traversal, we add airports in reverse order
+            itinerary.append(airport)
+        
+        # Start DFS from JFK airport (given in problem statement)
+        dfs("JFK")
+        
+        # Reverse the itinerary to get the correct order
+        # We need to reverse because we added airports in post-order
+        return itinerary[::-1]
