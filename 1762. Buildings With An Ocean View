@@ -1,0 +1,20 @@
+import math
+from collections import deque
+from typing import List
+
+
+class Solution:
+    def findBuildings(self, heights: List[int]) -> List[int]:
+        if len(heights) <=0:
+            return []
+        res =deque([])
+        max_so_far = -math.inf
+
+        for i in range(len(heights)-1, -1, -1):
+             if heights[i] > max_so_far:
+                 res.appendleft(i)
+                 max_so_far = heights[i]   
+
+        return res
+
+print(Solution().findBuildings([4, 2, 3, 1]))
