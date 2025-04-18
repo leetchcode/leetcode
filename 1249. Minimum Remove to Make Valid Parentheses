@@ -1,0 +1,29 @@
+class Solution:
+    def minRemoveToMakeValid(self, s: str) -> str:
+        # Step 1: Store indices of invalid parentheses
+        stack = []  # Stack to keep track of opening parentheses indices
+        to_remove = set()  # Set to store indices of characters to remove
+        
+        # Iterate through string and identify invalid parentheses
+        for i, char in enumerate(s):
+            if char == '(':
+                # Store index of opening parenthesis
+                stack.append(i)
+            elif char == ')':
+                if stack:  # If we have a matching opening parenthesis
+                    stack.pop()  # Pop the matching opening parenthesis
+                else:
+                    # No matching opening parenthesis, mark this closing parenthesis for removal
+                    to_remove.add(i)
+        
+        # Any remaining indices in stack are opening parentheses without matching closing ones
+        # Add them to the to_remove set
+        to_remove.update(stack)
+        
+        # Step 2: Build result string excluding characters at indices in to_remove
+        result = []
+        for i, char in enumerate(s):
+            if i not in to_remove:
+                result.append(char)
+        
+        return ''.join(result)
