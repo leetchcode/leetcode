@@ -1,0 +1,30 @@
+class Solution:
+    def validPalindrome(self, s: str) -> bool:
+        # Helper function to check if a substring is a palindrome
+        def isPalindrome(left, right):
+            while left < right:
+                if s[left] != s[right]:
+                    return False
+                left += 1
+                right -= 1
+            return True
+        
+        # Initialize two pointers at the beginning and end of the string
+        left, right = 0, len(s) - 1
+        
+        # Move pointers toward the center
+        while left < right:
+            # If characters don't match
+            if s[left] != s[right]:
+                # Check if removing either character results in a palindrome
+                # Try removing character at left position (check substring from left+1 to right)
+                # Or try removing character at right position (check substring from left to right-1)
+                return isPalindrome(left + 1, right) or isPalindrome(left, right - 1)
+            
+            # If characters match, continue moving pointers inward
+            left += 1
+            right -= 1
+        
+        # If we've made it through the entire string without returning,
+        # the string is already a palindrome
+        return True
