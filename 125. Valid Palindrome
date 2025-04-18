@@ -1,0 +1,27 @@
+class Solution:
+    def isPalindrome(self, s: str) -> bool:
+        # Initialize two pointers at the beginning and end of the string
+        left, right = 0, len(s) - 1
+        
+        while left < right:
+            # Skip non-alphanumeric characters from the left
+            if not s[left].isalnum():
+                left += 1
+                continue
+            
+            # Skip non-alphanumeric characters from the right
+            if not s[right].isalnum():
+                right -= 1
+                continue
+            
+            # Compare characters after converting to lowercase
+            if s[left].lower() != s[right].lower():
+                return False
+            
+            # Move both pointers inward
+            left += 1
+            right -= 1
+        
+        # If we've made it through the entire string without returning False,
+        # the string is a valid palindrome
+        return True
