@@ -1,0 +1,44 @@
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+
+class Solution:
+    def kthSmallest(self, root: Optional[TreeNode], k: int) -> int:
+        # Approach 1: Recursive inorder traversal
+        def inorder(node):
+            if not node:
+                return []
+            return inorder(node.left) + [node.val] + inorder(node.right)
+        
+        # Get all values in sorted order and return the kth one
+        return inorder(root)[k-1]
+        
+        # Approach 2: Iterative inorder traversal with early stopping
+        # More efficient as we stop once we find the kth element
+        """
+        stack = []
+        curr = root
+        count = 0
+        
+        while curr or stack:
+            # Go as far left as possible
+            while curr:
+                stack.append(curr)
+                curr = curr.left
+            
+            # Process current node
+            curr = stack.pop()
+            count += 1
+            
+            # If this is the kth element, return it
+            if count == k:
+                return curr.val
+            
+            # Move to right subtree
+            curr = curr.right
+        
+        return -1  # Should not reach here if k is valid
+        """
