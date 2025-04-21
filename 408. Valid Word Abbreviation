@@ -1,0 +1,28 @@
+def validWordAbbreviation(word, abbr):
+    i = j = 0  # i for word index, j for abbr index
+    
+    while i < len(word) and j < len(abbr):
+        # If characters match, move both pointers
+        if word[i] == abbr[j]:
+            i += 1
+            j += 1
+        # If we find a digit in the abbreviation
+        elif abbr[j].isdigit():
+            # Leading zero is not valid
+            if abbr[j] == '0':
+                return False
+                
+            # Parse the number
+            num = 0
+            while j < len(abbr) and abbr[j].isdigit():
+                num = num * 10 + int(abbr[j])
+                j += 1
+                
+            # Move forward in word by num characters
+            i += num
+        else:
+            # Characters don't match
+            return False
+    
+    # Valid only if we've consumed both strings completely
+    return i == len(word) and j == len(abbr)
