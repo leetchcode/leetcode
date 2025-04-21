@@ -1,0 +1,24 @@
+def canSeePersonsCount(heights):
+    n = len(heights)
+    result = [0] * n
+    stack = []  # monotonic decreasing stack of indices
+    
+    # Process people from right to left
+    for i in range(n-1, -1, -1):
+        # Count how many people the current person can see
+        count = 0
+        
+        # While stack is not empty and current person is taller than the person at top of stack
+        while stack and heights[i] > heights[stack[-1]]:
+            count += 1  # Current person can see this person
+            stack.pop()  # Remove the shorter person
+        
+        # If stack is not empty after removing shorter people,
+        # the current person can also see the next taller person
+        if stack:
+            count += 1
+            
+        result[i] = count
+        stack.append(i)  # Add current person to stack
+        
+    return result
