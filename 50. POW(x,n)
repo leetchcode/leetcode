@@ -1,0 +1,20 @@
+def myPow(x, n):
+    # Handle negative power
+    if n < 0:
+        x = 1 / x
+        n = -n
+    
+    # Initialize result
+    result = 1
+    
+    # Binary exponentiation
+    while n > 0:
+        # If n is odd, multiply result by x
+        if n % 2 == 1:
+            result *= x
+        
+        # Square x and halve n
+        x *= x
+        n //= 2
+    
+    return result
