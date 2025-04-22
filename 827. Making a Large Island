@@ -1,0 +1,72 @@
+class Solution(object):
+    def largestIsland(self, grid):
+        # Four directional movement: up, down, right, left
+        dirs = [(-1,0), (1,0), (0,1), (0,-1)]
+        N = len(grid)
+        # Dictionary to store the size of each island by its label
+        island_sizes = defaultdict(int)
+
+    
+        def dfs(i, j, label):
+            """
+            Depth-first search to explore an island and label all its cells
+            with the same label. Returns the size of the island.
+            
+            Args:
+                i, j: Current cell coordinates
+                label: Unique identifier for the current island
+            
+            Returns:
+                size: Total number of cells in the island
+            """
+            # Mark current cell with the island label
+            grid[i][j] = label
+            size = 1    
+            # Check all four directions
+            for dx, dy in dirs:
+                ni = i + dx
+                nj = j + dy
+                # If the neighbor is valid and part of the same island (still marked as 1)
+                if 0 <= ni < N and 0 <= nj < N and grid[ni][nj] == 1:
+                    # Continue DFS and add the size of connected land
+                    size += dfs(ni, nj, label)
+            return size
+
+        max_area = 0
+        # Start labeling islands from 2 (to differentiate from 0 and 1 in the original grid)
+        label = 2
+        
+        # First pass: Label all islands and calculate their sizes
+        for i in range(N):
+            for j in range(N):
+                if grid[i][j] == 1:
+                    # Found an unlabeled island, run DFS to label it and get its size
+                    island_sizes[label] = dfs(i, j, label)            
+                    max_area = max(max_area, island_sizes[label])
+                    label += 1
+
+
+        # Second pass: Try changing each 0 to 1 and calculate the resulting island size
+        for i in range(N):
+            for j in range(N):
+                if grid[i][j] == 0:
+                    # Set to keep track of islands we've already counted
+                    visited = set()
+                    # Start with area = 1 for the current cell we're flipping
+                    area = 1
+                    # Check all four directions
+                    for dx, dy in dirs:
+                        ni = i + dx
+                        nj = j + dy
+                        # If neighbor is valid and is part of an island
+                        if 0 <= ni < N and 0 <= nj < N and grid[ni][nj] != 0:
+                            label = grid[ni][nj]
+                            # Only add the island size if we haven't counted this island already
+                            if label not in visited:
+                                area += island_sizes[label]
+                                visited.add(label)
+                    # Update max_area if changing this cell results in a larger island
+                    max_area = max(max_area, area)
+
+        # Return the largest possible island size
+        return max_area
