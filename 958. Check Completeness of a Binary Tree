@@ -1,0 +1,50 @@
+# Definition for a binary tree node.
+# class TreeNode(object):
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution(object):
+    def isCompleteTree(self, root):
+        """
+        Check if the binary tree is complete.
+        
+        A complete binary tree is a binary tree in which every level, except possibly the last, is completely filled,
+        and all nodes in the last level are as far left as possible.
+        
+        Args:
+            root: Root node of the binary tree
+            
+        Returns:
+            True if the tree is complete, False otherwise
+        """
+        # Edge case: empty tree is considered complete
+        if not root:
+            return True
+
+        # Use BFS to traverse the tree level by level
+        q = deque([root])            
+        
+        while q:
+            # Process all nodes at current level
+            level_size = len(q)
+            for _ in range(level_size):
+                n = q.popleft()
+                
+                # If we encounter a null node
+                if not n:
+                    # If there are any non-null nodes after this null node,
+                    # then the tree is not complete
+                    if any(q):
+                        return False
+                    else:
+                        # All remaining nodes are null, tree is complete
+                        return True
+
+                # Add both children to queue (even if they're null)
+                # This is key: we explicitly enqueue null nodes to detect gaps
+                q.append(n.left)
+                q.append(n.right)
+        
+        # This line won't be reached with the current implementation
+        # because the function will return inside the loop when it encounters a null node
