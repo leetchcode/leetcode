@@ -1,0 +1,62 @@
+class Solution:
+    def wordBreak(self, s: str, wordDict: list[str]) -> list[str]:
+        """
+        Given a string s and a dictionary of strings wordDict,
+        return all possible ways to break s into a space-separated sequence of words.
+
+        Args:
+            s: The input string to break
+            wordDict: List of dictionary words
+
+        Returns:
+            List of all possible space-separated sequences
+        """
+        # Convert wordDict to a set for O(1) lookups
+        word_set = set(wordDict)
+
+        # Memoization cache to avoid recomputing the same subproblems
+        memo = {}
+
+        def backtrack(start):
+            """
+            Recursive helper function that breaks string from start to end.
+
+            Args:
+                start: Starting index in string s
+
+            Returns:
+                List of all possible space-separated sequences from start to end
+            """
+            # If we've already computed this subproblem, return the cached result
+            if start in memo:
+                return memo[start]
+
+            # If we've reached the end of the string, return empty list
+            if start == len(s):
+                return [""]
+
+            results = []
+
+            # Try all possible words that could start at the current position
+            for end in range(start + 1, len(s) + 1):
+                word = s[start:end]
+
+                # If the word is in our dictionary
+                if word in word_set:
+                    # Get all valid sequences for the rest of the string
+                    sub_sequences = backtrack(end)
+
+                    # Combine the current word with each valid subsequence
+                    for sub in sub_sequences:
+                        if sub:
+                            results.append(word + " " + sub)
+                        else:
+                            results.append(word)
+
+            # Cache the result before returning
+            memo[start] = results
+            return results
+
+        return backtrack(0)
+    
+print(Solution().wordBreak("catsanddog", ["cat","cats","and","sand","dog"]))
