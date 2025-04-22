@@ -1,0 +1,76 @@
+class Solution(object):
+    def removeInvalidParentheses(self, s):
+        """
+        Remove the minimum number of invalid parentheses to make the input string valid.
+        Return all possible results.
+        
+        Args:
+            s: Input string containing parentheses and possibly other characters
+            
+        Returns:
+            List of all possible valid strings after minimal removals
+        """
+        
+        def is_valid(s):
+            """
+            Check if a string has valid parentheses.
+            
+            Args:
+                s: String to check
+                
+            Returns:
+                Boolean indicating if the string has valid parentheses
+            """
+            open = 0  # Count of unmatched opening parentheses
+            close = 0  # Count of unmatched closing parentheses
+            
+            for c in s:
+                if c == '(':
+                    open += 1
+                elif c == ')':
+                    if open > 0:  # If we have an opening parenthesis to match
+                        open -= 1  # Match it with current closing parenthesis
+                    else:
+                        close += 1  # No opening parenthesis to match, unmatched closing
+            
+            # Valid if no unmatched parentheses remain
+            return open == 0 and close == 0
+
+        res = []  # Store valid results
+        q = deque([s])  # Queue for BFS, starting with original string
+        visited = set([s])  # Track visited strings to avoid duplicates
+        found = False  # Flag to indicate if we found valid strings at current level
+        
+        # BFS to find strings with minimum removals
+        while q:
+            level_len = len(q)  # Process level by level
+            
+            # Process all strings at current level
+            for _ in range(level_len):
+                curr_str = q.popleft()
+                
+                # If current string is valid, add to results
+                if is_valid(curr_str):
+                    res.append(curr_str)
+                    found = True
+                    continue  # Skip further processing for this string
+                
+                # Try removing each character and generate new strings
+                for i in range(len(curr_str)):
+                    # Only consider removing parentheses
+                    if curr_str[i] in '()':
+                        # Create new string by removing current character
+                        new_str = curr_str[:i] + curr_str[i+1:]
+                        
+                        # Add to queue if not visited before
+                        if new_str not in visited:
+                            visited.add(new_str)
+                            q.append(new_str)
+            
+            # If we found valid strings at this level, no need to go deeper
+            # This ensures we only remove the minimum number of parentheses
+            if found:
+                break
+
+        # Return results or [""] if no valid string found
+        return res if len(res) > 0 else [""]
