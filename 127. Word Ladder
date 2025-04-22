@@ -1,0 +1,56 @@
+class Solution(object):
+    def ladderLength(self, beginWord, endWord, wordList):
+        """
+        Find the length of shortest transformation sequence from beginWord to endWord.
+        
+        In each transformation, you can only change one letter at a time.
+        Each transformed word must exist in the word list.
+        
+        Args:
+            beginWord: Starting word
+            endWord: Target word
+            wordList: Dictionary of valid words
+            
+        Returns:
+            Length of the shortest transformation sequence (including beginWord and endWord),
+            or 0 if no such sequence exists
+        """
+        # Convert wordList to a set for O(1) lookups
+        wordSet = set(wordList)
+
+        # If endWord is not in the dictionary, transformation is impossible
+        if endWord not in wordSet:
+            return 0
+
+        # Initialize queue with the beginWord and BFS level counter
+        queue = deque([beginWord])
+        steps = 1  # Start with 1 as we count the beginWord itself
+        
+        # BFS to find shortest path
+        while queue:
+            # Process all words at the current level
+            level_size = len(queue)
+            for _ in range(level_size):
+                word = queue.popleft()
+
+                # If we've reached the endWord, return the number of steps
+                if word == endWord:
+                    return steps
+
+                # Try changing each character position to all possible letters
+                for i in range(len(word)):
+                    for j in range(26):  # 26 lowercase English letters
+                        # Create a new word by changing one character
+                        check_word = word[:i] + chr(ord('a') + j) + word[i+1:]
+                        
+                        # If the new word is in our dictionary
+                        if check_word in wordSet:
+                            queue.append(check_word)
+                            # Remove from set to avoid revisiting (acts as our visited set)
+                            wordSet.remove(check_word)
+            
+            # Increment steps after processing each level
+            steps += 1
+        
+        # If we've exhausted all possibilities without finding endWord
+        return 0
