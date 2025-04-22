@@ -1,0 +1,17 @@
+class Solution(object):
+    def findPeakElement(self, nums):
+        left, right = 0, len(nums) - 1
+        
+        while left < right:
+            mid = left + (right - left) // 2
+            
+            # If we're ascending, go right
+            if nums[mid] < nums[mid + 1]:
+                left = mid + 1
+            # If we're descending, go left
+            else:
+                right = mid
+                
+        # When left == right, we've found a peak
+        return left
+        
