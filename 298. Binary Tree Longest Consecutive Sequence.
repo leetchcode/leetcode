@@ -1,0 +1,49 @@
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+
+class Solution:
+    def longestConsecutive(self, root: Optional[TreeNode]) -> int:
+        """
+        Find the length of the longest consecutive sequence path in a binary tree.
+        A path is a sequence where values increase by exactly 1 between each node.
+        
+        Args:
+            root: The root of the binary tree
+            
+        Returns:
+            Length of the longest consecutive sequence path
+        """
+        if not root:
+            return 0
+        
+        # Track the max length we've seen
+        self.max_length = 1
+        
+        # Helper function to traverse the tree
+        def dfs(node, parent_val, current_length):
+            if not node:
+                return
+            
+            # If current node continues the consecutive sequence
+            if node.val == parent_val + 1:
+                current_length += 1
+            else:
+                # Reset the sequence counter
+                current_length = 1
+            
+            # Update global max if needed
+            self.max_length = max(self.max_length, current_length)
+            
+            # Continue DFS on both children
+            dfs(node.left, node.val, current_length)
+            dfs(node.right, node.val, current_length)
+        
+        # Start DFS from the root
+        dfs(root.left, root.val, 1)
+        dfs(root.right, root.val, 1)
+        
+        return self.max_length
