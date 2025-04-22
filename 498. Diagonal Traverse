@@ -1,0 +1,30 @@
+def findDiagonalOrder(mat):
+    if not mat or not mat[0]:
+        return []
+        
+    m, n = len(mat), len(mat[0])
+    result = []
+    
+    # For each diagonal
+    for d in range(m + n - 1):
+        # Temporary array to store diagonal elements
+        diagonal = []
+        
+        # Row starts from min(d, m-1) and decreases to max(0, d-n+1)
+        row = min(d, m - 1)
+        # Col starts from max(0, d-m+1) and increases to min(d, n-1)
+        col = max(0, d - row)
+        
+        # Collect diagonal elements
+        while row >= 0 and col < n and row < m and col >= 0:
+            diagonal.append(mat[row][col])
+            row -= 1
+            col += 1
+        
+        # Reverse diagonal elements if needed (for every even diagonal)
+        if d % 2 == 0:
+            result.extend(diagonal)
+        else:
+            result.extend(diagonal[::-1])
+    
+    return result
