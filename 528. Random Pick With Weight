@@ -1,0 +1,55 @@
+class Solution:
+    def __init__(self, w: list[int]):
+        """
+        Initialize the solution with an array of weights.
+        
+        Args:
+            w: Array where w[i] is the weight of index i
+        """
+        # Create a prefix sum array
+        self.prefix_sums = []
+        prefix_sum = 0
+        
+        # Calculate prefix sums
+        for weight in w:
+            prefix_sum += weight
+            self.prefix_sums.append(prefix_sum)
+            
+        # Total sum is the last element in prefix_sums
+        self.total_sum = prefix_sum
+        
+    def pickIndex(self) -> int:
+        """
+        Randomly pick an index with probability proportional to its weight.
+        
+        Returns:
+            Randomly picked index
+        """
+        # Generate a random number between 1 and total sum
+        target = random.randint(1, self.total_sum)
+        
+        # Binary search to find the first index where prefix sum >= target
+        left, right = 0, len(self.prefix_sums) - 1
+        
+        while left < right:
+            mid = left + (right - left) // 2
+            
+            if self.prefix_sums[mid] < target:
+                left = mid + 1
+            else:
+                right = mid
+                
+        return left
+    
+    # Alternative implementation using bisect
+    def pickIndexAlternative(self) -> int:
+        """
+        Alternative implementation using Python's bisect module.
+        """
+        target = random.random() * self.total_sum
+        return bisect.bisect_left(self.prefix_sums, target)
+
+
+# Example usage:
+# obj = Solution(w)
+# param_1 = obj.pickIndex()
