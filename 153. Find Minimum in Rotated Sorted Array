@@ -1,0 +1,11 @@
+class Solution:
+    #https://leetcode.com/problems/find-minimum-in-rotated-sorted-array/?envType=study-plan-v2&envId=top-interview-150
+    def findMin(self, nums: List[int]) -> int:
+        left, right = 0, len(nums) - 1
+        while left < right:
+            mid = (left + right) // 2
+            if nums[mid] > nums[right]: 
+                left = mid + 1 # Min must be on the right half as the break is in right half
+            else:
+                right = mid # Min could be at mid, so keep it
+        return nums[left] # or nums[right], since left == right at the end
