@@ -1,0 +1,74 @@
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+
+class Solution:
+    def largestBSTSubtree(self, root: Optional[TreeNode]) -> int:
+        """
+        Find the size of the largest subtree that is a Binary Search Tree (BST).
+        
+        Args:
+            root: Root of the binary tree
+            
+        Returns:
+            Size (number of nodes) of the largest BST subtree
+        """
+        # Function to check if a subtree is BST and count its nodes
+        def dfs(node):
+            """
+            DFS helper function that returns (is_bst, min_val, max_val, size)
+            
+            Args:
+                node: Current node in traversal
+                
+            Returns:
+                Tuple containing:
+                - is_bst: Whether the subtree is a valid BST
+                - min_val: Minimum value in the subtree
+                - max_val: Maximum value in the subtree
+                - size: Number of nodes in the subtree
+            """
+            # Base case: empty subtree is a valid BST of size 0
+            if not node:
+                # Return (is_bst, min_val, max_val, size)
+                # Use inf and -inf for min and max to ensure valid comparisons
+                return True, float('inf'), float('-inf'), 0
+            
+            # Recursively check left and right subtrees
+            left_is_bst, left_min, left_max, left_size = dfs(node.left)
+            right_is_bst, right_min, right_max, right_size = dfs(node.right)
+            
+            # Current subtree is BST if:
+            # 1. Left subtree is BST
+            # 2. Right subtree is BST
+            # 3. Current node's value > max value in left subtree
+            # 4. Current node's value < min value in right subtree
+            if (left_is_bst and right_is_bst and 
+                node.val > left_max and node.val < right_min):
+                # Current subtree is a valid BST
+                # Calculate size, min, and max values for this subtree
+                current_size = left_size + right_size + 1
+                # Update min and max values for this subtree
+                current_min = min(node.val, left_min)
+                current_max = max(node.val, right_max)
+                
+                # Update global maximum size if needed
+                nonlocal max_size
+                max_size = max(max_size, current_size)
+                
+                return True, current_min, current_max, current_size
+            else:
+                # If current subtree is not a BST, return invalid values
+                # We don't update max_size here
+                return False, 0, 0, 0
+        
+        # Initialize the maximum size
+        max_size = 0
+        
+        # Start DFS traversal
+        dfs(root)
+        
+        return max_size
