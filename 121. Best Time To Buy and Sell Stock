@@ -1,0 +1,11 @@
+class Solution(object):
+    def maxProfit(self, prices):
+        min_so_far = float('inf')
+        max_profit = float('-inf')
+        for p in prices:
+            min_so_far = min(min_so_far, p)
+            max_profit = max(max_profit, p - min_so_far)
+
+        return max_profit    
+
+        
