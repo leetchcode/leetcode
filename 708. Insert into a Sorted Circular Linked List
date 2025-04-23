@@ -1,0 +1,39 @@
+class Node:
+    def __init__(self, value=None, next_node=None):
+        self.value = value
+        self.next_node = next_node
+
+
+class Solution:
+    def insert(self, head: 'Optional[Node]', insert_value: int) -> 'Node':
+        # Create a new node with the insert_value
+        new_node = Node(insert_value)
+
+        # If the linked list is empty, initialize it with the new node
+        if head is None:
+            new_node.next_node = new_node  # Point the new_node to itself
+            return new_node
+      
+        # Initialize two pointers for iterating the linked list
+        previous, current = head, head.next_node
+
+        # Traverse the linked list
+        while current != head:
+            # Check if the insert_value should be inserted between previous and current
+            # The first condition checks for normal ordered insertion
+            # The second condition checks for insertion at the boundary of the largest and smallest values
+            if (
+                previous.value <= insert_value <= current.value or
+                (previous.value > current.value and (insert_value >= previous.value or insert_value <= current.value))
+            ):
+                break  # Correct insertion spot is found
+
+            # Move to the next pair of nodes
+            previous, current = current, current.next_node
+
+        # Insert new_node between previous and current
+        previous.next_node = new_node
+        new_node.next_node = current
+
+        # Return the head of the modified linked list
+        return head
