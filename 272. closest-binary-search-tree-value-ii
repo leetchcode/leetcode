@@ -1,0 +1,71 @@
+from collections import deque
+from typing import List, Optional
+
+# Definition for a binary tree node.
+class TreeNode:
+    def __init__(self, val=0, left=None, right=None):
+        self.val = val
+        self.left = left
+        self.right = right
+
+class Solution:
+    def closestKValues(self, root: Optional[TreeNode], target: float, k: int) -> List[int]:
+        """
+        Finds the k closest values in a Binary Search Tree (BST) to a given target value.
+
+        Args:
+            root: The root node of the BST.
+            target: The target value to find the closest values to.
+            k: The number of closest values to return.
+
+        Returns:
+            A list of the k closest integer values to the target in the BST.
+        """
+        # Handle the case where the tree is empty.
+        if not root:
+            return []
+
+        # Initialize a deque (double-ended queue) to store potential closest values.
+        # Using a deque allows efficient addition and removal from both ends.
+        q = deque()
+
+        def inorder(node: Optional[TreeNode]):
+            """
+            Performs an in-order traversal of the BST.
+            In an in-order traversal of a BST, the nodes are visited in ascending order of their values.
+            This property is crucial for efficiently finding the closest values.
+
+            Args:
+                node: The current node being visited in the traversal.
+            """
+            if not node:
+                return
+
+            # Recursively traverse the left subtree.
+            inorder(node.left)
+
+            # Process the current node.
+            # If the queue has less than k elements, simply add the current node's value.
+            if len(q) < k:
+                q.append(node.val)
+            # If the queue already has k elements, we need to check if the current node's value
+            # is closer to the target than the farthest value currently in the queue (which is at the left end).
+            else:
+                # Compare the absolute difference between the target and the first element in the queue
+                # with the absolute difference between the target and the current node's value.
+                if abs(q[0] - target) > abs(node.val - target):
+                    # If the current node's value is closer, remove the farthest value from the left
+                    # and add the current node's value to the right. This maintains a window of k
+                    # potentially closest values, ordered such that the farthest is at the front.
+                    q.popleft()
+                    q.append(node.val)
+
+            # Recursively traverse the right subtree.
+            inorder(node.right)
+
+        # Start the in-order traversal from the root of the BST.
+        inorder(root)
+
+        # After the in-order traversal, the deque 'q' will contain the k closest values to the target.
+        # Convert the deque to a list and return it.
+        return list(q)
