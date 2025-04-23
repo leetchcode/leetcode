@@ -1,0 +1,53 @@
+from collections import deque
+
+
+class Solution:
+    #https://algo.monster/liteproblems/286
+    def wallsAndGates(self, rooms):
+        """
+        This method modifies the 'rooms' matrix in-place by filling each empty room with the distance to its nearest gate.
+
+        An empty room is represented by the integer 2**31 - 1, a gate is represented by 0, and a wall is represented by -1.
+
+        :type rooms: List[List[int]]
+        """
+
+        # Dimensions of the rooms matrix
+        num_rows, num_cols = len(rooms), len(rooms[0])
+
+        # Define the representation of an infinite distance (empty room)
+        INF = 2 ** 31 - 1
+
+        # Initialize a queue and populate it with the coordinates of all gates
+        queue = deque([(row, col) for row in range(num_rows) for col in range(num_cols) if rooms[row][col] == 0])
+
+        # Initialize distance from gates
+        distance = 0
+
+        # Perform a breadth-first search (BFS) from the gates
+        while queue:
+            # Increase the distance with each level of BFS
+            distance += 1
+
+            # Process nodes in the current level
+            for _ in range(len(queue)):
+                i, j = queue.popleft()
+
+                # Explore the four possible directions from the current cell
+                for delta_row, delta_col in [(0, 1), (0, -1), (1, 0), (-1, 0)]:
+                    new_row, new_col = i + delta_row, j + delta_col
+
+                    # Check if the new position is within bounds and is an empty room
+                    if 0 <= new_row < num_rows and 0 <= new_col < num_cols and rooms[new_row][new_col] == INF:
+                        # Update the distance for the room
+                        rooms[new_row][new_col] = distance
+
+                        # Add the new position to the queue to process its neighbors
+                        queue.append((new_row, new_col))
+
+INF = 2**31 -1
+rooms = [[INF, -1, 0], [INF, INF, INF], [INF, -1, INF]]
+Solution().wallsAndGates(rooms)
+print(rooms)
+
+
