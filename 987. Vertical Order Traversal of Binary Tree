@@ -1,0 +1,66 @@
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+
+class Solution:
+    def verticalTraversal(self, root: Optional[TreeNode]) -> List[List[int]]:
+        """
+        Return the vertical order traversal of a binary tree.
+        
+        In a vertical order traversal:
+        - Nodes in the same row and column are sorted in ascending order.
+        - Column numbers increase from left to right.
+        - Vertical level is determined by column position relative to root.
+        
+        Args:
+            root: Root of the binary tree
+            
+        Returns:
+            List of lists of node values in vertical order from left to right
+        """
+        if not root:
+            return []
+        
+        # Dictionary to store node values by column, row, and value
+        # Format: {column: [(row, val), (row, val), ...]}
+        node_map = defaultdict(list)
+        
+        # Perform BFS with tracking of position
+        # BFS ensures we visit nodes in order of increasing row (top to bottom)
+        queue = deque([(root, 0, 0)])  # (node, column, row)
+        
+        # Track min and max column to avoid sorting keys later
+        min_col = max_col = 0
+        
+        while queue:
+            node, col, row = queue.popleft()
+            
+            # Add current node to our map
+            node_map[col].append((row, node.val))
+            
+            # Update min and max column
+            min_col = min(min_col, col)
+            max_col = max(max_col, col)
+            
+            # Add children to queue with updated positions
+            if node.left:
+                queue.append((node.left, col - 1, row + 1))
+            if node.right:
+                queue.append((node.right, col + 1, row + 1))
+        
+        # Construct result
+        result = []
+        
+        # Iterate through columns from leftmost to rightmost
+        for col in range(min_col, max_col + 1):
+            # Sort nodes in this column by row and then by value
+            column_nodes = node_map[col]
+            column_nodes.sort()  # Sort by row (first element) then by value (second element)
+            
+            # Extract just the values for this column
+            result.append([val for _, val in column_nodes])
+        
+        return result
