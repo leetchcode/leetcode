@@ -1,0 +1,57 @@
+class Solution(object):
+    def minWindow(self, s, t):
+        """
+        Find the minimum window substring of s that contains all characters of t.
+        
+        Args:
+            s (str): Source string to search in
+            t (str): Target string whose characters need to be found
+            
+        Returns:
+            str: Minimum window substring containing all characters of t, or empty string if not found
+        """
+        
+        # Helper function to check if all characters in t (stored in m2) 
+        # are contained in current window (stored in m1) with sufficient counts
+        def check(m1, m2):
+            for k, v in m2.items():
+                if not (k in m1 and m1[k] >= v):  # Check if character exists with enough count
+                    return False
+            return True
+        
+        # Count frequency of each character in t
+        t_char_count = Counter(t)
+        
+        # Track frequency of characters in current sliding window
+        s_char_count = defaultdict(int)
+        
+        # Initialize window boundaries and tracking variables
+        start = 0                # Left boundary of sliding window
+        min_len = float('inf')   # Track minimum valid window length
+        i = -1                   # Start index of minimum window found (-1 means not found yet)
+        j = -1                   # End index of minimum window found (-1 means not found yet)
+        
+        # Sliding window approach: expand right boundary
+        for end in range(len(s)):
+            # Add current character to window count
+            s_char_count[s[end]] += 1
+            
+            # Contract window from left when window contains all required characters
+            while check(s_char_count, t_char_count):
+                # Update minimum window if current window is smaller
+                if end - start + 1 < min_len:
+                    min_len = end - start + 1
+                    i = start
+                    j = end
+                
+                # Move left boundary to contract window
+                s_char_count[s[start]] -= 1
+                # Remove character from map if count becomes zero (to keep map clean)
+                if s_char_count[s[start]] <= 0:
+                    del s_char_count[s[start]]
+                    
+                # Move left boundary right
+                start += 1
+        
+        # Return minimum window substring if found, otherwise empty string
+        return s[i:j+1] if i != -1 and j != -1 else ""
