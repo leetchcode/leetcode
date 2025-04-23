@@ -1,0 +1,62 @@
+class Solution(object):
+    def addOperators(self, num, target):
+        """
+        Add operators (+, -, *) between digits to make expressions evaluate to target.
+        
+        Args:
+            num: A string of digits
+            target: The target value
+            
+        Returns:
+            List of all possible valid expressions
+        """
+        result = []
+        
+        def backtrack(index, prev_operand, current_value, expression):
+            """
+            Backtracking function to explore all possible expressions.
+            
+            Args:
+                index: Current index in the num string
+                prev_operand: Previous operand for handling multiplication
+                current_value: Current value of the expression
+                expression: Current expression string
+            """
+            # Base case: reached the end of the num string
+            if index == len(num):
+                # If the expression evaluates to target, add it to result
+                if current_value == target:
+                    result.append(expression)
+                return
+            
+            # Get all possible operands starting at the current index
+            for i in range(index, len(num)):
+                # Skip leading zeros
+                if i > index and num[index] == '0':
+                    break
+                
+                # Get the current operand as integer
+                current_num = int(num[index:i+1])
+                
+                # If it's the first number, no operator is needed
+                if index == 0:
+                    backtrack(i+1, current_num, current_num, str(current_num))
+                else:
+                    # Addition
+                    backtrack(i+1, current_num, current_value + current_num, expression + "+" + str(current_num))
+                    
+                    # Subtraction
+                    backtrack(i+1, -current_num, current_value - current_num, expression + "-" + str(current_num))
+                    
+                    # Multiplication requires special handling due to operator precedence
+                    # We need to undo the previous operation and apply multiplication
+                    # Example: If we had "1+2" and now processing "*3", we need "1+(2*3)" not "(1+2)*3"
+                    # So, we subtract the previous operand and add (previous_operand * current_num)
+                    new_value = current_value - prev_operand + (prev_operand * current_num)
+                    backtrack(i+1, prev_operand * current_num, new_value, expression + "*" + str(current_num))
+        
+        backtrack(0, 0, 0, "")
+        return result
+
+
+        
