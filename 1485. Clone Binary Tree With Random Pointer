@@ -1,0 +1,53 @@
+# Definition for a Node with an additional random pointer.
+class Node:
+    def __init__(self, val=0, left=None, right=None, random=None):
+        self.val = val
+        self.left = left
+        self.right = right
+        self.random = random
+
+
+# Definition for a NodeCopy, which is used to represent the cloned tree.
+class NodeCopy:
+    def __init__(self, val=0, left=None, right=None, random=None):
+        self.val = val
+        self.left = left
+        self.right = right
+        self.random = random
+
+
+class Solution:
+    def copyRandomBinaryTree(self, root: 'Optional[Node]') -> 'Optional[NodeCopy]':
+        # Helper function to perform a deep copy of the tree using DFS
+        def dfs_clone(node):
+            # Base case: If the current node is None, return None
+            if node is None:
+                return None
+          
+            # If we have already cloned this node, return its clone from the map
+            if node in clone_map:
+                return clone_map[node]
+          
+            # Create a new NodeCopy for the current node
+            cloned_node = NodeCopy(node.val)
+          
+            # Save this cloned node in the map with the original node as the key
+            clone_map[node] = cloned_node
+          
+            # Recursively clone the left subtree
+            cloned_node.left = dfs_clone(node.left)
+          
+            # Recursively clone the right subtree
+            cloned_node.right = dfs_clone(node.right)
+          
+            # Recursively clone the random pointer
+            cloned_node.random = dfs_clone(node.random)
+          
+            # Return the cloned node
+            return cloned_node
+      
+        # Initialize a map to keep track of original node to its cloned counterpart
+        clone_map = {}
+      
+        # Kick off the cloning process starting from the root of the tree
+        return dfs_clone(root)
