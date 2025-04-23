@@ -1,0 +1,31 @@
+class Solution(object):
+
+    def __init__(self, nums):
+        self.nums = nums
+        self.map =defaultdict(list)
+        for i, v in enumerate(self.nums):
+            self.map[v].append(i)
+
+    def pick(self, target):
+        indices = self.map[target]
+        r = random.randint(0, len(indices)-1)
+        return indices[r]
+        
+    # reservoir sampling
+    def pick_original(self, target):
+        count = 0
+        index = -1
+        for i, v in enumerate(self.nums):
+            if self.nums[i] == target:
+                count+=1
+                r = random.randint(1, count)
+                if r==count:
+                    index = i
+
+        return index            
+        
+
+
+# Your Solution object will be instantiated and called as such:
+# obj = Solution(nums)
+# param_1 = obj.pick(target)
