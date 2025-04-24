@@ -1,0 +1,64 @@
+# Definition for a binary tree node.
+# class TreeNode(object):
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution(object):
+    def addOneRow(self, root, val, depth):
+        """
+        Add a row of nodes with the given value at the specified depth.
+        
+        Args:
+            root: Root of the binary tree
+            val: Value for the new nodes to insert
+            depth: Depth at which to insert the new row (root is at depth 1)
+            
+        Returns:
+            Root of the modified tree
+        """
+        # Special case: If depth is 1, create a new root node
+        # and make the original tree its left child
+        if depth == 1:
+            newNode = TreeNode(val)
+            newNode.left = root
+            return newNode
+
+        # Initialize level counter and queue for BFS traversal
+        level = 0
+        q = deque([root])
+        
+        # Perform level-order traversal (BFS)
+        while q:
+            # Process nodes level by level
+            level_size = len(q)  # Number of nodes at current level
+            level += 1  # Increment level counter
+            
+            # Process all nodes at the current level
+            for _ in range(level_size):
+                node = q.popleft()  # Get next node from queue
+                
+                # Store references to original children
+                t_left = node.left
+                t_right = node.right
+                
+                # If we're at the level just above where we need to insert
+                if level == depth - 1:
+                    # Create new nodes with the specified value
+                    node.left = TreeNode(val)
+                    node.right = TreeNode(val)
+                    
+                    # Connect original children to the new nodes
+                    # Original left child becomes left child of new left node
+                    node.left.left = t_left
+                    # Original right child becomes right child of new right node
+                    node.right.right = t_right
+                
+                # Add children to queue for next level processing
+                # (using original references to avoid processing new nodes)
+                if t_left:
+                    q.append(t_left)
+                if t_right:
+                    q.append(t_right)
+                    
+        return root
