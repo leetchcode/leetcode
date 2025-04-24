@@ -1,0 +1,23 @@
+class Solution(object):
+    def moveZeroes(self, nums):
+        if len(nums) <=1:
+            return
+
+        write = 0
+        read = 0
+        while write < len(nums) and read<len(nums):    
+            while write<len(nums) and nums[write] !=0:
+                write+=1
+
+            # write now points to a value of 0
+            read = write+1
+            while read<len(nums) and nums[read]==0:
+                read+=1
+
+            # read now points a non-zero value
+            # check boundary
+            if write<len(nums) and read<len(nums):
+                nums[write], nums[read] = nums[read], nums[write]
+            write+=1            
+            
+        
