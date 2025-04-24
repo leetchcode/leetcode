@@ -1,0 +1,35 @@
+class Solution:
+    def maximumSum(self, arr: List[int]) -> int:
+        n = len(arr)
+        # left[i] stores the maximum subarray sum ending at index i
+        left = [0] * n
+        # right[i] stores the maximum subarray sum starting at index i
+        right = [0] * n
+        # s keeps track of the current maximum subarray sum ending at the current index
+        s = 0
+        # Iterate through the array from left to right
+        for i, x in enumerate(arr):
+            # Update the current maximum subarray sum.
+            # It's either the current element itself or the previous maximum sum plus the current element.
+            s = max(s, 0) + x
+            # Store the maximum subarray sum ending at index i
+            left[i] = s
+        # Reset s for calculating maximum subarray sum from right to left
+        s = 0
+        # Iterate through the array from right to left
+        for i in range(n - 1, -1, -1):
+            # Update the current maximum subarray sum.
+            # It's either the current element itself or the previous maximum sum plus the current element.
+            s = max(s, 0) + arr[i]
+            # Store the maximum subarray sum starting at index i
+            right[i] = s
+        # Initialize the answer with the maximum subarray sum without deleting any element
+        ans = max(left)
+        # Iterate through the array from the second element to the second-to-last element
+        for i in range(1, n - 1):
+            # Consider the case where one element is deleted at index i.
+            # The maximum sum in this case would be the maximum subarray sum ending at i-1
+            # plus the maximum subarray sum starting at i+1.
+            ans = max(ans, left[i - 1] + right[i + 1])
+        # Return the overall maximum sum, considering both cases (no deletion and one deletion)
+        return ans
