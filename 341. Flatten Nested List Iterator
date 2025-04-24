@@ -1,0 +1,84 @@
+# """
+# This is the interface that allows for creating nested lists.
+# You should not implement it, or speculate about its implementation
+# """
+# class NestedInteger(object):
+#    def isInteger(self):
+#        """
+#        @return True if this NestedInteger holds a single integer, rather than a nested list.
+#        :rtype bool
+#        """
+#
+#    def getInteger(self):
+#        """
+#        @return the single integer that this NestedInteger holds, if it holds a single integer
+#        Return None if this NestedInteger holds a nested list
+#        :rtype int
+#        """
+#
+#    def getList(self):
+#        """
+#        @return the nested list that this NestedInteger holds, if it holds a nested list
+#        Return None if this NestedInteger holds a single integer
+#        :rtype List[NestedInteger]
+#        """
+
+class NestedIterator(object):
+
+    def __init__(self, nestedList):
+        """
+        Initialize your data structure here.
+        :type nestedList: List[NestedInteger]
+        """
+        # Initialize a stack to store elements
+        # We'll use this stack to track elements that need to be processed
+        self.stack = []
+        
+        # Add all elements from the input list to the stack in reverse order
+        # This way, when we pop from the stack, we get elements in the original order
+        for i in range(len(nestedList)-1, -1, -1):
+            self.stack.append(nestedList[i])
+        
+
+    def next(self):
+        """
+        :rtype: int
+        Returns the next integer in the flattened nested list
+        """
+        # Check if there is a next element before returning
+        if self.hasNext():
+            # The hasNext() method ensures the top element is an integer
+            # So we can safely pop and return it
+            return self.stack.pop().getInteger()  # Note: We need to call getInteger() here
+
+        
+
+    def hasNext(self):
+        """
+        :rtype: bool
+        Returns true if there are still elements to iterate through
+        """
+        # If the stack has elements and the top element is an integer, we're ready to return it
+        if self.stack and self.stack[-1].isInteger():
+            return True
+        else:
+            # If the top element is not an integer (or stack is empty), we need to process nested lists
+            # Continue until the stack is empty or we find an integer at the top
+            while self.stack and not self.stack[-1].isInteger():
+                # Pop the nested list
+                ni = self.stack.pop()
+                
+                # Get the list inside this NestedInteger and add its elements to the stack
+                # We add in reverse order to maintain the correct sequence when popping
+                for i in range(len(ni.getList())-1, -1, -1):
+                    self.stack.append(ni.getList()[i])
+                    
+            # After processing, if there are elements in the stack, we have more integers to return
+            return len(self.stack) > 0
+            
+                    
+        
+
+# Your NestedIterator object will be instantiated and called as such:
+# i, v = NestedIterator(nestedList), []
+# while i.hasNext(): v.append(i.next())
