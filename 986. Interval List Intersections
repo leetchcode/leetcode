@@ -1,0 +1,20 @@
+def intervalIntersection(firstList, secondList):
+    result = []
+    i, j = 0, 0  # Pointers for firstList and secondList
+    
+    while i < len(firstList) and j < len(secondList):
+        # Find the overlap
+        start_max = max(firstList[i][0], secondList[j][0])
+        end_min = min(firstList[i][1], secondList[j][1])
+        
+        # If there's a valid intersection
+        if start_max <= end_min:
+            result.append([start_max, end_min])
+        
+        # Move the pointer of the interval with smaller end point
+        if firstList[i][1] < secondList[j][1]:
+            i += 1
+        else:
+            j += 1
+    
+    return result
