@@ -1,0 +1,75 @@
+class Solution(object):
+    def maxJumps(self, arr, d):
+        """
+        Find the maximum number of indices that can be visited starting from any index.
+        
+        Args:
+            arr: List of heights of each position
+            d: Maximum distance allowed to jump
+            
+        Returns:
+            Maximum number of indices that can be visited
+        """
+        
+        # Build adjacency list representation of possible jumps
+        # Only allowing jumps to positions with strictly lower heights
+        self.graph = defaultdict(set)
+        for i in range(len(arr)):
+            # Check jumps to the right
+            for j in range(i+1, len(arr)):
+                if arr[i] > arr[j] and abs(i-j) <= d:
+                    # Can jump from i to j if height[i] > height[j] and within distance d
+                    self.graph[i].add(j)
+                else:
+                    # Stop once we hit a higher or equal height (cannot jump over)
+                    break    
+
+            # Check jumps to the left
+            for j in range(i-1, -1, -1):
+                if arr[i] > arr[j] and abs(i-j) <= d:
+                    # Can jump from i to j if height[i] > height[j] and within distance d
+                    self.graph[i].add(j)                    
+                else:
+                    # Stop once we hit a higher or equal height (cannot jump over)
+                    break    
+
+        # Memoization cache to store maximum number of jumps from each position
+        self.memo = {}            
+
+        def dfs(i):
+            """
+            DFS with memoization to find maximum number of indices that can be visited
+            starting from index i.
+            
+            Args:
+                i: Current index
+                
+            Returns:
+                Maximum number of indices that can be visited from i
+            """
+            # Base case: out of bounds
+            if i == len(arr):
+                return 0
+                
+            # Check if result for this index is already computed
+            if i in self.memo:
+                return self.memo[i]
+
+            # Start with path length 1 (counting current position)
+            path = 1
+            
+            # Try all possible next jumps from current position
+            for next_hop in self.graph[i]:
+                # Update maximum path length
+                path = max(path, 1 + dfs(next_hop))
+
+            # Memoize result for this index
+            self.memo[i] = path    
+            return path
+
+        # Try starting from each index and find maximum possible result
+        res = 0
+        for i in range(len(arr)):
+            res = max(res, dfs(i))
+
+        return res
