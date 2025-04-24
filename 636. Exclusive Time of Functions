@@ -1,0 +1,51 @@
+class Solution(object):
+    def exclusiveTime(self, n, logs):
+        """
+        Calculate the exclusive time each function spends executing.
+        
+        Args:
+            n: Number of functions (0 to n-1)
+            logs: List of log entries in format "id:status:timestamp"
+            
+        Returns:
+            List of integers representing the exclusive execution time for each function
+        """
+        # Initialize result array to track execution time for each function
+        res = [0] * n
+        
+        # Stack to keep track of currently executing function IDs
+        stack = []
+        
+        # Variable to track the start time of the current execution segment
+        prev_start_time = 0
+
+        # Process each log entry
+        for log in logs:
+            # Parse the log entry into components
+            parts = log.split(":")
+            f_id = int(parts[0])          # Function ID
+            call_type = parts[1]          # "start" or "end"
+            timestamp = int(parts[2])     # Time when event occurred
+
+            if call_type == "start":
+                # If there's a function already running (on top of stack)
+                if stack:
+                    # Add time spent by previous function before this one starts
+                    # This captures the exclusive time of the previous function up to this point
+                    res[stack[-1]] += timestamp - prev_start_time
+                
+                # Push current function ID to the stack
+                stack.append(f_id)
+                
+                # Update previous start time to current timestamp
+                prev_start_time = timestamp
+            else:  # call_type == "end"
+                # When a function ends, pop it from stack and add its execution time
+                # +1 because timestamps are inclusive of the end second
+                res[stack.pop()] += timestamp - prev_start_time + 1
+                
+                # Update previous start time for the next function that resumes
+                # +1 because the next second belongs to the resuming function
+                prev_start_time = timestamp + 1
+
+        return res
