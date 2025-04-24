@@ -1,0 +1,93 @@
+class TrieNode:
+    def __init__(self):
+        # Initialize a node with empty children dictionary and word flag
+        self.children = {}  # Maps characters to child TrieNodes
+        self.isWord = False  # Marks if this node represents the end of a word
+
+
+class Trie:
+    def __init__(self):
+        # Initialize Trie with a root node
+        self.root = TrieNode()
+
+    def addWord(self, word):
+        # Add a word to the Trie
+        node = self.root
+        for c in word:
+            # Create new node if character not in children
+            if c not in node.children:
+                node.children[c] = TrieNode()
+            # Move to the next node
+            node = node.children[c]
+
+        # Mark the end of the word
+        node.isWord = True
+
+    def exists(self, word):
+        # Check if a word exists in the Trie
+        node = self.root
+        for c in word:
+            # Navigate through the Trie
+            if c in node.children:
+                node = node.children[c]
+            else:
+                # If character not found, word doesn't exist
+                return False
+        # Return true only if we've reached a complete word
+        return node.isWord
+
+
+class Solution:
+    def addBoldTag(self, string: str, words: list[str]) -> str:
+        # Create a Trie to store all words
+        trie = Trie()
+
+        # Add all words to the Trie
+        for word in words:
+            trie.addWord(word)
+
+        # Find all intervals where words from the list appear
+        indices = []
+        for start in range(len(string)):
+            for end in range(start, len(string)):
+                # Check if substring exists in our word list
+                if trie.exists(string[start:end+1]):
+                    indices.append((start, end))
+
+        # If no matches found, return original string
+        if not indices:
+            return string
+
+        # Merge overlapping intervals
+        res = [indices[0]]  # Start with first interval
+        for i in indices[1:]:
+            last_interval = res[-1]
+            # If current interval overlaps with last one
+            if last_interval[1] >= i[0] - 1:  # -1 to consider adjacent positions
+                # Update end position if current interval extends further
+                res[-1] = (last_interval[0], max(i[1], last_interval[1]))
+            else:
+                # Add as a new separate interval
+                res.append(i)
+
+        # Build the result string with bold tags
+        str_res = []
+        for i in range(len(string)):
+            # If current position is start of an interval, add opening tag
+            if res and res[0][0] == i:
+                str_res.append("<b>")
+                str_res.append(string[i])
+            # If current position is end of an interval, add closing tag
+            elif res and res[0][1] == i:
+                str_res.append(string[i])
+                str_res.append("</b>")
+                # Remove processed interval
+                res.pop(0)
+            else:
+                # Just add the character
+                str_res.append(string[i])
+
+        # Combine all parts into the final string
+        return "".join(str_res)
+
+print(Solution().addBoldTag("abcxyz123", ["abc","123"]))
