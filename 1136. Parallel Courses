@@ -1,0 +1,42 @@
+from collections import defaultdict, deque
+from typing import List
+
+class Solution:
+    def minimumSemesters(self, total_courses: int, prerequisites: List[List[int]]) -> int:
+        # Create a default dictionary to hold the adjacency list representation of the graph
+        graph = defaultdict(list)
+        # Initialize a list for incoming degree count of each node
+        incoming_degree = [0] * total_courses
+      
+        # Populate the graph and update the incoming degree counts
+        for prereq, course in prerequisites:
+            # Adjust indices to be 0-based instead of 1-based
+            prereq -= 1
+            course -= 1
+            graph[prereq].append(course)
+            incoming_degree[course] += 1
+
+        # Initialize a queue with all courses having 0 incoming degree
+        queue = deque([i for i, degree in enumerate(incoming_degree) if degree == 0])
+        # Initialize a variable to count the number of semesters
+        semesters = 0
+
+        # Process nodes level by level (BFS)
+        while queue:
+            # Increment the semester count
+            semesters += 1
+            # Process all nodes in the current level
+            for _ in range(len(queue)):
+                course = queue.popleft()
+                total_courses -= 1  # Decrement the number of courses remaining
+                # Decrease the incoming degree of all adjacent courses
+                for next_course in graph[course]:
+                    incoming_degree[next_course] -= 1
+                    # If adjacent course has no more prerequisites, add it to the queue
+                    if incoming_degree[next_course] == 0:
+                        queue.append(next_course)
+
+        # If all courses are covered, return the number of semesters
+        # If there are still courses remaining with nonzero incoming degree,
+        # it means there's a cycle, and we return -1 to indicate it's not possible to finish
+        return semesters if total_courses == 0 else -1
