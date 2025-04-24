@@ -1,0 +1,78 @@
+from collections import defaultdict, deque
+from typing import List
+
+
+class Solution:
+    def alienOrder(self, words: List[str]) -> str:
+        # Create a graph where each character is a node
+        # and edges represent ordering constraints (character precedence)
+        graph = defaultdict(set)
+        
+        # Compare adjacent words to extract ordering rules
+        for w1, w2 in zip(words, words[1:]):
+            minLen = min(len(w1), len(w2))
+            
+            # Check for invalid case: if w1 is longer than w2 but is a prefix of w2
+            # This violates lexicographical ordering rules
+            if len(w1) > len(w2) and w1[:minLen] == w2[:minLen]:
+                return ""
+                
+            # Find the first differing character and add an edge
+            for i in range(minLen):
+                if w1[i] != w2[i]:
+                    # w1[i] must come before w2[i] in the ordering
+                    graph[w1[i]].add(w2[i])
+                    break
+
+        # Sets for tracking visited nodes and nodes in the current path
+        visited = set()    # All nodes that have been processed
+        active = set()     # Nodes in current DFS path (used to detect cycles)
+        res = deque()      # Result ordering (built from right to left)
+        
+        # Depth-first search to detect cycles and build topological ordering
+        def dfs(node):
+            visited.add(node)
+            active.add(node)  # Mark node as part of current path
+            
+            if node in graph:
+                for neighbor in graph[node]:
+                    # Cycle detected - ordering is impossible
+                    if neighbor in active:
+                        return False
+                    # Process unvisited neighbors
+                    elif neighbor not in visited:
+                        if not dfs(neighbor):
+                            return False
+            
+            # Backtrack - remove from current path
+            active.remove(node)
+            # Add to the front of result (building the order from right to left)
+            res.appendleft(node)
+            return True
+
+        # Process all characters in the graph
+        for c in graph.keys():
+            if c not in visited:
+                if not dfs(c):
+                    return ""  # Cycle detected, no valid ordering exists
+
+        return "".join(list(res))
+
+print(Solution().alienOrder([
+  "wrt",
+  "wrf",
+  "er",
+  "ett",
+  "rftt"
+]))  # Expected: "wertf"
+
+print(Solution().alienOrder([
+  "z",
+  "x"
+]))  # Expected: "zx"
+
+print(Solution().alienOrder([
+  "z",
+  "x",
+  "z"
+]))  # Expected: "", because of invalid ordering (contradiction)
