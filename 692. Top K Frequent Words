@@ -1,0 +1,67 @@
+from collections import Counter
+import heapq
+
+class Wrapper:
+    """
+    A wrapper class to customize comparison logic for the heap.
+    This allows us to maintain a min-heap based on frequency,
+    with lexicographical tie-breaking in reverse order.
+    """
+    def __init__(self, freq, word):
+        # Store the frequency of the word
+        self.freq = freq
+        # Store the actual word
+        self.word = word
+
+    def __lt__(self, other):
+        """
+        Custom comparison for heap operations.
+        If frequencies are equal, compare words lexicographically in reverse order.
+        Otherwise, compare by frequency (smaller frequency comes first in min-heap).
+        """
+        if self.freq == other.freq:
+            # For equal frequencies, we want higher lexicographic words to be popped first
+            # (This is why we use ">" instead of "<" - to ensure correct ordering when reversed later)
+            return self.word > other.word
+        else:
+            # For different frequencies, we want lower frequency words to be popped first
+            # (This is a min-heap, so we'll keep the k highest frequencies)
+            return self.freq < other.freq
+
+class Solution(object):
+    def topKFrequent(self, words, k):
+        """
+        Find the k most frequent words in the input list.
+        
+        Args:
+            words: List of strings
+            k: Number of top frequent words to return
+            
+        Returns:
+            List of k most frequent words, sorted by frequency (descending)
+            and lexicographically (ascending) for words with same frequency
+        """
+        # Count the frequency of each word
+        counts = Counter(words)
+        
+        # Use a min-heap to keep track of k most frequent words
+        heap = []
+        
+        # Process each word and its frequency
+        for word in counts.keys():
+            # Add current word to the heap
+            heapq.heappush(heap, Wrapper(counts[word], word))
+            
+            # If heap size exceeds k, remove the word with lowest frequency
+            # (or lexicographically larger word if frequencies are equal)
+            if len(heap) > k:
+                heapq.heappop(heap)
+
+        # Extract words from the heap (will be in reverse order)
+        res = []
+        while heap:
+            res.append(heapq.heappop(heap).word)
+
+        # Reverse to get correct order: higher frequency first,
+        # then lexicographically smaller words for same frequency
+        return res[::-1]
