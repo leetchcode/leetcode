@@ -1,0 +1,24 @@
+from collections import defaultdict
+
+#https://algo.monster/liteproblems/249
+#
+class Solution:
+    def groupStrings(self, strings):
+        normalized_string_list = defaultdict(list)
+
+        for s in strings:
+            left_shift = ord(s[0]) - ord('a')
+            shifted_chars = []
+            for c in s:
+                shifted_ordinal = ord(c) - left_shift
+                if shifted_ordinal < ord('a'):
+                    shifted_ordinal += 26 # right shift by 26
+                shifted_chars.append(chr(shifted_ordinal))
+            normalized_string_list[''.join(shifted_chars)].append(s)
+
+        res = []
+        for val in normalized_string_list.values():
+            res.append(val)
+        return res
+
+print(Solution().groupStrings(["abc", "bcd", "acef", "xyz", "az", "ba", "a", "z"]))
