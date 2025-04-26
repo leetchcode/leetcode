@@ -1,0 +1,113 @@
+# Definition for a binary tree node.
+from collections import defaultdict, deque
+from typing import Optional
+
+
+class TreeNode:
+    def __init__(self, val=0, left=None, right=None):
+        self.val = val
+        self.left = left
+        self.right = right
+
+class Solution:
+    def findDistance(self, root: Optional[TreeNode], p: int, q: int) -> int:
+        """
+        Find the shortest path distance between two nodes with values p and q in a binary tree.
+        
+        The approach:
+        1. Convert the tree to an undirected graph using DFS
+        2. Perform BFS from node p to find shortest path to node q
+        
+        Args:
+            root: Root of the binary tree
+            p: Value of the first node
+            q: Value of the second node
+            
+        Returns:
+            The shortest path distance between nodes p and q
+        """
+        # Variables to store references to the nodes containing values p and q
+        self.node_p = None
+        self.node_q = None
+
+        # Handle empty tree case
+        if not root:
+            return 0
+
+        # Create an adjacency list representation of the tree as an undirected graph
+        graph = defaultdict(set)
+
+        def dfs(node, parent):
+            """
+            Depth-first search to:
+            1. Find the nodes with values p and q
+            2. Build the adjacency list representation of the tree
+            
+            Args:
+                node: Current node being processed
+                parent: Parent of the current node
+            """
+            # Base case: empty node
+            if not node:
+                return
+
+            # Identify the nodes with values p and q when encountered
+            if node.val == p:
+                self.node_p = node
+            if node.val == q:
+                self.node_q = node
+
+            # Initialize empty adjacency set for current node
+            graph[node] = set()
+            
+            # Connect node with its parent (creating undirected edges)
+            if parent:
+                graph[node].add(parent)
+                graph[parent].add(node)
+
+            # Process left and right subtrees
+            dfs(node.left, node)
+            dfs(node.right, node)
+
+        # Build the graph representation of the tree
+        dfs(root, None)
+        
+        # Perform BFS to find shortest path from node p to node q
+        qu = deque([self.node_p])  # Start BFS from node p
+        visited = set()            # Track visited nodes to avoid cycles
+        dist = 0                   # Distance counter
+        
+        while qu:
+            level_len = len(qu)    # Number of nodes at current distance level
+            
+            # Process all nodes at current distance level
+            for _ in range(level_len):
+                node = qu.popleft()
+                visited.add(node)
+                
+                # If we found node q, return current distance
+                if node.val == q:
+                    return dist
+
+                # Add unvisited neighbors to the queue for next level
+                for n in graph[node]:
+                    if n not in visited:
+                        qu.append(n)
+                        
+            # Increment distance for next level
+            dist += 1
+
+        # If we exit the loop, nodes p and q are not connected
+        return 0
+
+# Test case setup
+root = TreeNode(3)
+root.left = TreeNode(5)
+root.right = TreeNode(1)
+root.left.left = TreeNode(6)
+root.left.right = TreeNode(2)
+root.left.right.left = TreeNode(7)
+root.left.right.right = TreeNode(4)
+
+# Test the solution
+print(Solution().findDistance(root, 7, 4))  # Expected output: 2
