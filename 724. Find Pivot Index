@@ -1,0 +1,18 @@
+class Solution(object):
+    def pivotIndex(self, nums):
+        prefix_sum = []
+        c_sum = 0
+        for num in nums:
+            c_sum+=num
+            prefix_sum.append(c_sum)
+
+        for i in range(len(nums)):
+            l_sum = prefix_sum[i-1] if i>0 else 0
+            r_sum = prefix_sum[len(nums)-1] - prefix_sum[i] if i<len(nums)-1 else 0
+            if l_sum == r_sum:
+                return i
+
+        return -1            
+            
+
+        
