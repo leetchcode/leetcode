@@ -1,0 +1,45 @@
+class Solution(object):
+    def maximumSwap(self, num):
+        """
+        Given a non-negative integer, find the maximum valued number
+        after swapping exactly one pair of digits.
+        
+        Args:
+            num: A non-negative integer
+            
+        Returns:
+            The maximum valued number after at most one swap
+        """
+        # Track the maximum digit found so far (scanning right to left)
+        max_digit = 0
+        # Index of the maximum digit found so far
+        max_i = -1
+        # Index of the digit to be swapped (left side of swap)
+        swap_i = -1
+        # Index of the digit to be swapped with (right side of swap)
+        swap_j = -1
+        
+        # Convert number to list of digits for easier manipulation
+        num = list(str(num))
+        
+        # Scan from right to left to find the potential swap
+        for i in range(len(num)-1, -1, -1):
+            # If current digit is greater than the max seen so far,
+            # update the max digit and its index
+            if max_digit < num[i]:
+                max_digit = num[i]
+                max_i = i
+            # If current digit is smaller than max seen so far,
+            # we found a potential swap that can increase the number
+            elif num[i] < max_digit:
+                # We want to swap the leftmost smaller digit with
+                # the largest digit to its right
+                swap_i = i
+                swap_j = max_i
+
+        # Perform the swap if we found a valid pair
+        if swap_i != -1 and swap_j != -1:        
+            num[swap_i], num[swap_j] = num[swap_j], num[swap_i]            
+
+        # Convert back to integer and return
+        return int("".join(num))
