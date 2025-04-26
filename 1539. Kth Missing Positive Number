@@ -1,0 +1,23 @@
+class Solution(object):
+    def findKthPositive(self, arr, k):
+        left, right = 0, len(arr) - 1
+    
+        # Binary search to find the index where the number of missing 
+        # positive integers before arr[mid] is >= k
+        while left <= right:
+            mid = (left + right) // 2
+            
+            # Calculate how many positive integers are missing before arr[mid]
+            missing = arr[mid] - (mid + 1)
+            
+            if missing < k:
+                left = mid + 1
+            else:
+                right = mid - 1
+        
+        # At this point, right is the index before the kth missing number
+        # The kth missing number is (right + 1) + k - missing at right
+        # This simplifies to k + left
+        return k + left
+
+#print(Solution().findKthPositive([2,3,4,7,11], 5))
