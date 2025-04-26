@@ -1,0 +1,50 @@
+class Solution:
+    def isValidPalindrome(self, s: str, k: int) -> bool:
+        # Helper function to check if substring s[i...j] is a valid palindrome without any removals
+        def isValid(s, i, j):
+            while i < j:
+                if s[i] != s[j]:
+                    return False  # Characters don't match, not a palindrome
+                i += 1  # Move left pointer right
+                j -= 1  # Move right pointer left
+            
+            return True  # All characters matched, it's a palindrome
+        
+        # Memoization dictionary to store results of subproblems
+        memo = {}
+        
+        # Recursive function with memoization
+        # i: left index, j: right index, k: removals left
+        def dfs(i, j, k):
+            # Return cached result if this subproblem was already solved
+            if (i, j, k) in memo:
+                return memo[(i, j, k)]
+            
+            # Base case: If no more removals allowed, check if remaining substring is a palindrome
+            if not k:
+                memo[(i, j, k)] = isValid(s, i, j)
+                return memo[(i, j, k)]
+            
+            # Process the substring
+            while i < j:
+                if s[i] != s[j]:
+                    # Characters don't match, we have two options:
+                    # 1. Remove the character at index i
+                    # 2. Remove the character at index j
+                    memo[(i, j, k)] = dfs(i+1, j, k-1) or dfs(i, j-1, k-1)
+                    return memo[(i, j, k)]
+                else:
+                    # Characters match, continue checking the inner substring
+                    i += 1
+                    j -= 1
+            
+            # If we've reached here, the substring is already a palindrome
+            memo[(i, j, k)] = True
+            return True
+        
+        # Start the recursion from the full string with k removals allowed
+        return dfs(0, len(s)-1, k)
+
+# Test cases
+print(Solution().isValidPalindrome("abxcyba", 1))  # True - can remove 'x' or 'y' to make "abcba" or "abyba"
+print(Solution().isValidPalindrome("abcdeca", 2))  # True - can remove 'd' and 'e' to make "abcca"
