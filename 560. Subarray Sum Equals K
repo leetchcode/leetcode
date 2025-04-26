@@ -1,0 +1,46 @@
+class Solution(object):
+    # Link to explanation: https://yuminlee2.medium.com/leetcode-560-subarray-sum-equals-k-9eb688e43534
+    def subarraySum(self, nums, k):
+        """
+        Find the total number of subarrays whose sum equals k.
+        
+        This solution uses a prefix sum technique with a hash map to efficiently track
+        potential subarrays.
+        
+        :type nums: List[int]
+        :type k: int
+        :rtype: int
+        """
+        # Hash map to store prefix sums and their frequencies
+        # Initialize with 0:1 to handle cases where the subarray starts from index 0
+        prefixSums = {0: 1}
+        
+        # Counter for valid subarrays
+        count = 0
+        
+        # Running sum of elements
+        currentSum = 0
+        
+        # Iterate through the array
+        for i in range(len(nums)):
+            # Update running sum with current element
+            currentSum += nums[i]
+            
+            # Calculate the complementary sum needed
+            # If currentSum - k exists in our map, it means there's a subarray ending at
+            # current index with sum k
+            # if diff is 0 then line 16 will handle that case
+            diff = currentSum - k
+            
+            # If we have seen this complementary sum before, add its frequency to our count
+            if diff in prefixSums:
+                count += prefixSums[diff]
+            
+            # Update the frequency of current prefix sum
+            if currentSum in prefixSums:
+                prefixSums[currentSum] += 1
+            else:
+                prefixSums[currentSum] = 1
+            
+                    
+        return count
