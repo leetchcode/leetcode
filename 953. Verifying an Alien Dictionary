@@ -1,0 +1,42 @@
+class Solution(object):
+    def isAlienSorted(self, words, order):
+        """
+        Determine if the words are sorted lexicographically according to the alien language.
+        
+        Args:
+            words: List of strings to check if they are sorted
+            order: String representing the order of characters in alien language
+            
+        Returns:
+            Boolean indicating if words are sorted according to the alien dictionary
+        """
+        # Create a mapping of each character to its position in the alien order
+        # This allows us to quickly compare two characters
+        char_index = {}
+        for i, ch in enumerate(order):
+            char_index[ch] = i
+
+        # Check each adjacent pair of words
+        for w1, w2 in zip(words, words[1:]):
+            minLen = min(len(w1), len(w2))
+            
+            # Special case: if first word is longer and is a prefix of second word,
+            # then words are not sorted (e.g., "apple" should come after "app")
+            if len(w1) > len(w2) and w1[:minLen] == w2[:minLen]:
+                return False
+
+            # Compare characters at the same positions
+            for i in range(minLen):
+                if w1[i] != w2[i]:
+                    # Once we find differing characters, check their order
+                    # If first word's character comes after second word's character,
+                    # then words are not sorted according to alien order
+                    if not char_index[w1[i]] <= char_index[w2[i]]:
+                        return False
+                    else:
+                        # if the chars differ then no point looking beyond as we can't say anything about these chars
+                        break    
+
+        # If we've checked all adjacent pairs without finding violations,
+        # the words are sorted according to the alien dictionary
+        return True
