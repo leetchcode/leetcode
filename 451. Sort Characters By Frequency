@@ -1,0 +1,13 @@
+class Solution(object):
+    def frequencySort(self, s):
+        char_count = Counter(s)
+        items = char_count.items()
+        items.sort(key = lambda x : -x[1]) # descending order of frequencies
+
+        res = []
+        for c, f in items:
+            res.append(c*f)
+
+        return "".join(res)   
+
+        
