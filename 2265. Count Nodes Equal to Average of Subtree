@@ -1,0 +1,54 @@
+# Definition for a binary tree node.
+# class TreeNode(object):
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution(object):
+    def averageOfSubtree(self, root):
+        """
+        Count the number of nodes in the binary tree where the value of the node is equal
+        to the average of all values in the subtree rooted at that node.
+        
+        :type root: TreeNode
+        :rtype: int
+        """
+        # Handle empty tree case
+        if not root:
+            return 0
+
+        # Initialize counter for nodes that meet our criteria
+        self.count = 0    
+
+        def dfs(node):
+            """
+            Helper function to perform depth-first search on the tree.
+            Returns a tuple containing:
+                1. Sum of all values in the subtree rooted at node
+                2. Count of all nodes in the subtree rooted at node
+            
+            :type node: TreeNode
+            :rtype: tuple(int, int) - (sum of values, count of nodes)
+            """
+            # Base case: empty node
+            if not node:
+                return 0, 0
+
+            # Recursively process left and right subtrees
+            l_sum, l_count = dfs(node.left)    # Get sum and count from left subtree
+            r_sum, r_count = dfs(node.right)   # Get sum and count from right subtree
+            
+            # Calculate current subtree sum and count
+            c_sum = l_sum + r_sum + node.val   # Sum includes current node value
+            c_count = 1 + l_count + r_count    # Count includes current node
+            
+            # Check if current node's value equals the integer average of its subtree
+            if int(c_sum/c_count) == node.val:
+                self.count += 1
+
+            # Return the subtree sum and count for parent's calculation
+            return c_sum, c_count
+
+        # Start DFS from root
+        dfs(root)
+        return self.count
