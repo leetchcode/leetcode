@@ -1,0 +1,41 @@
+# Definition for a binary tree node.
+# class TreeNode(object):
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution(object):
+    def longestUnivaluePath(self, root):
+        # Instance variable to track the overall longest path found
+        self.longest = 0
+        
+        # Helper function to calculate longest paths
+        def dfs(node):
+            # Base case: if node is None, path length is 0
+            if not node:
+                return 0
+            
+            # Recursively get the max path lengths from left and right subtrees
+            left_max = dfs(node.left)
+            right_max = dfs(node.right)
+            
+            # Calculate paths that include the current node:
+            # If left child exists and has the same value as current node,
+            # extend the path from left child, otherwise reset to 0
+            left_path = left_max + 1 if node.left and node.left.val == node.val else 0
+            
+            # Similarly for the right child
+            right_path = right_max + 1 if node.right and node.right.val == node.val else 0
+            
+            # Update the global maximum - this combines both left and right paths
+            # going through the current node (forming an arrow/V-shape)
+            self.longest = max(self.longest, left_path + right_path)
+            
+            # Return the longer of the two paths to the parent
+            # (we can only extend one path to parent, not both)
+            return max(left_path, right_path)
+        
+        # Start DFS from the root
+        dfs(root)        
+        # Return the length of the longest univalue path found
+        return self.longest
