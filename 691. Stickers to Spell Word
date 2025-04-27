@@ -1,0 +1,64 @@
+
+
+class Solution(object):
+    def minStickers(self, stickers, target):
+        # Preprocess stickers into frequency counters to avoid repeated counting
+        sticker_counts = []
+        for sticker in stickers:
+            # Create a counter dictionary for each sticker
+            counter = {}
+            for char in sticker:
+                counter[char] = counter.get(char, 0) + 1
+            sticker_counts.append(counter)
+
+        # Initialize memoization dictionary
+        memo = {}
+
+        def dfs(remaining):
+            # Convert the remaining characters to a string for memoization key
+            target_str = "".join(remaining)
+
+            # Base case: no characters left to cover
+            if not target_str:
+                return 0
+
+            # Check if we've already solved this subproblem
+            if target_str in memo:
+                return memo[target_str]
+
+            # Initialize with infinity (indicating impossible)
+            result = float('inf')
+
+            # Try each sticker
+            for sticker in sticker_counts:
+                # Skip if this sticker doesn't contain any character from our first remaining character
+                # This is an optimization to avoid unnecessary recursive calls
+                if target_str[0] not in sticker:
+                    continue
+
+                # Apply the sticker and calculate remaining characters
+                new_remaining = list(target_str)
+                for char, count in sticker.items():
+                    for _ in range(count):
+                        # Remove the character if it exists in our remaining list
+                        if char in new_remaining:
+                            new_remaining.remove(char)
+
+                # If we were able to remove some characters, try the recursive solution
+                if len(new_remaining) < len(target_str):
+                    subproblem = dfs(new_remaining)
+                    if subproblem != -1:
+                        result = min(result, 1 + subproblem)
+
+            # If result is still infinity, it's not possible
+            memo[target_str] = -1 if result == float('inf') else result
+            return memo[target_str]
+
+        # Start the recursion with the original target
+        return dfs(list(target))
+
+
+print(Solution().minStickers(["with","example","science"], "thehat"))
+print(Solution().minStickers(["notice","possible"], "basicbasic"))
+
+
