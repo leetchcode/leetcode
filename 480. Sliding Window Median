@@ -1,0 +1,60 @@
+class Solution(object):
+    def medianSlidingWindow(self, nums, k):
+        """
+        Find the median of all sliding windows of size k in the array nums
+        using a two-heap approach.
+
+        Args:
+            nums: List of integers
+            k: Size of the sliding window
+
+        Returns:
+            List of medians for each sliding window
+        """
+        result = []
+
+        # Use hashmap to keep track of invalid numbers (numbers that have left the window)
+        # but are still in our heaps
+        removed = {}
+
+        # Max heap for the smaller half of elements (multiply by -1 to use as max heap)
+        small = []
+        # Min heap for the larger half of elements
+        large = []
+
+        for i in range(len(nums)):
+            # Add the current number to the appropriate heap
+            heappush(small, -nums[i])
+
+            # Balance the heaps (small to large)
+            # Move the largest element from small to large
+            heappush(large, -heappop(small))
+
+            # Balance the heaps (large to small)
+            if len(large) > len(small):
+                heappush(small, -heappop(large))
+
+            # Mark the number leaving the window as removed
+            if i >= k:
+                removed[nums[i - k]] = removed.get(nums[i - k], 0) + 1
+
+            # Clean up removed numbers from the heaps
+            while small and removed.get(-small[0], 0) > 0:
+                removed[-small[0]] -= 1
+                heappop(small)
+
+            while large and removed.get(large[0], 0) > 0:
+                removed[large[0]] -= 1
+                heappop(large)
+
+            # Calculate median once we have a full window
+            if i >= k - 1:
+                if k % 2 == 1:
+                    # For odd k, median is the largest element in small heap
+                    result.append(-small[0])
+                else:
+                    # For even k, median is the average of largest in small and smallest in large
+                    result.append((-small[0] + large[0]) / 2)
+
+        return result
+        
