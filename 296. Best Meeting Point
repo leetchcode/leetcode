@@ -1,0 +1,28 @@
+class Solution:
+    def minTotalDistance(self, grid: List[List[int]]) -> int:
+        # Step 1: Get grid size
+        m, n = len(grid), len(grid[0])
+
+        # Step 2: Collect row and column coordinates
+        rows, cols = [], []
+        for i in range(m):
+            for j in range(n):
+                if grid[i][j] == 1:  # Found a person
+                    rows.append(i)  # Add row
+                    cols.append(j)  # Add column
+
+        # Step 3: Sort (rows already sorted due to scan order)
+        cols.sort()  # Sort columns
+
+        # Step 4: Find medians (middle index for odd count)
+        row_median = rows[len(rows) // 2]  # Middle row
+        col_median = cols[len(cols) // 2]  # Middle col
+
+        # Step 5: Calculate total Manhattan distance
+        total = 0
+        for r in rows:
+            total += abs(r - row_median)  # Row distance
+        for c in cols:
+            total += abs(c - col_median)  # Col distance
+
+        return total
