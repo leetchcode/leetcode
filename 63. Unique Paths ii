@@ -1,0 +1,42 @@
+class Solution(object):
+    def uniquePathsWithObstacles(self, obstacleGrid):
+        """
+        :type obstacleGrid: List[List[int]]
+        :rtype: int
+        """
+        # Get dimensions of the grid
+        m = len(obstacleGrid)
+        n = len(obstacleGrid[0])
+
+        # Edge case: If start or end position has an obstacle, return 0
+        # (no path is possible)
+        if obstacleGrid[m-1][n-1] == 1 or obstacleGrid[0][0] == 1:
+            return 0
+
+        # Initialize memoization dictionary to store computed results
+        # This prevents recalculating paths for positions we've already visited
+        self.memo = {}
+
+        # Depth-first search function to explore paths
+        def dfs(x, y):
+            # If this position has been calculated before, return cached result
+            if (x, y) in self.memo:
+                return self.memo[(x, y)]    
+
+            # Base case: If we've reached the destination (bottom-right corner)
+            # This is a valid path, so return 1
+            if x == m - 1 and y == n - 1:
+                self.memo[(x, y)] = self.memo.get((x, y), 0) + 1
+                return self.memo[(x, y)]
+
+            # If current position is valid (within bounds and not an obstacle)
+            if 0 <= x < m and 0 <= y < n and obstacleGrid[x][y] != 1:
+                # Total paths = paths from going right + paths from going down
+                self.memo[(x, y)] = dfs(x+1, y) + dfs(x, y+1)
+                return self.memo[(x, y)]
+                
+            # If position is invalid (out of bounds or has obstacle), no paths possible
+            return 0    
+
+        # Start DFS from top-left corner (0,0)
+        return dfs(0, 0)
