@@ -1,0 +1,22 @@
+def longestCommonPrefix(strs):
+    # Edge case: empty array
+    if not strs:
+        return ""
+    
+    # Start with the first string as our prefix
+    prefix = strs[0]
+    
+    for string in strs[1:]:
+        # Find the common prefix between current prefix and string
+        i = 0
+        while i < len(prefix) and i < len(string) and prefix[i] == string[i]:
+            i += 1
+        
+        # Update the prefix
+        prefix = prefix[:i]
+        
+        # If prefix is empty, we can stop
+        if not prefix:
+            return ""
+    
+    return prefix
