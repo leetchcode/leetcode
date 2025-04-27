@@ -1,0 +1,55 @@
+# https://medium.com/j-t-tech/leetcode-42-trapping-rain-water-c7e6e4e3b671
+
+# This is the Dynamic Programming Solution/Approach
+# Find the tallest left and tallest right for each index, then solve for the
+# water each position will add to the total.
+
+def trap(self, height: List[int]) -> int:
+    maxLefts, maxRights = [0] * len(height), [0] * len(height)
+    
+    # init values
+    maxLefts[0] = height[0]
+    maxRights[len(height)-1] = height[len(height)-1]
+    
+    i, j = 1, len(height)-2
+    while i < len(height):
+        maxLefts[i] = max(maxLefts[i-1], height[i]) # Check this height to max height to left
+        maxRights[j] = max(maxRights[j+1], height[j]) # Check this height to max height to right
+        
+        i += 1
+        j -= 1
+        
+    # Determine answer
+    ans = 0
+    for i in range(0, len(height)):
+        ans += max(0, min(maxLefts[i], maxRights[i]) - height[i])
+    
+    return ans
+
+
+# This is the 2 pointer Solution/Approach
+# It utilizes the fact that the amount of water a position
+# can contain is bounded by the smallest wall to its left and right
+# If the left < right, then we KNOW that it can contain whatever
+# amount of water with respect to the height of the left wall (the smaller wall).
+# and vice versa
+
+def trap(self, height: List[int]) -> int:
+    leftMax, rightMax, ans = 0, 0, 0
+    left, right = 0, len(height)-1
+    
+    while left < right:
+        if height[left] < height[right]:
+            if height[left] < leftMax: # Can contain water
+                ans += leftMax - height[left]
+            else:
+                leftMax = height[left]
+            left += 1
+        else: # height[right] >= height[left]
+            if height[right] < rightMax: # Can contain water
+                ans += rightMax - height[right]
+            else:
+                rightMax = height[right]
+            right -= 1
+    return ans
+    
