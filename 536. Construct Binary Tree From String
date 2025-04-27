@@ -1,0 +1,38 @@
+class Solution:
+    def str2tree(self, s: str) -> TreeNode:
+        if not s:
+            return None
+        
+        # Find the position of the first '('
+        first_paren = s.find('(')
+        
+        # If no parenthesis found, the entire string is the root value
+        if first_paren == -1:
+            return TreeNode(int(s))
+        
+        # Parse the root value
+        root_val = int(s[:first_paren])
+        root = TreeNode(root_val)
+        
+        # Track parentheses to find complete subtrees
+        count = 0
+        i = first_paren
+        
+        # Find the left subtree
+        start = first_paren
+        while i < len(s):
+            if s[i] == '(':
+                count += 1
+            elif s[i] == ')':
+                count -= 1
+                if count == 0:  # Found a complete subtree
+                    # If this is the first subtree (left)
+                    if start == first_paren:
+                        root.left = self.str2tree(s[start+1:i])
+                        start = i + 1
+                    else:  # This is the second subtree (right)
+                        root.right = self.str2tree(s[start+1:i])
+                        break # need to break as we have found both sub-trees for the root
+            i += 1
+        
+        return root
