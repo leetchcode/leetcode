@@ -1,0 +1,59 @@
+from collections import deque
+
+# Definition for a binary tree node.
+class TreeNode:
+    def __init__(self, val=0, left=None, right=None):
+        self.val = val
+        self.left = left
+        self.right = right
+
+class Solution:
+    def isEvenOddTree(self, root: TreeNode) -> bool:
+        if not root:
+            return True
+        
+        # Use a queue for level-order traversal
+        queue = deque([root])
+        level = 0
+        
+        while queue:
+            level_size = len(queue)
+            prev_val = None  # Track previous value at this level
+            
+            for _ in range(level_size):
+                node = queue.popleft()
+                
+                # Check if current node's value follows even-odd property
+                # For even levels: values must be odd and strictly increasing
+                if level % 2 == 0:
+                    # Check if value is odd
+                    if node.val % 2 == 0:
+                        return False
+                    
+                    # Check if strictly increasing
+                    if prev_val is not None and node.val <= prev_val:
+                        return False
+                
+                # For odd levels: values must be even and strictly decreasing
+                else:
+                    # Check if value is even
+                    if node.val % 2 == 1:
+                        return False
+                    
+                    # Check if strictly decreasing
+                    if prev_val is not None and node.val >= prev_val:
+                        return False
+                
+                # Update prev_val for next iteration
+                prev_val = node.val
+                
+                # Add children to queue
+                if node.left:
+                    queue.append(node.left)
+                if node.right:
+                    queue.append(node.right)
+            
+            # Move to next level
+            level += 1
+        
+        return True
