@@ -1,0 +1,23 @@
+class Solution(object):
+    def isSubsequence(self, s, t):
+        # Edge case: empty string is always a subsequence
+        if not s:
+            return True
+            
+        # Pointers for both strings
+        s_ptr = 0
+        t_ptr = 0
+        
+        # Iterate through string t
+        while t_ptr < len(t) and s_ptr < len(s):
+            # If current characters match, move s pointer
+            if s[s_ptr] == t[t_ptr]:
+                s_ptr += 1
+            
+            # Always move t pointer
+            t_ptr += 1
+        
+        # If we've gone through all characters in s, it's a subsequence
+        return s_ptr == len(s)
+
+        
