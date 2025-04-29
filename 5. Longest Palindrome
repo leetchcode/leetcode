@@ -1,0 +1,69 @@
+class Solution(object):
+    def longestPalindrome(self, s):
+        """
+        Find the longest palindromic substring in the given string.
+        
+        LeetCode Problem 5: https://leetcode.com/problems/longest-palindromic-substring/
+        
+        The approach uses the "expand around center" technique. For each position in the string,
+        we try to expand outwards to find palindromes centered at that position.
+        
+        Args:
+            s: Input string
+            
+        Returns:
+            The longest palindromic substring
+        """
+        # Handle empty string case
+        if not s:
+            return ""
+
+        def expand(i, j):
+            """
+            Helper function to expand around potential palindrome centers.
+            
+            Start from indices i and j and expand outward as long as characters match.
+            - When i == j, we're checking for odd-length palindromes (like "aba")
+            - When i+1 == j, we're checking for even-length palindromes (like "abba")
+            
+            Args:
+                i: Left index to start expansion
+                j: Right index to start expansion
+                
+            Returns:
+                Tuple of (palindrome_length, start_index, end_index)
+            """
+            # Expand as long as we're within bounds and characters match
+            while i >= 0 and j < len(s) and s[i] == s[j]:
+                i -= 1  # Move left pointer leftward
+                j += 1  # Move right pointer rightward
+
+            # When the while loop ends, i and j have moved one position too far
+            # Length calculation: (j-1) - (i+1) + 1 = j-i-1
+            # But we return j-i+1 because our return values need to be corrected
+            return j - i - 1, i + 1, j - 1        
+
+        # Initialize variables to track the longest palindrome found
+        start, end = 0, 0  # Indices of the longest palindrome
+        max_l = 0  # Length of the longest palindrome found
+
+        # Check each possible center position
+        for i in range(len(s)):
+            # Check for odd-length palindromes centered at position i
+            l, x, y = expand(i, i)
+            if l > max_l:
+                max_l = l  # Update max length
+                start = x  # Update start index
+                end = y    # Update end index
+            
+            # Check for even-length palindromes centered between positions i and i+1
+            l, x, y = expand(i, i+1)
+            if l > max_l:
+                max_l = l  # Update max length
+                start = x  # Update start index
+                end = y    # Update end index    
+
+        # Return the longest palindromic substring
+        # If no palindrome was found (which shouldn't happen with non-empty input),
+        # we would return an empty string
+        return s[start:end+1]
