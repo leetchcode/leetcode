@@ -1,0 +1,180 @@
+class Node:
+    def __init__(self, freq):
+        """
+        Initialize a node in our doubly linked list
+        
+        Args:
+            freq: The frequency/count this node represents
+        """
+        self.freq = freq  # Frequency/count this node represents
+        self.prev = None  # Reference to previous node (lower frequency)
+        self.next = None  # Reference to next node (higher frequency)
+        self.keys = set() # Set of keys that have this frequency
+        
+class AllOne:
+    def __init__(self):
+        """
+        Initialize the All O`one data structure with a doubly linked list
+        for efficient tracking of min/max frequencies
+        """
+        # Create dummy head and tail nodes to simplify insertion/deletion
+        self.head = Node(0)  # Dummy head (smallest possible frequency)
+        self.tail = Node(0)  # Dummy tail (largest possible frequency)
+        
+        # Connect head and tail to form an empty doubly linked list
+        self.head.next = self.tail
+        self.tail.prev = self.head
+        
+        # Map to quickly locate which node contains a given key
+        self.char_map = {}  # Maps key -> Node containing that key
+    
+    def inc(self, key: str) -> None:
+        """
+        Increments the count of the given key by 1.
+        If key doesn't exist, add it with count 1.
+        
+        Args:
+            key: The string key to increment
+        """
+        if key in self.char_map:
+            # Key already exists, need to move it to a higher frequency node
+            node = self.char_map[key]  # Current node containing the key
+            freq = node.freq  # Current frequency of the key
+            
+            # Remove key from its current node
+            node.keys.remove(key)
+            
+            # Check if the next node has frequency = freq + 1
+            next_node = node.next
+            if next_node == self.tail or next_node.freq != freq + 1:
+                # Need to create a new node for freq + 1
+                new_node = Node(freq + 1)
+                new_node.keys.add(key)
+                
+                # Insert new node between current node and next node
+                new_node.prev = node
+                new_node.next = next_node
+                node.next = new_node
+                next_node.prev = new_node
+                
+                # Update the char_map to point to the new node
+                self.char_map[key] = new_node
+            else:
+                # Next node already has the right frequency, add key there
+                next_node.keys.add(key)
+                self.char_map[key] = next_node
+                
+            # Clean up: remove the old node if it's now empty
+            if not node.keys:
+                self.removeNode(node)
+        else:
+            # Key doesn't exist yet, add with frequency 1
+            first_node = self.head.next
+            
+            # Check if the first node has frequency = 1
+            if first_node == self.tail or first_node.freq > 1:
+                # Need to create a new node for frequency 1
+                new_node = Node(1)
+                new_node.keys.add(key)
+                
+                # Insert new node right after head
+                new_node.prev = self.head
+                new_node.next = first_node
+                self.head.next = new_node
+                first_node.prev = new_node
+                
+                # Update the char_map
+                self.char_map[key] = new_node
+            else:
+                # First node already has frequency 1, add key there
+                first_node.keys.add(key)
+                self.char_map[key] = first_node
+    
+    def dec(self, key: str) -> None:
+        """
+        Decrements the count of the given key by 1.
+        If the count reaches 0, remove the key from the data structure.
+        Returns silently if the key doesn't exist.
+        
+        Args:
+            key: The string key to decrement
+        """
+        # Silently return if key doesn't exist
+        if key not in self.char_map:
+            return
+        
+        node = self.char_map[key]  # Current node containing the key
+        node.keys.remove(key)      # Remove key from current node
+        freq = node.freq           # Current frequency of the key
+        
+        if freq == 1:
+            # Frequency becomes 0, remove key completely
+            del self.char_map[key]
+        else:
+            # Need to move key to a node with frequency = freq - 1
+            prev_node = node.prev
+            
+            # Check if the previous node has frequency = freq - 1
+            if prev_node == self.head or prev_node.freq != freq - 1:
+                # Need to create a new node for freq - 1
+                new_node = Node(freq - 1)
+                new_node.keys.add(key)
+                
+                # Insert new node between prev_node and current node
+                new_node.prev = prev_node
+                new_node.next = node
+                prev_node.next = new_node
+                node.prev = new_node
+                
+                # Update the char_map
+                self.char_map[key] = new_node
+            else:
+                # Previous node already has the right frequency, add key there
+                prev_node.keys.add(key)
+                self.char_map[key] = prev_node
+        
+        # Clean up: remove the old node if it's now empty
+        if not node.keys:
+            self.removeNode(node)
+    
+    def getMaxKey(self) -> str:
+        """
+        Returns one of the keys with the highest frequency, or empty string if none.
+        
+        Returns:
+            str: A key with the highest frequency, or "" if no keys exist
+        """
+        if self.tail.prev == self.head:
+            # List is empty, no keys exist
+            return ""
+        else:
+            # Return any key from the last real node (highest frequency)
+            # next(iter(set)) is a trick to get the first element from a set
+            return next(iter(self.tail.prev.keys))
+    
+    def getMinKey(self) -> str:
+        """
+        Returns one of the keys with the lowest frequency, or empty string if none.
+        
+        Returns:
+            str: A key with the lowest frequency, or "" if no keys exist
+        """
+        if self.head.next == self.tail:
+            # List is empty, no keys exist
+            return ""
+        else:
+            # Return any key from the first real node (lowest frequency)
+            return next(iter(self.head.next.keys))
+    
+    def removeNode(self, node):
+        """
+        Helper method to remove a node from the doubly linked list
+        
+        Args:
+            node: The node to be removed
+        """
+        # Adjust pointers to skip over the node being removed
+        prev_node = node.prev
+        next_node = node.next
+        prev_node.next = next_node
+        next_node.prev = prev_node
