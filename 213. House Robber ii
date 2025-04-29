@@ -1,0 +1,72 @@
+class Solution(object):
+    def rob(self, nums):
+        """
+        LeetCode 213: House Robber II
+        
+        This problem is a variation of the classic House Robber problem, but with
+        houses arranged in a circle (first and last houses are adjacent).
+        
+        The key insight is to split the problem into two subproblems:
+        1. Rob houses from 0 to n-2 (excluding the last house)
+        2. Rob houses from 1 to n-1 (excluding the first house)
+        
+        We solve each subproblem using dynamic programming and take the maximum.
+        
+        Args:
+            nums: List of non-negative integers representing money in each house
+            
+        Returns:
+            Maximum amount of money that can be robbed without alerting the police
+        """
+        # Handle edge cases: empty array or single house
+        if not nums:
+            return 0
+            
+        if len(nums) == 1:
+            return nums[0]
+
+        def dfs(i, start, end):
+            """
+            Helper function to calculate the maximum amount that can be robbed
+            using dynamic programming with memoization.
+            
+            Args:
+                i: Current house index to consider
+                start: Start index of the valid range (inclusive)
+                end: End index of the valid range (exclusive)
+                
+            Returns:
+                Maximum amount that can be robbed from houses start to i
+            """
+            # Return memoized result if available
+            if i in self.memo:
+                return self.memo[i]
+
+            # Return 0 if index is out of the valid range
+            if not (i >= start and i < end):
+                return 0
+
+            # Either rob this house and jump to house i-2, or skip this house
+            self.memo[i] = max(nums[i] + dfs(i-2, start, end), dfs(i-1, start, end))
+            return self.memo[i]
+
+        # Case 1: Rob houses 0 to n-2 (exclude the last house)
+        self.memo = {}
+        for i in range(len(nums)-1):  # Start from 0 but ignore the last one as they are adjacent
+            dfs(i, 0, len(nums)-1)
+        
+        # Get the maximum amount for case 1 (excluding the last house)
+        # The answer is at the rightmost valid house in this case
+        max_1 = self.memo.get(len(nums)-2, 0)            
+
+        # Case 2: Rob houses 1 to n-1 (exclude the first house)
+        self.memo = {}
+        for i in range(1, len(nums)):  # Start from 1 and include the last house
+            dfs(i, 1, len(nums))
+        
+        # Get the maximum amount for case 2 (excluding the first house)
+        # The answer is at the rightmost valid house in this case
+        max_2 = self.memo.get(len(nums)-1, 0)                
+
+        # Return the maximum of the two cases
+        return max(max_1, max_2)
