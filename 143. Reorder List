@@ -1,0 +1,101 @@
+"""
+LeetCode 143: Reorder List
+
+Problem:
+You are given the head of a singly linked list. The list can be represented as:
+L0 → L1 → L2 → ... → Ln-1 → Ln
+
+Reorder the list to be:
+L0 → Ln → L1 → Ln-1 → L2 → Ln-2 → ...
+
+You may not modify the values in the list's nodes. Only nodes themselves may be changed.
+
+Solution approach:
+1. Find the middle of the linked list using slow and fast pointers
+2. Reverse the second half of the linked list
+3. Merge the first half with the reversed second half
+
+Time Complexity: O(n) where n is the number of nodes in the linked list
+Space Complexity: O(1) as we only use pointers
+"""
+
+# Definition for singly-linked list.
+class ListNode:
+    def __init__(self, val=0, next=None):
+        self.val = val
+        self.next = next
+
+class Solution:
+    def reorderList(self, head):
+        """
+        Reorders the linked list according to the problem description.
+        
+        Args:
+            head: Head of the linked list
+            
+        Returns:
+            None (modifies the list in-place)
+        """
+        if not head or not head.next or not head.next.next:
+            # Lists with 0, 1, or 2 nodes don't need reordering
+            return
+        
+        # Step 1: Find the middle of the linked list
+        slow = head
+        fast = head
+        while fast.next and fast.next.next:
+            slow = slow.next
+            fast = fast.next.next
+        
+        # At this point, slow is at the middle node
+        # For odd-length lists: middle node
+        # For even-length lists: end of first half
+        
+        # Step 2: Reverse the second half of the linked list
+        second_half = slow.next
+        slow.next = None  # Break the list into two halves
+        
+        # Reverse the second half
+        prev = None
+        current = second_half
+        while current:
+            next_temp = current.next
+            current.next = prev
+            prev = current
+            current = next_temp
+        
+        second_half = prev  # prev now points to the head of reversed second half
+        
+        # Step 3: Merge the first half with the reversed second half
+        first_half = head
+        while first_half and second_half:
+            # Save pointers to the next nodes
+            first_next = first_half.next
+            second_next = second_half.next
+            
+            # Connect first half node to second half node
+            first_half.next = second_half
+            
+            # Connect second half node to the next first half node
+            second_half.next = first_next
+            
+            # Move to the next pair of nodes
+            first_half = first_next
+            second_half = second_next
+
+# Example usage
+# 1 -> 2 -> 3 -> 4 -> 5 becomes 1 -> 5 -> 2 -> 4 -> 3
+
+def printList(head):
+    """Helper function to print the linked list"""
+    result = []
+    while head:
+        result.append(head.val)
+        head = head.next
+    return result
+
+# Example test:
+# head = ListNode(1, ListNode(2, ListNode(3, ListNode(4, ListNode(5)))))
+# solution = Solution()
+# solution.reorderList(head)
+# print(printList(head))  # Should print [1, 5, 2, 4, 3]
