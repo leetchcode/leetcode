@@ -1,0 +1,21 @@
+class Solution(object):
+    def removeDuplicates(self, nums):
+        # Handle edge case: empty array
+        if not nums:
+            return 0
+            
+        # Initialize the slow pointer (where to place next unique element)
+        i = 0
+        
+        # Iterate through the array with fast pointer j
+        for j in range(1, len(nums)):
+            # If current element is different from the last unique element
+            if nums[j] != nums[i]:
+                # Move i forward
+                i += 1
+                # Place the new unique element at position i
+                nums[i] = nums[j]
+        
+        # The length of the array with unique elements is i+1
+        # (since i is 0-indexed)
+        return i + 1
