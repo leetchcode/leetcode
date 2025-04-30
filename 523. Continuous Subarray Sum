@@ -1,0 +1,56 @@
+class Solution(object):
+    def checkSubarraySum(self, nums, k):
+        """
+        LeetCode 523: Continuous Subarray Sum
+        
+        Problem:
+        Given an integer array nums and an integer k, return true if nums has a continuous subarray 
+        of size at least 2 whose sum is a multiple of k, or false otherwise.
+        
+        Examples:
+        1. nums = [23,2,4,6,7], k = 6 => Output: true ([2,4] sums to 6)
+        2. nums = [23,2,6,4,7], k = 6 => Output: true (entire array sums to 42 = 7*6)
+        3. nums = [23,2,6,4,7], k = 13 => Output: false
+        
+        Approach:
+        - Use prefix sums and modular arithmetic
+        - If two prefix sums have the same remainder when divided by k, 
+          the subarray between those indices has a sum divisible by k
+        - Use a hash map to track the earliest occurrence of each remainder
+        """
+        
+        # Initialize a hash map to store remainders and their corresponding indices
+        remainder_map = {}
+        
+        # Initialize the running sum
+        running_sum = 0
+        
+        # Iterate through the array
+        for i, num in enumerate(nums):
+            # Update the running sum with the current number
+            running_sum += num
+            
+            # Calculate the remainder when the running sum is divided by k
+            rem = running_sum % k
+            
+            # Case 1: If the remainder is 0 and we have at least 2 elements
+            # This means the sum from index 0 to current index is divisible by k
+            if rem == 0 and i+1 >= 2:
+                return True
+                
+            # Case 2: If we've seen this remainder before
+            # This means the subarray between the previous occurrence and current index
+            # has a sum divisible by k
+            elif rem in remainder_map:
+                # Check if the size of the subarray is at least 2
+                if i - remainder_map[rem] >= 2:
+                    return True
+            
+            # Case 3: First time seeing this remainder
+            # Store the current index for this remainder
+            # We only store the first occurrence because we want the longest possible subarray
+            else:
+                remainder_map[rem] = i
+
+        # If no valid subarray is found, return False
+        return False
