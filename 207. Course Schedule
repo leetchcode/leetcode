@@ -1,0 +1,55 @@
+class Solution:
+    """
+    LeetCode 207: Course Schedule
+    
+    Problem: Determine if it's possible to finish all courses.
+    - Given numCourses (0 to numCourses-1) and prerequisites
+    - Each prerequisite[i] = [a, b] means you must take course b before course a
+    - Return true if you can finish all courses, otherwise false
+    
+    Approach: Use DFS to detect cycles in the course dependency graph
+    Time Complexity: O(V + E) where V = number of courses, E = number of prerequisites
+    Space Complexity: O(V + E) for the adjacency list and visited set
+    """
+    def canFinish(self, numCourses: int, prerequisites: List[List[int]]) -> bool:
+        # Create adjacency list to represent the prerequisite graph
+        # Key: course, Value: list of prerequisites for that course
+        pre = defaultdict(list)
+        for course, prereq in prerequisites:
+            pre[course].append(prereq)
+        
+        # Set to track courses being visited in current DFS path (for cycle detection)
+        taken = set()
+        
+        def dfs(course) -> bool:
+            # Base case 1: If course has no prerequisites, it can be completed
+            if pre[course] == []:
+                return True
+            
+            # Base case 2: If course is already in our current path, we found a cycle
+            if course in taken:
+                return False  # cycle detected, cannot complete all courses
+            
+            # Mark current course as being visited in this DFS path
+            taken.add(course)
+            
+            # Recursively check all prerequisites of current course
+            for prereq in pre[course]:
+                if not dfs(prereq):
+                    return False  # If any prerequisite can't be completed, this course can't be completed
+            
+            # Once we've verified all prerequisites can be completed, mark this course as having no prerequisites
+            # This acts as memoization to avoid recomputing courses we've already verified
+            pre[course] = []
+            
+            # Remove course from our current DFS path as we're done processing it
+            taken.remove(course)  # This line is missing in the original code which could cause issues
+            
+            return True  # All prerequisites for this course can be completed
+        
+        # Check each course to ensure all can be completed
+        for course in range(numCourses):
+            if not dfs(course):
+                return False  # If any course can't be completed, return False
+                
+        return True  # All courses can be completed
