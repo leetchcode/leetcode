@@ -1,0 +1,55 @@
+"""
+LeetCode 19: Remove Nth Node From End of List
+
+Problem:
+- Given the head of a linked list, remove the nth node from the end of the list and return its head.
+
+Approach:
+1. Two-pointer technique to find the nth node from the end
+2. First pointer moves n steps ahead
+3. Then both pointers move together until first pointer reaches end
+4. The second pointer will be at the node just before the one to be removed
+
+Time Complexity: O(L) where L is the length of the linked list (one pass)
+Space Complexity: O(1) as we only use two pointers
+
+Edge Cases:
+- Empty list: Already handled by problem constraints (n is valid)
+- Removing head node: Handle with dummy node
+"""
+
+# Definition for singly-linked list.
+# class ListNode:
+#     def __init__(self, val=0, next=None):
+#         self.val = val
+#         self.next = next
+
+class Solution:
+    def removeNthFromEnd(self, head: Optional[ListNode], n: int) -> Optional[ListNode]:
+        # Create a dummy node to handle edge case of removing the head
+        dummy = ListNode(0)
+        dummy.next = head
+        
+        # Initialize two pointers
+        first = dummy
+        second = dummy
+        
+        # Move first pointer n+1 steps ahead
+        # The +1 is to position second at the node *before* the one to be removed
+        for i in range(n + 1):
+            # If we can't advance first by n+1 steps, it means n is invalid
+            # But problem states n is valid, so this shouldn't happen
+            if not first:
+                return None
+            first = first.next
+        
+        # Move both pointers until first reaches the end
+        while first:
+            first = first.next
+            second = second.next
+        
+        # Remove the nth node by updating the next pointer
+        second.next = second.next.next
+        
+        # Return the head of the modified list
+        return dummy.next
