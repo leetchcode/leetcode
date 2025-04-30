@@ -1,0 +1,120 @@
+class ListNode:
+    """
+    A doubly linked list node to store key-value pairs and maintain order of usage.
+    """
+    def __init__(self, key, val):
+        self.key = key      # The key used to access this cache entry
+        self.val = val      # The value stored in the cache
+        self.next = None    # Reference to the next node in the linked list
+        self.prev = None    # Reference to the previous node in the linked list
+
+class LRUCache(object):
+    """
+    Least Recently Used (LRU) Cache implementation using a hash map and doubly linked list.
+    - get and put operations both run in O(1) time
+    - When capacity is reached, the least recently used item is evicted
+    """
+
+    def __init__(self, capacity):
+        """
+        Initialize the LRU Cache with a specified capacity.
+        
+        Args:
+            capacity: Maximum number of key-value pairs the cache can hold
+        """
+        self.capacity = capacity                  # Maximum size of the cache
+        self.node_map = {}                        # Hash map for O(1) access to nodes by key
+        self.head_dummy = ListNode(-1, -1)        # Dummy node at the start of the list
+        self.tail_dummy = ListNode(-1, -1)        # Dummy node at the end of the list
+        
+        # Initially, head and tail dummies point to each other (empty list)
+        self.head_dummy.next = self.tail_dummy
+        self.tail_dummy.prev = self.head_dummy
+        
+
+    def get(self, key):
+        """
+        Retrieve a value from the cache by key and mark it as most recently used.
+        
+        Args:
+            key: The key to look up
+            
+        Returns:
+            The value if key exists, -1 otherwise
+        """
+        if key in self.node_map:
+            # Key exists in cache, retrieve the node
+            node = self.node_map[key]
+            
+            # Mark as recently used by moving to the end of the list
+            self._remove(node)    # Remove from current position
+            self._add(node)       # Add to the end (most recently used position)
+            
+            return node.val
+        return -1    # Key not found in cache
+
+    def put(self, key, value):
+        """
+        Insert or update a key-value pair in the cache.
+        If the key already exists, update its value and mark as recently used.
+        If the cache is at capacity, remove the least recently used item.
+        
+        Args:
+            key: The key to insert or update
+            value: The value to store
+        """
+        if key in self.node_map:
+            # If key exists, remove the old node from the list
+            node = self.node_map[key]
+            self._remove(node)
+            
+        # Create a new node with the updated value
+        newNode = ListNode(key, value)
+        
+        # Add the new node to the end of the list (most recently used position)
+        self._add(newNode)
+        
+        # Update the hash map with the new node
+        self.node_map[key] = newNode
+
+        # If we've exceeded capacity, remove the least recently used item
+        if len(self.node_map) > self.capacity:
+            # The least recently used item is right after the head dummy
+            to_delete = self.head_dummy.next
+            
+            # Remove from the list and the hash map
+            self._remove(to_delete)
+            del self.node_map[to_delete.key]
+        
+    def _remove(self, node):
+        """
+        Helper method to remove a node from the doubly linked list.
+        
+        Args:
+            node: The node to remove
+        """
+        # Update the pointers of adjacent nodes to bypass this node
+        node.prev.next = node.next
+        node.next.prev = node.prev
+
+    def _add(self, node):
+        """
+        Helper method to add a node to the end of the list (most recently used position).
+        The node is inserted between the last real node and the tail dummy.
+        
+        Args:
+            node: The node to add
+        """
+        # Find the current last real node (before tail dummy)
+        prev_end = self.tail_dummy.prev
+        
+        # Insert new node between prev_end and tail_dummy
+        prev_end.next = node
+        node.prev = prev_end
+        node.next = self.tail_dummy
+        self.tail_dummy.prev = node    
+
+# Your LRUCache object will be instantiated and called as such:
+# obj = LRUCache(capacity)
+# param_1 = obj.get(key)
+# obj.put(key,value)
