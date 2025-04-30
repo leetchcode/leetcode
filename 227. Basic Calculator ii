@@ -1,0 +1,86 @@
+class Solution(object):
+    def calculate(self, s):
+        """
+        LeetCode 227: Basic Calculator II
+        
+        Implement a basic calculator to evaluate a simple expression string.
+        The expression string contains only non-negative integers, '+', '-', '*', '/'
+        operators, and spaces. The integer division truncates toward zero.
+        
+        Example:
+        Input: "3+2*2"
+        Output: 7
+        
+        Approach:
+        - Process the expression from left to right in a single pass
+        - Track the running result, previous operand, current operand, and previous operator
+        - Handle multiplication and division by adjusting the running result
+        
+        Time Complexity: O(n) where n is the length of the input string
+        Space Complexity: O(1) as we only use a constant amount of extra space
+        """
+        # Initialize variables
+        res = 0                # Running result of the calculation
+        prev_operand = 0       # Keep track of the previous operand for * and / operations
+        curr_operand = 0       # Current operand being parsed
+        prev_operator = '+'    # Start with '+' as the default operator
+
+        i = 0
+        while i < len(s):
+            # Case 1: Current character is a digit - parse the full number
+            if s[i].isdigit():
+                curr_operand = 0
+                
+                # Parse multi-digit numbers
+                while i < len(s) and s[i].isdigit():
+                    # Build the number digit by digit
+                    # For example, "123" is calculated as ((0*10+1)*10+2)*10+3
+                    curr_operand = curr_operand * 10 + int(s[i])
+                    i += 1
+
+                # Adjust index since the loop increments it once more at the end
+                i = i - 1
+
+                # Apply the operation based on the previous operator
+                if prev_operator == '+':
+                    # Add the current operand to the result
+                    res = res + curr_operand
+                    # Save this operand for potential future * or / operations
+                    prev_operand = curr_operand
+                    
+                elif prev_operator == '-':
+                    # Subtract the current operand from the result
+                    res = res - curr_operand
+                    # Save negative of this operand for potential future * or / operations
+                    prev_operand = -curr_operand
+                    
+                elif prev_operator == '*':
+                    # For multiplication, we need to adjust the result:
+                    # 1. Remove the previous operand from the result
+                    res = res - prev_operand
+                    # 2. Add the product of previous and current operands
+                    res = res + prev_operand * curr_operand
+                    # Update prev_operand for potential future operations
+                    prev_operand = prev_operand * curr_operand
+                    
+                elif prev_operator == '/':
+                    # Similar to multiplication, but with division:
+                    # 1. Remove the previous operand from the result
+                    res = res - prev_operand
+                    # 2. Add the quotient (with integer division)
+                    res = res + int(prev_operand / curr_operand)
+                    # Update prev_operand for potential future operations
+                    prev_operand = int(prev_operand / curr_operand)
+            
+            # Case 2: Current character is an operator (skip spaces)
+            elif s[i] != ' ':
+                # Update the previous operator for the next iteration
+                prev_operator = s[i]
+
+            # Move to the next character
+            i += 1
+
+        return res
+
+# Example test case
+print(Solution().calculate("14-3/2"))  # Expected output: 14-1 = 13
