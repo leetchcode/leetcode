@@ -1,0 +1,70 @@
+"""
+LeetCode 426: Convert Binary Search Tree to Sorted Doubly Linked List
+
+Problem:
+- Convert a Binary Search Tree (BST) to a Circular Doubly Linked List
+- The conversion should be done in-place
+- The left pointer of the tree node should point to the predecessor
+- The right pointer should point to the successor
+- The linked list should be circular (last node connects to first node)
+- Return the head of the doubly linked list (smallest element)
+
+Approach:
+1. Use inorder traversal to visit nodes in sorted order
+2. Keep track of the previous node and connect it with the current node
+3. After traversal, connect the first and last nodes to make the list circular
+
+Time Complexity: O(n) - we visit each node exactly once
+Space Complexity: O(h) - where h is the height of the tree (recursion stack)
+"""
+
+"""
+# Definition for a Node.
+class Node:
+    def __init__(self, val, left=None, right=None):
+        self.val = val
+        self.left = left
+        self.right = right
+"""
+
+class Solution:
+    def treeToDoublyList(self, root: 'Optional[Node]') -> 'Optional[Node]':
+        # Handle empty tree
+        if not root:
+            return None
+        
+        # Initialize variables to track the first and last nodes in the inorder traversal
+        self.first = None
+        self.last = None
+        
+        # Helper function for inorder traversal
+        def inorder(node):
+            if not node:
+                return
+            
+            # Recursively process left subtree
+            inorder(node.left)
+            
+            # Process current node: connect with previous node
+            if self.last:
+                # Connect the previous node (self.last) with the current node
+                self.last.right = node
+                node.left = self.last
+            else:
+                # This is the first node (smallest value)
+                self.first = node
+            
+            # Update self.last to the current node
+            self.last = node
+            
+            # Recursively process right subtree
+            inorder(node.right)
+        
+        # Perform inorder traversal to create doubly linked list
+        inorder(root)
+        
+        # Make the doubly linked list circular
+        self.last.right = self.first  # Connect last node to first node
+        self.first.left = self.last   # Connect first node to last node
+        
+        return self.first
