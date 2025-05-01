@@ -1,0 +1,61 @@
+class Solution:
+    """
+    LeetCode 15: 3Sum
+    
+    Problem: Given an integer array nums, return all triplets [nums[i], nums[j], nums[k]] 
+    such that i != j, i != k, j != k, and nums[i] + nums[j] + nums[k] == 0.
+    The solution set must not contain duplicate triplets.
+    
+    Approach: Sort the array and use two-pointer technique
+    Time Complexity: O(n²) where n is the length of the array
+    Space Complexity: O(1) excluding the output space
+    """
+    def threeSum(self, nums: List[int]) -> List[List[int]]:
+        # Sort the array to make the two-pointer approach work
+        # This also helps in skipping duplicates
+        nums.sort()
+        
+        # Initialize the result list to store all valid triplets
+        res = []
+        
+        # Iterate through the array
+        # We'll fix nums[i] as the first element of our triplet
+        for i in range(len(nums)):
+            # Skip duplicates for the first element
+            # If current element is same as previous, we've already considered all triplets with this value
+            if i > 0 and nums[i] == nums[i-1]:
+                continue
+            
+            # Initialize two pointers for the remaining two elements
+            # j starts right after i, k starts from the end
+            j = i + 1
+            k = len(nums) - 1
+            
+            # Use two-pointer approach to find pairs that sum to -nums[i]
+            while j < k:
+                # Calculate the sum of the current triplet
+                sum = nums[i] + nums[j] + nums[k]
+                
+                if sum == 0:
+                    # Found a valid triplet, add to result
+                    res.append([nums[i], nums[j], nums[k]])
+                    
+                    # Move j pointer forward
+                    j += 1
+                    
+                    # Skip duplicates for the second element
+                    # We skip all duplicates of nums[j] to avoid duplicate triplets
+                    while j < k and nums[j] == nums[j-1]:
+                        j += 1
+                        
+                elif sum < 0:
+                    # If sum is less than zero, we need to increase it
+                    # Move j pointer to get a larger value
+                    j += 1
+                    
+                elif sum > 0:
+                    # If sum is greater than zero, we need to decrease it
+                    # Move k pointer to get a smaller value
+                    k -= 1
+        
+        return res
