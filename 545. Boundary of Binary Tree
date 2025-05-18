@@ -1,0 +1,74 @@
+# Definition for a binary tree node.
+from typing import List
+
+
+class TreeNode:
+    def __init__(self, val=0, left=None, right=None):
+        self.val = val
+        self.left = left
+        self.right = right
+
+class Solution:
+    def boundaryOfBinaryTree(self, root: TreeNode) -> List[int]:
+        if not root:
+            return []
+
+        self.result = []  # Initialize the list to store the boundary nodes
+
+        def isLeaf(node):
+            """
+            Helper function to check if a node is a leaf node.
+            A leaf node has no left or right children.
+            """
+            if not node:
+                return False
+            return not node.left and not node.right
+
+        # 1. Add the root node's value to the result.  This is always part of the boundary.
+        self.result.append(root.val)
+
+        # 2. If the root is a leaf node, it's the entire boundary, so return.
+        if isLeaf(root):
+            return self.result
+
+        # 3. Find the left boundary nodes (excluding leaf nodes).
+        current = root.left  # Start from the left child of the root
+        while current:
+            if not isLeaf(current):
+                self.result.append(current.val)  # Add non-leaf node value to result
+            if current.left:
+                current = current.left  # Move to the left child if it exists
+            else:
+                current = current.right  # Otherwise, move to the right child
+        # 4. Collect all leaf nodes.
+        def findLeaves(node):
+            """
+            Helper function to find and add all leaf nodes in the tree to the result.
+            This performs a recursive traversal of the tree.
+            """
+            if not node:
+                return
+
+            if isLeaf(node):
+                self.result.append(node.val)  # Add leaf node value to result
+
+            findLeaves(node.left)  # Recursively explore the left subtree
+            findLeaves(node.right)  # Recursively explore the right subtree
+
+        findLeaves(root)  # Start finding leaves from the root
+
+        # 5. Find the right boundary nodes (excluding leaf nodes) in reverse order.
+        right_boundary = []
+        current = root.right  # Start from the right child of the root
+        while current:
+            if not isLeaf(current):
+                right_boundary.append(current.val)  # Add non-leaf node value
+            if current.right:
+                current = current.right  # Move to the right child if it exists
+            else:
+                current = current.left  # Otherwise, move to the left child
+
+        # 6. Reverse the right boundary nodes and append them to the result.
+        self.result.extend(right_boundary[::-1])  # Reverse and extend
+
+        return self.result
