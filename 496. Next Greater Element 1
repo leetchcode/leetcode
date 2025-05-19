@@ -1,0 +1,31 @@
+class Solution(object):
+    def nextGreaterElement(self, nums1, nums2):
+        """
+        Finds the next greater element for each element in nums1 within nums2.
+
+        Args:
+            nums1: An array of integers.
+            nums2: An array of integers containing all elements of nums1.
+
+        Returns:
+            A list where the i-th element is the next greater element of nums1[i] in nums2.
+            If there is no greater element, the i-th element is -1.
+        """
+        st = []  # Stack to store elements from nums2
+        num_index = {}  # Dictionary to store the next greater element for each number
+
+        # 1. Iterate through nums2 to find the next greater element for each number.
+        for num in nums2:
+            while st and num > st[-1]:
+                # While the stack is not empty and the current number is greater than the top of the stack,
+                # it means we've found the next greater element for the top of the stack.
+                num_index[st.pop()] = num  # Store the next greater element in the dictionary
+            st.append(num)  # Push the current number onto the stack
+
+        # 2. Iterate through nums1 to find the next greater element for each number.
+        res = []
+        for num in nums1:
+            res.append(num_index.get(num, -1))  # Get the next greater element from the dictionary.
+                                               # If the number is not in the dictionary, it means there is no greater element, so use -1.
+
+        return res
