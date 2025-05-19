@@ -1,0 +1,42 @@
+class Solution(object):
+    def countSubstrings(self, s):
+        """
+        Counts the number of palindromic substrings in a given string.
+
+        Args:
+            s: The input string.
+
+        Returns:
+            The total number of palindromic substrings.
+        """
+        if not s:
+            return 0
+
+        def countPalindromes(s, left, right):
+            """
+            Helper function to count palindromes expanding from a center point.
+
+            Args:
+                s: The input string.
+                left: The left index of the center (or the left of the center).
+                right: The right index of the center (or the right of the center).
+
+            Returns:
+                The number of palindromes found expanding from the center.
+            """
+            count = 0
+            while left >= 0 and right < len(s) and s[left] == s[right]:
+                count += 1
+                left -= 1  # Expand left
+                right += 1 # Expand right
+            return count
+
+        total_count = 0
+        for i in range(len(s)):
+            # Check for even length palindromes with center at (i, i+1)
+            even = countPalindromes(s, i, i + 1)
+            # Check for odd length palindromes with center at (i, i)
+            odd = countPalindromes(s, i, i)
+            total_count += even + odd
+
+        return total_count
