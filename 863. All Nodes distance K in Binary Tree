@@ -1,0 +1,64 @@
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, x):
+#         self.val = x
+#         self.left = None
+#         self.right = None
+
+from collections import defaultdict, deque
+from typing import List
+
+class Solution:
+    def distanceK(self, root: TreeNode, target: TreeNode, k: int) -> List[int]:
+        """
+        Finds all nodes that are at a distance k from the target node in a binary tree.
+
+        Args:
+            root: The root of the binary tree.
+            target: The target node.
+            k: The distance from the target node.
+
+        Returns:
+            A list of the values of the nodes that are at distance k from the target node.
+        """
+        if not k:
+            return [target.val]  # If k is 0, return the target node's value
+
+        graph = defaultdict(list)  # Use defaultdict to represent the graph.  No need to check if key exists.
+        queue = deque([root])  # Initialize a queue for BFS, starting from the root
+
+        # 1. Build the graph (adjacency list) from the tree using Breadth-First Search (BFS).
+        while queue:
+            node = queue.popleft()  # Dequeue a node
+            if node.left:
+                graph[node].append(node.left)  # Add edge: node -> node.left
+                graph[node.left].append(node)  # Add edge: node.left -> node (undirected edge)
+                queue.append(node.left)    # Enqueue the left child
+            if node.right:
+                graph[node].append(node.right) # Add edge: node -> node.right
+                graph[node.right].append(node) # Add edge: node.right -> node (undirected edge)
+                queue.append(node.right)   # Enqueue the right child
+
+        # 2. Perform BFS on the graph, starting from the target node.
+        level = 0
+        visited = set()  # Keep track of visited nodes to avoid cycles
+        visited.add(target)  # Mark the target node as visited
+        queue = deque([target])  # Initialize the queue with the target node
+
+        while queue:
+            level_size = len(queue) # Get the number of nodes at the current level
+            # local_res = []  # This variable is not used
+            for _ in range(level_size):
+                if level == k:
+                    res = [n.val for n in queue] # Collect nodes at distance k
+                    return res
+
+                node = queue.popleft()  # Dequeue a node
+                for edge in graph[node]: # Iterate through its neighbors
+                    if edge not in visited:
+                        queue.append(edge)    # Enqueue the neighbor
+                        visited.add(edge)  # Mark the neighbor as visited
+            level += 1  # Increment the level
+
+        # 3. Handle the case where no nodes are found at distance k.
+        return []  # Return an empty list if no such nodes exist
