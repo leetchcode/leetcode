@@ -1,0 +1,48 @@
+class Solution(object):
+    def countGoodStrings(self, low, high, zero, one):
+        """
+        Count number of good strings with length between low and high 
+        that can be formed by appending sequences of zeros and ones.
+        
+        Args:
+            low: The minimum length of a good string
+            high: The maximum length of a good string
+            zero: The length of a zero token (e.g., if zero=2, then "00" is added)
+            one: The length of a one token (e.g., if one=1, then "1" is added)
+            
+        Returns:
+            The number of good strings modulo 10^9 + 7
+        """
+        # Dictionary to store the computed results to avoid redundant calculations
+        self.memo = {}
+        
+        # Define a helper DFS function that computes the number of good strings
+        # starting from length i
+        def dfs(i):
+            # Base case: If current length exceeds maximum allowed, no valid strings
+            if i > high:
+                return 0
+            
+            # If we've already computed this subproblem, return cached result
+            if i in self.memo:
+                return self.memo[i]
+
+            ans = 0
+            # If current length is within valid range, count this as a valid string
+            if low <= i <= high:
+                ans += 1
+                
+            # Recursively compute number of strings by adding:
+            # 1. 'zero' length zeros (e.g., appending "00" if zero=2)
+            # 2. 'one' length ones (e.g., appending "1" if one=1)
+            ans += dfs(i + zero) + dfs(i + one)
+            
+            # Apply modulo to avoid integer overflow and cache the result
+            self.memo[i] = ans % mod
+            return self.memo[i]
+
+        # Modulo value as per problem requirement
+        mod = 10**9 + 7
+        
+        # Start DFS from length 0 (empty string)
+        return dfs(0)
