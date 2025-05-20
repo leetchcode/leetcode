@@ -1,0 +1,67 @@
+class Solution(object):
+    def longestIncreasingPath(self, matrix):
+        """
+        Find the length of the longest strictly increasing path in a matrix.
+        
+        Args:
+            matrix: A 2D grid of integers
+            
+        Returns:
+            The length of the longest increasing path in the matrix
+        """
+        # Get dimensions of the matrix
+        rows = len(matrix)
+        cols = len(matrix[0])
+        
+        # Define the four possible directions: right, left, down, up
+        dirs = [(1,0), (-1,0), (0,1), (0,-1)]
+        
+        # Memoization dictionary to store computed results
+        # Key: (row, col), Value: longest path length starting from that cell
+        self.memo = {}
+
+        def dfs(r, c):
+            """
+            DFS function to find the longest increasing path starting from cell (r,c)
+            
+            Args:
+                r: Current row index
+                c: Current column index
+                
+            Returns:
+                Length of the longest increasing path starting from (r,c)
+            """
+            # If we've already computed this cell, return the cached result
+            if (r,c) in self.memo:
+                return self.memo[(r,c)]
+
+            # Initialize the max path length to 1 (counting the current cell)
+            max_path = 1
+            
+            # Try all four directions
+            for dr, dc in dirs:
+                # Calculate coordinates of the adjacent cell
+                nr = r + dr
+                nc = c + dc
+
+                # Check if the adjacent cell is:
+                # 1. Within matrix boundaries
+                # 2. Has a larger value than the current cell (strictly increasing)
+                if 0<=nr<rows and 0<=nc<cols and matrix[nr][nc] > matrix[r][c]:
+                    # Recursively compute the longest path from the adjacent cell
+                    # and add 1 for the current cell
+                    max_path = max(max_path, 1 + dfs(nr, nc))
+            
+            # Cache the result for the current cell
+            self.memo[(r,c)] = max_path
+            return self.memo[(r,c)]
+
+        # Initialize the result to find the maximum path length
+        max_path = 0
+        
+        # Try starting DFS from each cell in the matrix
+        for r in range(rows):
+            for c in range(cols):
+                max_path = max(max_path, dfs(r,c))    
+
+        return max_path
