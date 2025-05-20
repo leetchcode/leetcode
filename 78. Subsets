@@ -1,0 +1,48 @@
+class Solution(object):
+    def subsets(self, nums):
+        """
+        Find all possible subsets (the power set) of a given array of distinct integers.
+        
+        Args:
+            nums: List of distinct integers
+            
+        Returns:
+            List of all possible subsets
+        """
+        # Initialize result list with an empty subset []
+        res = []
+        res.append([])
+
+        def backtrack(i, curr_set, l):
+            """
+            Backtracking helper function to generate subsets of specific length.
+            
+            Args:
+                i: Current index in nums array to consider
+                curr_set: Current subset being built
+                l: Target length of the subset
+            """
+            # Base case 1: If we've reached the target length, add the current subset to results
+            if len(curr_set) == l:
+                res.append(curr_set[:])  # Create a copy to avoid modifying later
+                return
+
+            # Base case 2: If we've gone past the end of the array, return without adding
+            if i >= len(nums):
+                return     
+
+            # Option 1: Include the current element at index i
+            curr_set.append(nums[i])
+            backtrack(i+1, curr_set, l)
+            
+            # Option 2: Exclude the current element (backtrack)
+            curr_set.pop()  # Remove the last added element
+            backtrack(i+1, curr_set, l)
+
+        # Generate subsets of each possible length (1 to n)
+        for l in range(len(nums)):
+            # l+1 because we're using 1-based counting for subset length
+            # while the loop uses 0-based indexing
+            backtrack(0, [], l+1)        
+        
+        return res
