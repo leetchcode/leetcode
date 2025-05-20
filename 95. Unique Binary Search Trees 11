@@ -1,0 +1,60 @@
+# Definition for a binary tree node.
+# class TreeNode(object):
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+
+class Solution(object):
+    def generateTrees(self, n):
+        """
+        Generate all structurally unique BSTs (binary search trees) that store values 1 to n.
+        
+        Args:
+            n: Integer representing the range of values (1 to n) to be stored in the BSTs
+            
+        Returns:
+            List of all possible root nodes of the unique BSTs
+        """
+        def generate(start, end):
+            """
+            Helper function to generate all unique BSTs with values from start to end.
+            
+            Args:
+                start: The minimum value in the current range
+                end: The maximum value in the current range
+                
+            Returns:
+                List of root nodes of all unique BSTs with values from start to end
+            """
+            trees = []
+            
+            # Base case: If the range is invalid (start > end), return a list with null
+            # This represents an empty subtree
+            if start > end:
+                trees.append(None)
+                return trees
+
+            # Try each value from the range as the root of a BST
+            for i in range(start, end+1):
+                # Generate all possible left subtrees
+                # Values less than i go to the left subtree in a BST
+                left_trees = generate(start, i-1)
+                
+                # Generate all possible right subtrees
+                # Values greater than i go to the right subtree in a BST
+                right_trees = generate(i+1, end)
+                
+                # Combine left and right subtrees with the current root
+                # to form all possible BSTs with i as the root
+                for left_tree in left_trees:
+                    for right_tree in right_trees:
+                        # Create a new root node with value i
+                        root = TreeNode(i, left_tree, right_tree)    
+                        # Add the constructed tree to our result list
+                        trees.append(root)
+
+            return trees
+
+        # Start the generation process with the full range from 1 to n
+        return generate(1, n)
