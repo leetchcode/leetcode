@@ -1,0 +1,55 @@
+# Definition for a binary tree node.
+# class TreeNode(object):
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+
+class Solution(object):
+    def isBalanced(self, root):
+        """
+        Determine if the given binary tree is height-balanced.
+        A height-balanced binary tree is defined as a binary tree in which 
+        the depth of the two subtrees of every node never differs by more than 1.
+        
+        Args:
+            root: Root node of the binary tree
+            
+        Returns:
+            True if the tree is height-balanced, False otherwise
+        """
+        
+        def maxDepth(node):
+            """
+            Helper function that checks if a tree is balanced and calculates its height.
+            
+            Args:
+                node: Current node being processed
+                
+            Returns:
+                Tuple of (is_balanced, height):
+                - is_balanced: Boolean indicating if the tree rooted at node is balanced
+                - height: Height of the tree rooted at node
+            """
+            # Base case: empty tree is balanced with height 0
+            if not node:
+                return True, 0
+
+            # Recursively check if left and right subtrees are balanced
+            # and get their heights
+            left_is_balanced, left_height = maxDepth(node.left)
+            right_is_balanced, right_height = maxDepth(node.right)
+
+            # Check balance criteria:
+            # 1. Height difference between left and right subtrees is at most 1
+            # 2. Both left and right subtrees are balanced
+            if abs(left_height - right_height) > 1 or not left_is_balanced or not right_is_balanced:
+                # If any criterion fails, the tree is not balanced
+                # Still calculate the height for parent nodes
+                return False, 1 + max(left_height, right_height)     
+            else:
+                # Tree is balanced, return True and its height
+                return True, 1 + max(left_height, right_height)     
+
+        # Return only the balance status, not the height
+        return maxDepth(root)[0]
