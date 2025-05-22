@@ -1,0 +1,63 @@
+class Solution(object):
+    def restoreIpAddresses(self, s):
+        """
+        Restore all possible valid IP addresses from a string of digits.
+        An IP address has exactly 4 parts, each ranging from 0-255.
+        
+        Uses backtracking (DFS) to try all possible combinations of splitting
+        the string into 4 valid parts.
+        """
+        res = []  # Store all valid IP addresses
+
+        def isValid(i, j):
+            """
+            Check if substring s[i:j] forms a valid IP address part.
+            
+            Valid conditions:
+            1. Not empty
+            2. No leading zeros (except for "0" itself)
+            3. Must be a digit and in range [0, 255]
+            """
+            sub_str = s[i:j]
+            
+            # Check if substring exists
+            if not sub_str:
+                return False
+            # Check for leading zeros: "01", "001" etc. are invalid, but "0" is valid
+            elif sub_str[0] == '0' and len(sub_str) > 1:
+                return False
+            # Check if it's a valid number in range [0, 255]
+            elif sub_str.isdigit() and 0 <= int(sub_str) <= 255:
+                return True
+            
+            return False  # Invalid in all other cases
+
+        def dfs(i, path):
+            """
+            Depth-First Search to build IP addresses.
+            
+            Args:
+                i: Current index in the string
+                path: Current list of IP parts being built
+            """
+            # Base case: If we've processed all characters and have exactly 4 parts
+            if i == len(s) and len(path) == 4:
+                res.append(".".join(path[:]))  # Join parts with dots and add to result
+                return
+
+            # Try all possible lengths for the next IP part (1, 2, or 3 digits)
+            for j in range(i, len(s)):
+                # Check if current substring s[i:j+1] is a valid IP part
+                if isValid(i, j + 1):
+                    # Add this part to our current path
+                    path.append(s[i:j + 1])
+                    
+                    # Recursively try to build the rest of the IP address
+                    dfs(j + 1, path)
+                    
+                    # Backtrack: remove the part we just added to try other possibilities
+                    path.pop()
+
+        # Start DFS from index 0 with empty path
+        dfs(0, [])
+        return res
