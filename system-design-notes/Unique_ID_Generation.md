@@ -8,6 +8,23 @@
 - With non-sequential identifiers, the most recent data will be randomly dispersed within an index and lack clustering. As a result, retrieving the most recent data from a large dataset will require traversing a large number of database index pages, leading to a poor cache hit ratio (how many requests a cache is able to fill successfully, compared to how many requests it receives). 
 - Compare this to the use of sequential identifiers, where the latest data is logically arranged on the right-most part of an index, allowing it to be far more cache-friendly.
 
+## How Twitter Snowflake ID generation works ?
+[Twitter Snowflake ID Gen](https://github.com/twitter-archive/snowflake/tree/snowflake-2010)
+### Requirements
+- 10K ids per second per process
+- latency 2ms + network time
+- Uncoordinated - For high availability within and across data centers, machines generating ids should not have to coordinate with each other.
+  Should be at least as available as other services that depend on it!
+- Roughly time ordered i.e. k-sortable within some time bound like a second. (Able to answer queries like give me all data after 'id' without additional filters)
+
+### Solution
+id is composed of:
+- time: 41 bits (millisecond precision w/ a custom epoch gives us 69 years)
+- configured machine id - 10 bits - gives us up to 1024 machines
+- sequence number - 12 bits - rolls over every 4096 per machine (with protection to avoid rollover in the same ms by waiting for the next ms)
+- Use NTP to keep your system clock accurate. Snowflake protects from non-monotonic clocks, i.e. clocks that run backwards.
+  If your clock is running fast and NTP tells it to repeat a few milliseconds, snowflake will refuse to  generate ids until a time that is after the last time we generated an id
+
 ## How does Instagram ID generation work ?
 [Sharding & IDs at Instagram](https://instagram-engineering.com/sharding-ids-at-instagram-1cf5a71e5a5c)
 ### Requirements
@@ -22,4 +39,10 @@
 - Created a format where first few bits were for timestamp from the custom epoch followed by shard_id and followed by sequence_id (per shard)
 - All of the above logic was included as a stored procedure in DB and specified in table create schema to be used as auto id generation custom function 
   
-  
+## How Shopify does it ?
+[Shopify - Composite Primary Keys](https://shopify.engineering/how-to-introduce-composite-primary-keys-in-rails)
+### Requirements
+- Reduce query performance when querying for records for a shop. Currently all records per shop aren't clustered and result in loading all pages from OS
+
+### Solution
+- Use composite primary key (shop_id, order_id) which clusters all order_ids per shop and thereby reducing number of pages to load from OS 
