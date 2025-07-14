@@ -45,12 +45,14 @@ For other services like Twitter we might need to do it more frequently so use so
 
 ## HLD + Deep Dives
 
+![image info](./images/type_ahead_search_system_design.png)
 
 
 
 
 
-
+## References
+https://medium.com/@prefixyteam/how-we-built-prefixy-a-scalable-prefix-search-service-for-powering-autocomplete-c20f98e2eff1
 
            
 
