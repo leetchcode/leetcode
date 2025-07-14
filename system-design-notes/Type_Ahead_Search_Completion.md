@@ -36,6 +36,7 @@ Cost: O(p) + O(c) + O(clogc)
 Optimizations:
 Store the top 5 results in each inner node. This takes up space but it is a good trade-off to gain performance.
 
+![image info](./images/trie_each_node_storing_top_n_results.png)
 
 
 
