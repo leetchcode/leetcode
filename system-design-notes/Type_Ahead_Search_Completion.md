@@ -38,7 +38,21 @@ Store the top 5 results in each inner node. This takes up space but it is a good
 
 ![image info](./images/trie_each_node_storing_top_n_results.png)
 
+### How to update the Trie ?
+What is the use case ? 
+For search - the results don't change that much so a periodic batch process to update is sufficient. 
+For other services like Twitter we might need to do it more frequently so use some stream processing engine and update more frequently.
 
+## HLD + Deep Dives
+
+
+
+
+
+
+
+
+           
 
 
  
