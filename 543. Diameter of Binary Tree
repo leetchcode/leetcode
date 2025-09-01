@@ -6,27 +6,105 @@ class TreeNode:
         self.right = right
 
 class Solution:
-    def diameterOfBinaryTree(self, root: TreeNode) -> int:
-        # Variable to store the maximum diameter found
-        self.max_diameter = 0
+    def diameterOfBinaryTree(self, root):
+        """
+        :type root: TreeNode
+        :rtype: int
+        """
+        self.diameter = 0
         
-        # Helper function to calculate height and update diameter
-        def height(node):
+        def depth(node):
+            """
+            Returns the depth of the tree rooted at node.
+            Also updates the global diameter during traversal.
+            """
             if not node:
                 return 0
             
-            # Calculate heights of left and right subtrees
-            left_height = height(node.left)
-            right_height = height(node.right)
+            # Get depth of left and right subtrees
+            left_depth = depth(node.left)
+            right_depth = depth(node.right)
             
-            # Update the maximum diameter if needed
-            # Current diameter = left_height + right_height
-            self.max_diameter = max(self.max_diameter, left_height + right_height)
+            # The diameter through this node is left_depth + right_depth
+            # Update global diameter if this path is longer
+            self.diameter = max(self.diameter, left_depth + right_depth)
             
-            # Return the height of the current node
-            return max(left_height, right_height) + 1
+            # Return the depth of this subtree
+            return 1 + max(left_depth, right_depth)
         
-        # Start the DFS traversal
-        height(root)
+        depth(root)
+        return self.diameter
+    
+    def diameterPath(self, root):
+        """
+        Returns both the diameter length and the actual path nodes.
+        :type root: TreeNode
+        :rtype: tuple (int, list)
+        """
+        self.max_diameter = 0
+        self.diameter_path = []
         
-        return self.max_diameter
+        def find_path_to_deepest(node, target_depth, current_depth=0, path=[]):
+            """Find path from node to a node at target_depth"""
+            if not node:
+                return None
+            
+            current_path = path + [node.val]
+            
+            if current_depth == target_depth:
+                return current_path
+            
+            # Try left subtree
+            left_result = find_path_to_deepest(node.left, target_depth, current_depth + 1, current_path)
+            if left_result:
+                return left_result
+                
+            # Try right subtree
+            right_result = find_path_to_deepest(node.right, target_depth, current_depth + 1, current_path)
+            if right_result:
+                return right_result
+                
+            return None
+        
+        def depth_and_path(node):
+            """
+            Returns the depth and updates global diameter path.
+            """
+            if not node:
+                return 0
+            
+            left_depth = depth_and_path(node.left)
+            right_depth = depth_and_path(node.right)
+            
+            current_diameter = left_depth + right_depth
+            
+            if current_diameter > self.max_diameter:
+                self.max_diameter = current_diameter
+                
+                # Construct the path through this node
+                path = []
+                
+                # Get path from deepest left node to current node
+                if left_depth > 0:
+                    left_path = find_path_to_deepest(node.left, left_depth - 1)
+                    if left_path:
+                        path.extend(reversed(left_path))
+                
+                # Add current node
+                path.append(node.val)
+                
+                # Get path from current node to deepest right node
+                if right_depth > 0:
+                    right_path = find_path_to_deepest(node.right, right_depth - 1)
+                    if right_path:
+                        path.extend(right_path)
+                
+                self.diameter_path = path
+            
+            return 1 + max(left_depth, right_depth)
+        
+        if not root:
+            return 0, []
+            
+        depth_and_path(root)
+        return self.max_diameter, self.diameter_path
