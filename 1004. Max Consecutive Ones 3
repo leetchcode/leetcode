@@ -1,0 +1,32 @@
+class Solution:
+    def longestOnes(self, nums, k):
+        """
+        Approach 1: Sliding Window (Two Pointers)
+        
+        Key insight: Find the longest subarray containing at most k zeros.
+        If we can flip at most k zeros, then the longest subarray of consecutive 1s
+        after flipping is the longest subarray containing at most k zeros.
+        
+        Time: O(n), Space: O(1)
+        """
+        left = 0
+        zero_count = 0
+        max_length = 0
+        
+        for right in range(len(nums)):
+            # Expand window: if we see a zero, increment zero_count
+            if nums[right] == 0:
+                zero_count += 1
+            
+            # Contract window: if zero_count exceeds k, shrink from left
+            while zero_count > k:
+                if nums[left] == 0:
+                    zero_count -= 1
+                left += 1
+            
+            # Update max_length with current window size
+            max_length = max(max_length, right - left + 1)
+        
+        return max_length
+    
+    
