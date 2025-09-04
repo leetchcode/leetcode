@@ -1,0 +1,223 @@
+class Solution:
+    def removeDuplicates(self, s: str, k: int) -> str:
+        """
+        Removes all adjacent duplicates in string II.
+        
+        Given a string s and an integer k, remove all adjacent duplicate characters
+        that appear k times consecutively. Keep removing until no more adjacent
+        duplicates of length k can be removed.
+        
+        Algorithm:
+        Use a stack to keep track of characters and their consecutive counts.
+        - If current character matches stack top, increment count
+        - If count reaches k, remove the group (pop from stack)
+        - If current character doesn't match stack top, push new character with count 1
+        - Finally, reconstruct string from stack
+        
+        Time Complexity: O(n) where n is length of string
+        Space Complexity: O(n) for the stack in worst case
+        
+        Args:
+            s: Input string containing lowercase letters
+            k: Number of consecutive duplicates to remove
+            
+        Returns:
+            str: String after removing all adjacent duplicates of length k
+            
+        Examples:
+            s = "abcd", k = 2 -> "abcd" (no duplicates to remove)
+            s = "deeedbbcccbdaa", k = 3 -> "aa"
+            s = "pbbcggttciiippooaais", k = 2 -> "ps"
+        """
+        # Stack stores tuples of (character, count)
+        stack = []
+        
+        for char in s:
+            # If stack is not empty and current character matches the top character
+            if stack and stack[-1][0] == char:
+                # Increment the count for this character
+                stack[-1] = (char, stack[-1][1] + 1)
+                
+                # If count reaches k, remove this group by popping from stack
+                if stack[-1][1] == k:
+                    stack.pop()
+            else:
+                # New character or stack is empty, push with count 1
+                stack.append((char, 1))
+        
+        # Reconstruct the result string from the stack
+        result = []
+        for char, count in stack:
+            result.append(char * count)
+        
+        return ''.join(result)
+
+    def removeDuplicates_optimized(self, s: str, k: int) -> str:
+        """
+        Alternative implementation using list as stack for better performance.
+        Uses a single list to store characters and another to store counts.
+        
+        Time Complexity: O(n)
+        Space Complexity: O(n)
+        """
+        stack = []  # Stack of characters
+        counts = []  # Corresponding counts for each character group
+        
+        for char in s:
+            if stack and stack[-1] == char:
+                # Same character, increment count
+                counts[-1] += 1
+                stack.append(char)
+                
+                # If we have k consecutive characters, remove them
+                if counts[-1] == k:
+                    # Remove k characters and the count
+                    for _ in range(k):
+                        stack.pop()
+                    counts.pop()
+            else:
+                # New character
+                stack.append(char)
+                counts.append(1)
+        
+        return ''.join(stack)
+
+    def removeDuplicates_single_pass(self, s: str, k: int) -> str:
+        """
+        Most space-efficient approach using only character stack.
+        Uses the fact that we can deduce count by looking at recent characters.
+        
+        Time Complexity: O(n)
+        Space Complexity: O(n) for the stack only
+        """
+        stack = []
+        
+        for char in s:
+            if stack and stack[-1] == char:
+                stack.append(char)
+                
+                # Count consecutive characters from the end
+                if len(stack) >= k:
+                    # Check if last k characters are all the same
+                    if all(stack[i] == char for i in range(len(stack) - k, len(stack))):
+                        # Remove last k characters
+                        for _ in range(k):
+                            stack.pop()
+            else:
+                stack.append(char)
+        
+        return ''.join(stack)
+
+# Test cases and walkthrough examples
+def test_solution():
+    """Test the solution with various examples"""
+    solution = Solution()
+    
+    # Test Case 1: Basic removal
+    test1 = "abcd"
+    k1 = 2
+    result1 = solution.removeDuplicates(test1, k1)
+    print(f"Test 1: '{test1}' with k={k1} -> '{result1}'")
+    # Expected: "abcd" (no consecutive duplicates of length 2)
+    
+    # Test Case 2: Multiple removals needed
+    test2 = "deeedbbcccbdaa"
+    k2 = 3
+    result2 = solution.removeDuplicates(test2, k2)
+    print(f"Test 2: '{test2}' with k={k2} -> '{result2}'")
+    # Expected: "aa"
+    # Step by step: "deeedbbcccbdaa" -> "deedbbcccbdaa" -> "deedbbdaa" -> "ddbdaa" -> "aa"
+    
+    # Test Case 3: All characters removed
+    test3 = "pbbcggttciiippooaais"
+    k3 = 2
+    result3 = solution.removeDuplicates(test3, k3)
+    print(f"Test 3: '{test3}' with k={k3} -> '{result3}'")
+    # Expected: "ps"
+    
+    # Test Case 4: No removal needed
+    test4 = "abcdef"
+    k4 = 2
+    result4 = solution.removeDuplicates(test4, k4)
+    print(f"Test 4: '{test4}' with k={k4} -> '{result4}'")
+    # Expected: "abcdef"
+    
+    # Test Case 5: Edge case - k equals string length
+    test5 = "aaaa"
+    k5 = 4
+    result5 = solution.removeDuplicates(test5, k5)
+    print(f"Test 5: '{test5}' with k={k5} -> '{result5}'")
+    # Expected: ""
+
+def walkthrough_example():
+    """
+    Detailed walkthrough of algorithm with example: "deeedbbcccbdaa", k=3
+    """
+    print("\nDetailed Walkthrough:")
+    print("Input: s = 'deeedbbcccbdaa', k = 3")
+    print("Goal: Remove all adjacent duplicates of length 3")
+    print()
+    
+    s = "deeedbbcccbdaa"
+    k = 3
+    stack = []
+    
+    print("Character by character processing:")
+    for i, char in enumerate(s):
+        print(f"Step {i+1}: Processing '{char}'")
+        
+        if stack and stack[-1][0] == char:
+            stack[-1] = (char, stack[-1][1] + 1)
+            print(f"  Same as top, count now: {stack[-1][1]}")
+            
+            if stack[-1][1] == k:
+                removed = stack.pop()
+                print(f"  Removed group: {removed[0]} * {removed[1]}")
+        else:
+            stack.append((char, 1))
+            print(f"  New character added")
+        
+        # Show current stack state
+        current_string = ''.join(c * count for c, count in stack)
+        print(f"  Current result: '{current_string}'")
+        print(f"  Stack: {stack}")
+        print()
+    
+    final_result = ''.join(c * count for c, count in stack)
+    print(f"Final result: '{final_result}'")
+
+if __name__ == "__main__":
+    test_solution()
+    walkthrough_example()
+
+"""
+Key Algorithm Insights:
+
+1. **Stack-based approach**: Perfect for handling nested removals
+   - Stack keeps track of character groups and their counts
+   - When count reaches k, we remove the entire group
+
+2. **Greedy removal**: Remove as soon as we find k consecutive characters
+   - This ensures we handle cascading removals correctly
+   - Example: "abbbaaa" with k=3 -> "abbbaaa" -> "aaa" -> ""
+
+3. **Time complexity**: O(n) single pass through string
+   - Each character is pushed and popped at most once
+
+4. **Space complexity**: O(n) for the stack
+   - In worst case, no removals occur and entire string is in stack
+
+5. **Edge cases handled**:
+   - Empty string
+   - No duplicates to remove
+   - All characters removed
+   - k = 1 (remove all characters)
+   - k > string length
+
+6. **Alternative implementations**:
+   - Two stacks (characters and counts)
+   - Single stack with count deduction
+   - Each has slightly different space/time tradeoffs
+
+The stack approach is intuitive and handles the cascading nature of removals elegantly.
+"""
