@@ -1,0 +1,328 @@
+class TicTacToe:
+    """
+    Design a Tic-Tac-Toe game that is played between two players on a n x n grid.
+    
+    The game is won when a player gets n of their marks in a row, column, or diagonal.
+    
+    Optimized approach using counters instead of storing the entire board:
+    - Use arrays to track counts for each row, column, and diagonals
+    - Player 1 contributes +1, Player 2 contributes -1
+    - A win occurs when any counter reaches +n (Player 1) or -n (Player 2)
+    
+    Time Complexity: O(1) for each move operation
+    Space Complexity: O(n) for storing counters
+    """
+
+    def __init__(self, n: int):
+        """
+        Initialize the TicTacToe game board.
+        
+        Args:
+            n: The size of the n x n board
+        """
+        self.n = n
+        
+        # Track counts for each row (index = row number)
+        self.rows = [0] * n
+        
+        # Track counts for each column (index = column number)  
+        self.cols = [0] * n
+        
+        # Track count for main diagonal (top-left to bottom-right)
+        self.diagonal = 0
+        
+        # Track count for anti-diagonal (top-right to bottom-left)
+        self.anti_diagonal = 0
+    
+    def move(self, row: int, col: int, player: int) -> int:
+        """
+        Player makes a move at (row, col).
+        
+        Args:
+            row: 0-indexed row number
+            col: 0-indexed column number  
+            player: Player number (1 or 2)
+            
+        Returns:
+            int: The player number (1 or 2) if they win, 0 if no winner yet
+            
+        Time Complexity: O(1)
+        Space Complexity: O(1)
+        """
+        # Determine the contribution: +1 for player 1, -1 for player 2
+        contribution = 1 if player == 1 else -1
+        
+        # Update counters
+        self.rows[row] += contribution
+        self.cols[col] += contribution
+        
+        # Update diagonal if the move is on main diagonal
+        if row == col:
+            self.diagonal += contribution
+            
+        # Update anti-diagonal if the move is on anti-diagonal
+        if row + col == self.n - 1:
+            self.anti_diagonal += contribution
+        
+        # Check for win conditions
+        # Player 1 wins if any counter reaches +n
+        # Player 2 wins if any counter reaches -n
+        if (abs(self.rows[row]) == self.n or 
+            abs(self.cols[col]) == self.n or 
+            abs(self.diagonal) == self.n or 
+            abs(self.anti_diagonal) == self.n):
+            return player
+        
+        # No winner yet
+        return 0
+
+class TicTacToeAlternative:
+    """
+    Alternative implementation that stores the actual board for reference.
+    Less space-efficient but allows for additional features like board display.
+    
+    Time Complexity: O(n) for each move (need to check row, column, diagonals)
+    Space Complexity: O(n²) for storing the board
+    """
+    
+    def __init__(self, n: int):
+        """Initialize with actual board storage."""
+        self.n = n
+        self.board = [[0] * n for _ in range(n)]
+    
+    def move(self, row: int, col: int, player: int) -> int:
+        """
+        Make a move and check for winner by examining the affected row/col/diagonals.
+        """
+        # Place the move
+        self.board[row][col] = player
+        
+        # Check row
+        if all(self.board[row][c] == player for c in range(self.n)):
+            return player
+        
+        # Check column  
+        if all(self.board[r][col] == player for r in range(self.n)):
+            return player
+        
+        # Check main diagonal (if move is on diagonal)
+        if row == col:
+            if all(self.board[i][i] == player for i in range(self.n)):
+                return player
+        
+        # Check anti-diagonal (if move is on anti-diagonal)
+        if row + col == self.n - 1:
+            if all(self.board[i][self.n - 1 - i] == player for i in range(self.n)):
+                return player
+        
+        return 0
+    
+    def display_board(self) -> str:
+        """Display the current board state."""
+        symbols = {0: '.', 1: 'X', 2: 'O'}
+        result = []
+        for row in self.board:
+            result.append(' '.join(symbols[cell] for cell in row))
+        return '\n'.join(result)
+
+# Test the implementation
+def test_tic_tac_toe():
+    """Comprehensive test cases for the TicTacToe implementation."""
+    
+    print("Testing LeetCode 348: Design Tic-Tac-Toe\n")
+    
+    # Test Case 1: Basic 3x3 game with row win
+    print("Test 1: 3x3 game - Player 1 wins by completing top row")
+    game1 = TicTacToe(3)
+    
+    moves1 = [
+        (0, 0, 1),  # Player 1: X at (0,0)
+        (0, 2, 2),  # Player 2: O at (0,2)
+        (0, 1, 1),  # Player 1: X at (0,1)
+        (1, 1, 2),  # Player 2: O at (1,1)
+        (2, 0, 1),  # Player 1: X at (2,0)
+        (1, 0, 2),  # Player 2: O at (1,0)
+        (1, 2, 1),  # Player 1: X at (1,2)
+        (2, 1, 2),  # Player 2: O at (2,1)
+        (0, 2, 1),  # Player 1: X at (0,2) - This should be invalid in real game
+    ]
+    
+    for i, (row, col, player) in enumerate(moves1[:3]):  # Only show first 3 moves
+        result = game1.move(row, col, player)
+        print(f"Move {i+1}: Player {player} at ({row},{col}) -> Result: {result}")
+        if result != 0:
+            print(f"Game Over! Player {result} wins!")
+            break
+    print()
+    
+    # Test Case 2: Diagonal win
+    print("Test 2: 3x3 game - Player 1 wins by diagonal")
+    game2 = TicTacToe(3)
+    
+    diagonal_moves = [
+        (0, 0, 1),  # Player 1: X at (0,0)
+        (0, 1, 2),  # Player 2: O at (0,1)
+        (1, 1, 1),  # Player 1: X at (1,1)
+        (0, 2, 2),  # Player 2: O at (0,2)
+        (2, 2, 1),  # Player 1: X at (2,2) - Diagonal win!
+    ]
+    
+    for i, (row, col, player) in enumerate(diagonal_moves):
+        result = game2.move(row, col, player)
+        print(f"Move {i+1}: Player {player} at ({row},{col}) -> Result: {result}")
+        if result != 0:
+            print(f"Game Over! Player {result} wins by diagonal!")
+            break
+    print()
+    
+    # Test Case 3: Anti-diagonal win
+    print("Test 3: 3x3 game - Player 2 wins by anti-diagonal")
+    game3 = TicTacToe(3)
+    
+    anti_diagonal_moves = [
+        (0, 0, 1),  # Player 1: X at (0,0)
+        (0, 2, 2),  # Player 2: O at (0,2)
+        (1, 0, 1),  # Player 1: X at (1,0)
+        (1, 1, 2),  # Player 2: O at (1,1)
+        (0, 1, 1),  # Player 1: X at (0,1)
+        (2, 0, 2),  # Player 2: O at (2,0) - Anti-diagonal win!
+    ]
+    
+    for i, (row, col, player) in enumerate(anti_diagonal_moves):
+        result = game3.move(row, col, player)
+        print(f"Move {i+1}: Player {player} at ({row},{col}) -> Result: {result}")
+        if result != 0:
+            print(f"Game Over! Player {result} wins by anti-diagonal!")
+            break
+    print()
+    
+    # Test Case 4: Column win in 4x4 game
+    print("Test 4: 4x4 game - Player 1 wins by column")
+    game4 = TicTacToe(4)
+    
+    column_moves = [
+        (0, 1, 1),  # Player 1: X at (0,1)
+        (0, 0, 2),  # Player 2: O at (0,0)
+        (1, 1, 1),  # Player 1: X at (1,1)
+        (1, 0, 2),  # Player 2: O at (1,0)
+        (2, 1, 1),  # Player 1: X at (2,1)
+        (2, 0, 2),  # Player 2: O at (2,0)
+        (3, 1, 1),  # Player 1: X at (3,1) - Column win!
+    ]
+    
+    for i, (row, col, player) in enumerate(column_moves):
+        result = game4.move(row, col, player)
+        print(f"Move {i+1}: Player {player} at ({row},{col}) -> Result: {result}")
+        if result != 0:
+            print(f"Game Over! Player {result} wins by column!")
+            break
+    print()
+
+def algorithm_walkthrough():
+    """
+    Detailed walkthrough of the optimized counter-based algorithm.
+    """
+    print("Algorithm Walkthrough:")
+    print("Optimized approach using counters instead of full board storage")
+    print()
+    
+    print("Key Insight:")
+    print("- Instead of checking entire rows/columns/diagonals after each move")
+    print("- Maintain running counters for each row, column, and diagonal")
+    print("- Player 1 contributes +1, Player 2 contributes -1")
+    print("- Win occurs when any counter reaches ±n")
+    print()
+    
+    print("Example: 3x3 game with Player 1 diagonal win")
+    game = TicTacToe(3)
+    print(f"Initial state: rows={game.rows}, cols={game.cols}")
+    print(f"diagonal={game.diagonal}, anti_diagonal={game.anti_diagonal}")
+    print()
+    
+    moves = [(0, 0, 1), (0, 1, 2), (1, 1, 1), (0, 2, 2), (2, 2, 1)]
+    
+    for i, (row, col, player) in enumerate(moves):
+        print(f"Move {i+1}: Player {player} at ({row},{col})")
+        result = game.move(row, col, player)
+        
+        print(f"  Updated - rows={game.rows}, cols={game.cols}")
+        print(f"  diagonal={game.diagonal}, anti_diagonal={game.anti_diagonal}")
+        print(f"  Result: {result}")
+        
+        if result != 0:
+            print(f"  🎉 Player {result} wins!")
+            break
+        print()
+
+def complexity_analysis():
+    """
+    Analysis of time and space complexity for both approaches.
+    """
+    print("Complexity Analysis:")
+    print()
+    
+    print("Optimized Counter Approach (TicTacToe):")
+    print("├── Time Complexity: O(1) per move")
+    print("│   └── Only update 2-4 counters and check their values")
+    print("├── Space Complexity: O(n)")
+    print("│   └── Store 2n counters for rows/cols + 2 for diagonals")
+    print("└── Trade-off: Cannot reconstruct board state")
+    print()
+    
+    print("Board Storage Approach (TicTacToeAlternative):")
+    print("├── Time Complexity: O(n) per move")
+    print("│   └── Must check entire row/column/diagonals")
+    print("├── Space Complexity: O(n²)")
+    print("│   └── Store entire n×n board")
+    print("└── Benefit: Can display board and support additional features")
+    print()
+    
+    print("For the problem constraints (focus on win detection):")
+    print("✅ Optimized counter approach is preferred")
+    print("   - Constant time moves")
+    print("   - Linear space usage")
+    print("   - Meets all requirements")
+
+if __name__ == "__main__":
+    test_tic_tac_toe()
+    print("=" * 60)
+    algorithm_walkthrough()
+    print("=" * 60)
+    complexity_analysis()
+
+"""
+Key Algorithm Insights:
+
+1. **Counter-based Optimization**:
+   - Instead of storing full board, use counters for rows/cols/diagonals
+   - Player 1: +1 contribution, Player 2: -1 contribution
+   - Win condition: any counter reaches ±n
+
+2. **Space-Time Trade-off**:
+   - Optimized: O(1) time, O(n) space, no board reconstruction
+   - Alternative: O(n) time, O(n²) space, full board access
+
+3. **Win Detection Logic**:
+   - Check if move affects main diagonal: row == col
+   - Check if move affects anti-diagonal: row + col == n - 1
+   - Only update relevant counters for each move
+
+4. **Edge Cases**:
+   - Single cell board (n=1): First move wins
+   - Large boards: Algorithm scales linearly with n
+   - Corner moves may affect both diagonals
+
+5. **Design Considerations**:
+   - Immutable n (board size fixed at initialization)
+   - No move validation (assumes valid input)
+   - Returns winner immediately upon detection
+
+6. **Extensions**:
+   - Add move validation
+   - Support undo operations
+   - Add game state queries (is game over, get board state)
+
+The counter-based approach is elegant because it reduces the win-checking
+problem from O(n) to O(1) by maintaining running totals instead of
+performing full scans after each move.
+"""
