@@ -1,0 +1,360 @@
+from collections import deque
+from typing import List
+
+class Solution:
+    def orangesRotting(self, grid: List[List[int]]) -> int:
+        """
+        Determines the minimum time for all oranges to rot.
+        
+        Problem: In a grid, 0 = empty, 1 = fresh orange, 2 = rotten orange.
+        Every minute, any fresh orange adjacent to a rotten orange becomes rotten.
+        Return the minimum minutes for all oranges to rot, or -1 if impossible.
+        
+        Algorithm: Multi-source BFS (Breadth-First Search)
+        1. Find all initially rotten oranges and count fresh oranges
+        2. Use BFS to simulate the rotting process minute by minute
+        3. For each minute, rot all fresh oranges adjacent to currently rotten ones
+        4. Continue until no more fresh oranges can be rotted
+        5. Return total minutes if all fresh oranges rotted, else -1
+        
+        Time Complexity: O(m × n) where m, n are grid dimensions
+        Space Complexity: O(m × n) for the queue in worst case
+        
+        Args:
+            grid: 2D list representing the orange grid
+            
+        Returns:
+            int: Minimum minutes for all oranges to rot, or -1 if impossible
+            
+        Examples:
+            [[2,1,1],[1,1,0],[0,1,1]] -> 4 minutes
+            [[2,1,1],[0,1,1],[1,0,1]] -> -1 (impossible)
+            [[0,2]] -> 0 minutes (no fresh oranges)
+        """
+        if not grid or not grid[0]:
+            return 0
+        
+        rows, cols = len(grid), len(grid[0])
+        
+        # Queue for BFS - stores (row, col, time)
+        queue = deque()
+        fresh_count = 0
+        
+        # Step 1: Initialize queue with all rotten oranges and count fresh oranges
+        for r in range(rows):
+            for c in range(cols):
+                if grid[r][c] == 2:  # Rotten orange
+                    queue.append((r, c, 0))  # Start at time 0
+                elif grid[r][c] == 1:  # Fresh orange
+                    fresh_count += 1
+        
+        # Edge case: No fresh oranges to rot
+        if fresh_count == 0:
+            return 0
+        
+        # Directions for 4-directional movement (up, down, left, right)
+        directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
+        max_time = 0
+        
+        # Step 2: BFS to simulate rotting process
+        while queue:
+            row, col, time = queue.popleft()
+            max_time = max(max_time, time)
+            
+            # Check all 4 adjacent cells
+            for dr, dc in directions:
+                new_row, new_col = row + dr, col + dc
+                
+                # Check bounds and if cell contains fresh orange
+                if (0 <= new_row < rows and 
+                    0 <= new_col < cols and 
+                    grid[new_row][new_col] == 1):
+                    
+                    # Rot the fresh orange
+                    grid[new_row][new_col] = 2
+                    fresh_count -= 1
+                    
+                    # Add newly rotten orange to queue for next minute
+                    queue.append((new_row, new_col, time + 1))
+        
+        # Step 3: Check if all fresh oranges have rotted
+        return max_time if fresh_count == 0 else -1
+
+    def orangesRotting_verbose(self, grid: List[List[int]]) -> int:
+        """
+        Alternative implementation with detailed step-by-step tracking.
+        Same algorithm but with more verbose output for understanding.
+        """
+        if not grid or not grid[0]:
+            return 0
+        
+        rows, cols = len(grid), len(grid[0])
+        queue = deque()
+        fresh_count = 0
+        
+        # Find initial rotten oranges and count fresh ones
+        for r in range(rows):
+            for c in range(cols):
+                if grid[r][c] == 2:
+                    queue.append((r, c, 0))
+                elif grid[r][c] == 1:
+                    fresh_count += 1
+        
+        if fresh_count == 0:
+            return 0
+        
+        directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
+        minutes = 0
+        
+        # Process each minute
+        while queue:
+            # Process all rotten oranges at current time level
+            current_level_size = len(queue)
+            
+            for _ in range(current_level_size):
+                row, col, time = queue.popleft()
+                minutes = max(minutes, time)
+                
+                # Spread rot to adjacent fresh oranges
+                for dr, dc in directions:
+                    nr, nc = row + dr, col + dc
+                    
+                    if (0 <= nr < rows and 0 <= nc < cols and grid[nr][nc] == 1):
+                        grid[nr][nc] = 2  # Rot the orange
+                        fresh_count -= 1
+                        queue.append((nr, nc, time + 1))
+        
+        return minutes if fresh_count == 0 else -1
+
+    def orangesRotting_simulation(self, grid: List[List[int]]) -> int:
+        """
+        Alternative approach: Simulate minute by minute without BFS queue.
+        Less efficient but more intuitive simulation.
+        
+        Time Complexity: O(m × n × k) where k is the number of minutes
+        Space Complexity: O(m × n) for grid copy
+        """
+        if not grid or not grid[0]:
+            return 0
+        
+        rows, cols = len(grid), len(grid[0])
+        minutes = 0
+        
+        # Continue until no changes occur in a minute
+        while True:
+            # Make a copy to track changes
+            new_grid = [row[:] for row in grid]
+            changed = False
+            
+            for r in range(rows):
+                for c in range(cols):
+                    if grid[r][c] == 1:  # Fresh orange
+                        # Check if adjacent to any rotten orange
+                        for dr, dc in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+                            nr, nc = r + dr, c + dc
+                            if (0 <= nr < rows and 0 <= nc < cols and grid[nr][nc] == 2):
+                                new_grid[r][c] = 2  # Rot this orange
+                                changed = True
+                                break
+            
+            if not changed:
+                break
+                
+            grid = new_grid
+            minutes += 1
+        
+        # Check if any fresh oranges remain
+        for row in grid:
+            if 1 in row:
+                return -1
+        
+        return minutes
+
+def test_solution():
+    """Test the solution with various examples."""
+    solution = Solution()
+    
+    print("Testing LeetCode 994: Rotting Oranges\n")
+    
+    # Test Case 1: Standard case
+    print("Test 1: Standard rotting process")
+    grid1 = [[2,1,1],[1,1,0],[0,1,1]]
+    print("Grid:")
+    for row in grid1:
+        print(row)
+    result1 = solution.orangesRotting([row[:] for row in grid1])  # Copy to avoid modification
+    print(f"Result: {result1} minutes")
+    print("Expected: 4 minutes\n")
+    
+    # Test Case 2: Impossible case
+    print("Test 2: Impossible to rot all oranges")
+    grid2 = [[2,1,1],[0,1,1],[1,0,1]]
+    print("Grid:")
+    for row in grid2:
+        print(row)
+    result2 = solution.orangesRotting([row[:] for row in grid2])
+    print(f"Result: {result2}")
+    print("Expected: -1 (impossible)\n")
+    
+    # Test Case 3: No fresh oranges
+    print("Test 3: No fresh oranges to rot")
+    grid3 = [[0,2]]
+    print("Grid:")
+    for row in grid3:
+        print(row)
+    result3 = solution.orangesRotting([row[:] for row in grid3])
+    print(f"Result: {result3} minutes")
+    print("Expected: 0 minutes\n")
+    
+    # Test Case 4: All fresh, no rotten
+    print("Test 4: All fresh oranges, no rotten ones")
+    grid4 = [[1,1,1],[1,1,1]]
+    print("Grid:")
+    for row in grid4:
+        print(row)
+    result4 = solution.orangesRotting([row[:] for row in grid4])
+    print(f"Result: {result4}")
+    print("Expected: -1 (no rotten oranges to start)\n")
+    
+    # Test Case 5: Single rotten orange
+    print("Test 5: Single rotten orange")
+    grid5 = [[2]]
+    print("Grid:")
+    for row in grid5:
+        print(row)
+    result5 = solution.orangesRotting([row[:] for row in grid5])
+    print(f"Result: {result5} minutes")
+    print("Expected: 0 minutes\n")
+
+def algorithm_walkthrough():
+    """
+    Detailed walkthrough of the BFS algorithm with visual representation.
+    """
+    print("Algorithm Walkthrough:")
+    print("Example: [[2,1,1],[1,1,0],[0,1,1]] -> Expected: 4 minutes")
+    print()
+    
+    # Initial state
+    grid = [[2,1,1],[1,1,0],[0,1,1]]
+    
+    def print_grid_state(grid, minute):
+        print(f"Minute {minute}:")
+        for row in grid:
+            print("  " + " ".join("🟠" if x == 2 else "🍊" if x == 1 else "⬜" for x in row))
+        print(f"  Legend: 🟠=Rotten, 🍊=Fresh, ⬜=Empty")
+        print()
+    
+    print("Multi-source BFS Process:")
+    print_grid_state(grid, 0)
+    
+    # Simulate the algorithm steps
+    print("Step-by-step progression:")
+    
+    print("Minute 0 -> 1:")
+    print("  Rotten orange at (0,0) spreads to adjacent fresh oranges")
+    print("  - (0,1) becomes rotten")
+    print("  - (1,0) becomes rotten")
+    grid[0][1] = 2
+    grid[1][0] = 2
+    print_grid_state(grid, 1)
+    
+    print("Minute 1 -> 2:")  
+    print("  Newly rotten oranges spread further")
+    print("  - (0,2) becomes rotten (from (0,1))")
+    print("  - (1,1) becomes rotten (from (1,0) or (0,1))")
+    grid[0][2] = 2
+    grid[1][1] = 2
+    print_grid_state(grid, 2)
+    
+    print("Minute 2 -> 3:")
+    print("  Continue spreading")
+    print("  - (2,1) becomes rotten (from (1,1))")
+    grid[2][1] = 2
+    print_grid_state(grid, 3)
+    
+    print("Minute 3 -> 4:")
+    print("  Final spread")
+    print("  - (2,2) becomes rotten (from (2,1))")
+    grid[2][2] = 2
+    print_grid_state(grid, 4)
+    
+    print("All fresh oranges have rotted! Total time: 4 minutes")
+
+def complexity_analysis():
+    """
+    Detailed analysis of time and space complexity.
+    """
+    print("Complexity Analysis:")
+    print()
+    
+    print("BFS Approach (Recommended):")
+    print("├── Time Complexity: O(m × n)")
+    print("│   ├── Initialize: O(m × n) to scan entire grid")
+    print("│   ├── BFS: Each cell processed at most once")
+    print("│   └── Total: O(m × n) where m, n are grid dimensions")
+    print("├── Space Complexity: O(m × n)")
+    print("│   └── Queue can contain up to all cells in worst case")
+    print("└── Optimal: Yes, cannot do better than scanning entire grid")
+    print()
+    
+    print("Simulation Approach (Alternative):")
+    print("├── Time Complexity: O(m × n × k)")
+    print("│   └── k is number of minutes (up to m + n in worst case)")
+    print("├── Space Complexity: O(m × n)")
+    print("│   └── Grid copy for each minute")
+    print("└── Less efficient but more intuitive")
+    print()
+    
+    print("Key Insights:")
+    print("• Multi-source BFS: Start from ALL rotten oranges simultaneously")
+    print("• Level-by-level processing: Each BFS level = one minute")
+    print("• Early termination: Stop when queue is empty")
+    print("• Validation: Check if fresh_count reaches 0")
+
+if __name__ == "__main__":
+    test_solution()
+    print("=" * 60)
+    algorithm_walkthrough()
+    print("=" * 60)
+    complexity_analysis()
+
+"""
+Key Algorithm Insights:
+
+1. **Multi-source BFS Pattern**:
+   - Start BFS from ALL initially rotten oranges simultaneously
+   - Each BFS level represents one minute of time
+   - Process all oranges at current time before moving to next minute
+
+2. **State Tracking**:
+   - Queue stores (row, col, time) for each rotten orange
+   - fresh_count tracks remaining fresh oranges
+   - Grid is modified in-place to mark newly rotten oranges
+
+3. **Termination Conditions**:
+   - Success: fresh_count becomes 0 (all oranges rotted)
+   - Failure: Queue empty but fresh_count > 0 (isolated fresh oranges)
+
+4. **4-Directional Spreading**:
+   - Rot spreads up, down, left, right (not diagonally)
+   - Check bounds before accessing adjacent cells
+
+5. **Time Calculation**:
+   - Track maximum time seen during BFS
+   - This represents the last minute when any orange rotted
+
+6. **Edge Cases**:
+   - No fresh oranges initially: return 0
+   - No rotten oranges initially: return -1
+   - Empty grid: return 0
+   - Single cell: depends on content
+
+7. **Why BFS over DFS**:
+   - Need to process all oranges at same time level
+   - DFS would rot some oranges faster than others
+   - BFS naturally handles the "simultaneous" spreading requirement
+
+This problem is a classic application of multi-source BFS, commonly used
+in scenarios where multiple starting points spread influence simultaneously,
+such as forest fires, disease spread, or water flow problems.
+"""
