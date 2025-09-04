@@ -1,0 +1,159 @@
+# Definition for singly-linked list.
+# class ListNode:
+#     def __init__(self, val=0, next=None):
+#         self.val = val
+#         self.next = next
+
+from typing import Optional
+
+class Solution:
+    def isPalindrome(self, head: Optional[ListNode]) -> bool:
+        """
+        Determines if a singly-linked list is a palindrome.
+        
+        Algorithm:
+        1. Find the end of the first half using slow/fast pointer technique
+        2. Reverse the second half of the linked list
+        3. Compare values from start and reversed second half
+        4. Restore the original list structure
+        5. Return the palindrome result
+        
+        Time Complexity: O(n) where n is the number of nodes
+        Space Complexity: O(1) - only uses a constant amount of extra space
+        
+        Args:
+            head: The head node of the singly-linked list
+            
+        Returns:
+            bool: True if the linked list is a palindrome, False otherwise
+            
+        Examples:
+            [1,2,2,1] -> True
+            [1,2,3,2,1] -> True  
+            [1,2] -> False
+            [1] -> True
+            [] -> True
+        """
+        # Edge case: empty list is considered a palindrome
+        if not head:
+            return True
+
+        def first_half_tail(head):
+            """
+            Finds the tail node of the first half of the linked list.
+            Uses the slow/fast pointer technique (Floyd's algorithm).
+            
+            For even length lists: returns the last node of first half
+            For odd length lists: returns the middle node
+            
+            Example:
+            - [1,2,3,4] -> returns node with value 2
+            - [1,2,3,4,5] -> returns node with value 3 (middle)
+            
+            Args:
+                head: The head node of the linked list
+                
+            Returns:
+                ListNode: The tail node of the first half
+            """
+            fast = head
+            slow = head
+            
+            # Move fast pointer 2 steps and slow pointer 1 step
+            # When fast reaches end, slow will be at the right position
+            while fast.next and fast.next.next:
+                fast = fast.next.next  # Move 2 steps
+                slow = slow.next       # Move 1 step
+            
+            return slow
+
+        def reverse(head):
+            """
+            Reverses a linked list in-place using iterative approach.
+            
+            Process:
+            1. Keep track of current node, previous node, and next node
+            2. For each node, reverse the link to point to previous
+            3. Move all pointers one step forward
+            4. Continue until all nodes are processed
+            
+            Args:
+                head: The head of the linked list to reverse
+                
+            Returns:
+                ListNode: The new head of the reversed linked list
+                
+            Example:
+                Input:  1 -> 2 -> 3 -> None
+                Output: 3 -> 2 -> 1 -> None
+            """
+            curr = head
+            prev = None
+
+            while curr:
+                next = curr.next    # Store next node before breaking the link
+                curr.next = prev    # Reverse the link
+                prev = curr         # Move prev pointer forward
+                curr = next         # Move curr pointer forward
+                
+            return prev  # prev becomes the new head
+
+        # Step 1: Find the tail of the first half
+        first_half_t = first_half_tail(head)
+        
+        # Step 2: Reverse the second half starting from the node after first_half_tail
+        second_half_head = reverse(first_half_t.next)
+
+        # Step 3: Compare values from the beginning and the reversed second half
+        curr = head
+        while curr and second_half_head:
+            if curr.val != second_half_head.val:
+                # Mismatch found - not a palindrome
+                # Note: We should restore the list even on early return
+                first_half_t.next = reverse(second_half_head)
+                return False
+            curr = curr.next 
+            second_half_head = second_half_head.next
+
+        # Step 4: Restore the original list structure by reversing the second half back
+        # This step is optional but maintains the original list integrity
+        first_half_t.next = reverse(second_half_head)
+        
+        # Step 5: All comparisons passed - it's a palindrome
+        return True
+
+"""
+Algorithm Walkthrough with Example:
+
+Input: 1 -> 2 -> 2 -> 1
+
+Step 1: Find first half tail
+- fast starts at 1, slow starts at 1
+- Iteration 1: fast at 2->2, slow at 2 (first occurrence)
+- fast.next.next is 1, so continue
+- Iteration 2: fast at 1->None, slow at 2 (second occurrence)  
+- fast.next is None, so stop
+- first_half_tail = node with value 2 (first occurrence)
+
+Step 2: Reverse second half
+- second_half starts from node after first_half_tail: 2 -> 1
+- After reversal: 1 -> 2
+- second_half_head points to node with value 1
+
+Step 3: Compare
+- Compare head(1) with second_half_head(1) ✓
+- Compare next(2) with next(2) ✓
+- second_half_head becomes None, comparison complete
+
+Step 4: Restore (reverse 1->2 back to 2->1)
+Step 5: Return True
+
+Time Complexity Analysis:
+- Finding middle: O(n/2) = O(n)
+- Reversing second half: O(n/2) = O(n)  
+- Comparing: O(n/2) = O(n)
+- Restoring: O(n/2) = O(n)
+- Total: O(n)
+
+Space Complexity: O(1) - only using pointers, no additional data structures
+"""
