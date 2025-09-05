@@ -1,0 +1,357 @@
+from typing import List
+
+class Solution:
+    def zeroFilledSubarray(self, nums: List[int]) -> int:
+        """
+        Counts the number of subarrays filled with zeros.
+        
+        A subarray is a contiguous sequence of elements within an array.
+        We need to count all subarrays that contain only zeros.
+        
+        Key Insight: For a continuous segment of k zeros, the number of 
+        zero-filled subarrays is k*(k+1)/2 (arithmetic series).
+        
+        Algorithm:
+        1. Iterate through the array
+        2. When we encounter zeros, count consecutive zeros
+        3. For each segment of k consecutive zeros, add k*(k+1)/2 to result
+        4. Continue until end of array
+        
+        Time Complexity: O(n) where n is the length of array
+        Space Complexity: O(1) - only using constant extra space
+        
+        Args:
+            nums: List of integers
+            
+        Returns:
+            int: Total number of zero-filled subarrays
+            
+        Examples:
+            [1,3,0,0,2,0,0,4] -> 6 subarrays: [0], [0], [0,0], [0], [0], [0,0]
+            [0,0,0,2,0,0] -> 9 subarrays from first segment + 3 from second
+            [1,2,3] -> 0 (no zeros)
+        """
+        total_count = 0
+        current_zeros = 0
+        
+        for num in nums:
+            if num == 0:
+                # Extend current segment of consecutive zeros
+                current_zeros += 1
+            else:
+                # End of zero segment, calculate contribution
+                if current_zeros > 0:
+                    # For k consecutive zeros: k*(k+1)/2 subarrays
+                    total_count += current_zeros * (current_zeros + 1) // 2
+                    current_zeros = 0
+        
+        # Handle case where array ends with zeros
+        if current_zeros > 0:
+            total_count += current_zeros * (current_zeros + 1) // 2
+        
+        return total_count
+
+    def zeroFilledSubarray_alternative(self, nums: List[int]) -> int:
+        """
+        Alternative approach: Count subarrays incrementally.
+        
+        For each zero encountered, count how many new subarrays end at this position.
+        If we have k consecutive zeros so far, the current zero contributes k new subarrays.
+        
+        Time Complexity: O(n)
+        Space Complexity: O(1)
+        """
+        total_count = 0
+        current_zeros = 0
+        
+        for num in nums:
+            if num == 0:
+                current_zeros += 1
+                # Current zero contributes 'current_zeros' new subarrays
+                # (all subarrays ending at current position)
+                total_count += current_zeros
+            else:
+                current_zeros = 0
+        
+        return total_count
+
+    def zeroFilledSubarray_brute_force(self, nums: List[int]) -> int:
+        """
+        Brute force approach for verification and understanding.
+        Check all possible subarrays and count zero-filled ones.
+        
+        Time Complexity: O(n³) - due to nested loops and subarray checking
+        Space Complexity: O(1)
+        
+        Note: This is inefficient but helps understand the problem.
+        """
+        n = len(nums)
+        count = 0
+        
+        # Check all possible subarrays
+        for i in range(n):
+            for j in range(i, n):
+                # Check if subarray nums[i:j+1] contains only zeros
+                is_zero_filled = True
+                for k in range(i, j + 1):
+                    if nums[k] != 0:
+                        is_zero_filled = False
+                        break
+                
+                if is_zero_filled:
+                    count += 1
+        
+        return count
+
+    def zeroFilledSubarray_optimized_brute_force(self, nums: List[int]) -> int:
+        """
+        Slightly optimized brute force: stop early when non-zero is found.
+        
+        Time Complexity: O(n²) in average case, O(n³) in worst case (all zeros)
+        Space Complexity: O(1)
+        """
+        n = len(nums)
+        count = 0
+        
+        for i in range(n):
+            if nums[i] == 0:
+                # Extend as far as possible with zeros
+                for j in range(i, n):
+                    if nums[j] == 0:
+                        count += 1  # Found a zero-filled subarray nums[i:j+1]
+                    else:
+                        break  # Stop at first non-zero
+        
+        return count
+
+def mathematical_explanation():
+    """
+    Explains the mathematical foundation behind the solution.
+    """
+    print("Mathematical Foundation:")
+    print("=" * 50)
+    print()
+    
+    print("For k consecutive zeros, how many zero-filled subarrays are there?")
+    print()
+    print("Example: [0, 0, 0] (k = 3)")
+    print("Possible subarrays:")
+    print("  Length 1: [0] at pos 0, [0] at pos 1, [0] at pos 2 → 3 subarrays")
+    print("  Length 2: [0,0] at pos 0-1, [0,0] at pos 1-2 → 2 subarrays") 
+    print("  Length 3: [0,0,0] at pos 0-2 → 1 subarray")
+    print("  Total: 3 + 2 + 1 = 6 subarrays")
+    print()
+    
+    print("General formula for k consecutive zeros:")
+    print("  Subarrays of length 1: k")
+    print("  Subarrays of length 2: k-1") 
+    print("  Subarrays of length 3: k-2")
+    print("  ...")
+    print("  Subarrays of length k: 1")
+    print()
+    print("  Total = k + (k-1) + (k-2) + ... + 1 = k*(k+1)/2")
+    print("  This is the sum of first k natural numbers!")
+    print()
+
+def test_solution():
+    """Test the solution with various examples."""
+    solution = Solution()
+    
+    print("Testing LeetCode 2348: Number of Zero-Filled Subarrays\n")
+    
+    # Test Case 1: Mixed array with two zero segments
+    print("Test 1: Mixed array with zero segments")
+    nums1 = [1, 3, 0, 0, 2, 0, 0, 4]
+    result1 = solution.zeroFilledSubarray(nums1)
+    print(f"Input: {nums1}")
+    print(f"Result: {result1}")
+    print("Analysis:")
+    print("  - Segment 1: [0,0] at positions 2-3 → 2*(2+1)/2 = 3 subarrays")
+    print("  - Segment 2: [0,0] at positions 5-6 → 2*(2+1)/2 = 3 subarrays")
+    print("  - Total: 3 + 3 = 6")
+    print("Expected: 6\n")
+    
+    # Test Case 2: Larger zero segment
+    print("Test 2: Array with larger zero segment")
+    nums2 = [0, 0, 0, 2, 0, 0]
+    result2 = solution.zeroFilledSubarray(nums2)
+    print(f"Input: {nums2}")
+    print(f"Result: {result2}")
+    print("Analysis:")
+    print("  - Segment 1: [0,0,0] → 3*(3+1)/2 = 6 subarrays")
+    print("  - Segment 2: [0,0] → 2*(2+1)/2 = 3 subarrays")
+    print("  - Total: 6 + 3 = 9")
+    print("Expected: 9\n")
+    
+    # Test Case 3: No zeros
+    print("Test 3: Array with no zeros")
+    nums3 = [1, 2, 3]
+    result3 = solution.zeroFilledSubarray(nums3)
+    print(f"Input: {nums3}")
+    print(f"Result: {result3}")
+    print("Expected: 0\n")
+    
+    # Test Case 4: All zeros
+    print("Test 4: Array with all zeros")
+    nums4 = [0, 0, 0, 0]
+    result4 = solution.zeroFilledSubarray(nums4)
+    print(f"Input: {nums4}")
+    print(f"Result: {result4}")
+    print("Analysis:")
+    print("  - One segment: [0,0,0,0] → 4*(4+1)/2 = 10 subarrays")
+    print("Expected: 10\n")
+    
+    # Test Case 5: Single zero
+    print("Test 5: Single zero")
+    nums5 = [1, 0, 2]
+    result5 = solution.zeroFilledSubarray(nums5)
+    print(f"Input: {nums5}")
+    print(f"Result: {result5}")
+    print("Analysis:")
+    print("  - One segment: [0] → 1*(1+1)/2 = 1 subarray")
+    print("Expected: 1\n")
+    
+    # Verify with alternative approach
+    print("Verification with alternative approach:")
+    for i, nums in enumerate([nums1, nums2, nums3, nums4, nums5], 1):
+        alt_result = solution.zeroFilledSubarray_alternative(nums)
+        orig_result = solution.zeroFilledSubarray(nums)
+        print(f"Test {i}: Original={orig_result}, Alternative={alt_result}, Match={orig_result == alt_result}")
+
+def algorithm_walkthrough():
+    """
+    Detailed walkthrough of both approaches with visualization.
+    """
+    print("\nAlgorithm Walkthrough:")
+    print("Example: [1, 3, 0, 0, 2, 0, 0, 4]")
+    print()
+    
+    nums = [1, 3, 0, 0, 2, 0, 0, 4]
+    
+    print("Approach 1: Segment-based counting")
+    print("═" * 40)
+    
+    total_count = 0
+    current_zeros = 0
+    
+    for i, num in enumerate(nums):
+        print(f"Index {i}: nums[{i}] = {num}")
+        
+        if num == 0:
+            current_zeros += 1
+            print(f"  Zero found, current_zeros = {current_zeros}")
+        else:
+            if current_zeros > 0:
+                contribution = current_zeros * (current_zeros + 1) // 2
+                total_count += contribution
+                print(f"  Non-zero found, ending segment of {current_zeros} zeros")
+                print(f"  Contribution: {current_zeros}*({current_zeros}+1)/2 = {contribution}")
+                print(f"  Total count: {total_count}")
+                current_zeros = 0
+            else:
+                print(f"  Non-zero, no active zero segment")
+        print()
+    
+    # Handle end of array
+    if current_zeros > 0:
+        contribution = current_zeros * (current_zeros + 1) // 2
+        total_count += contribution
+        print(f"End of array: final segment of {current_zeros} zeros")
+        print(f"Final contribution: {contribution}")
+        print(f"Final total: {total_count}")
+    
+    print()
+    print("Approach 2: Incremental counting")
+    print("═" * 40)
+    
+    total_count_alt = 0
+    current_zeros_alt = 0
+    
+    for i, num in enumerate(nums):
+        print(f"Index {i}: nums[{i}] = {num}")
+        
+        if num == 0:
+            current_zeros_alt += 1
+            total_count_alt += current_zeros_alt
+            print(f"  Zero found, current_zeros = {current_zeros_alt}")
+            print(f"  Add {current_zeros_alt} new subarrays ending here")
+            print(f"  Total count: {total_count_alt}")
+        else:
+            current_zeros_alt = 0
+            print(f"  Non-zero, reset current_zeros = 0")
+        print()
+    
+    print(f"Both approaches give the same result: {total_count}")
+
+def complexity_comparison():
+    """
+    Compare different approaches and their complexities.
+    """
+    print("Complexity Comparison:")
+    print("═" * 50)
+    print()
+    
+    approaches = [
+        ("Optimal (Segment-based)", "O(n)", "O(1)", "Count complete segments"),
+        ("Alternative (Incremental)", "O(n)", "O(1)", "Count incrementally"),
+        ("Optimized Brute Force", "O(n²)", "O(1)", "Early termination"),
+        ("Brute Force", "O(n³)", "O(1)", "Check all subarrays")
+    ]
+    
+    print(f"{'Approach':<25} {'Time':<8} {'Space':<8} {'Description'}")
+    print("─" * 70)
+    for approach, time, space, desc in approaches:
+        print(f"{approach:<25} {time:<8} {space:<8} {desc}")
+    
+    print()
+    print("Key Insights:")
+    print("• Mathematical approach reduces O(n²) to O(n)")
+    print("• Segment counting and incremental counting are equivalent")
+    print("• Both optimal approaches use arithmetic series sum formula")
+    print("• Problem demonstrates power of mathematical insight in optimization")
+
+if __name__ == "__main__":
+    mathematical_explanation()
+    test_solution()
+    algorithm_walkthrough()
+    print("\n" + "=" * 70)
+    complexity_comparison()
+
+"""
+Key Algorithm Insights:
+
+1. **Mathematical Foundation**:
+   - For k consecutive zeros: k*(k+1)/2 zero-filled subarrays
+   - This comes from sum of arithmetic series: 1+2+3+...+k
+   - Each position can be start of multiple subarrays
+
+2. **Two Equivalent Optimal Approaches**:
+   a) Segment-based: Count complete segments, apply formula
+   b) Incremental: For each zero, count new subarrays ending there
+
+3. **Why O(n) is Optimal**:
+   - Must examine each element at least once
+   - Mathematical insight eliminates need for nested loops
+   - No additional space required beyond counting variables
+
+4. **Edge Cases Handled**:
+   - No zeros in array
+   - Array ends with zeros
+   - Single zero elements
+   - All zeros in array
+
+5. **Pattern Recognition**:
+   - This is a "counting contiguous subarrays" problem
+   - Mathematical formula eliminates brute force enumeration
+   - Similar pattern appears in other subarray counting problems
+
+6. **Implementation Details**:
+   - Track current consecutive zero count
+   - Reset counter on non-zero elements
+   - Handle end-of-array zero segments
+   - Use integer division for efficiency
+
+The key insight is recognizing that this reduces to counting consecutive
+zero segments and applying the arithmetic series formula, transforming
+a potentially O(n²) or O(n³) problem into an elegant O(n) solution.
+"""
