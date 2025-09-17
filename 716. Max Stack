@@ -1,0 +1,160 @@
+class MaxStack:
+    """
+    Design a Max Stack that supports push, pop, top, peekMax, and popMax operations.
+    
+    push(x) -- Push element x onto stack.
+    pop() -- Remove the element on top of the stack and return it.
+    top() -- Get the element on the top.
+    peekMax() -- Retrieve the maximum element in the stack.
+    popMax() -- Retrieve the maximum element in the stack, and remove it. 
+               If you find more than one maximum elements, only remove the top-most one.
+    """
+    
+    def __init__(self):
+        # Main stack to store elements
+        self.stack = []
+        # Max stack to keep track of maximum at each level
+        self.max_stack = []
+    
+    def push(self, x: int) -> None:
+        """Push element x onto stack."""
+        self.stack.append(x)
+        
+        # Update max_stack with the maximum value so far
+        if not self.max_stack or x >= self.max_stack[-1]:
+            self.max_stack.append(x)
+        else:
+            self.max_stack.append(self.max_stack[-1])
+    
+    def pop(self) -> int:
+        """Remove the element on top of the stack and return it."""
+        if not self.stack:
+            return None
+        
+        self.max_stack.pop()
+        return self.stack.pop()
+    
+    def top(self) -> int:
+        """Get the element on the top."""
+        if not self.stack:
+            return None
+        return self.stack[-1]
+    
+    def peekMax(self) -> int:
+        """Retrieve the maximum element in the stack."""
+        if not self.max_stack:
+            return None
+        return self.max_stack[-1]
+    
+    def popMax(self) -> int:
+        """
+        Retrieve the maximum element in the stack, and remove it.
+        If multiple max elements exist, remove the top-most one.
+        """
+        if not self.stack:
+            return None
+        
+        max_val = self.max_stack[-1]
+        temp_stack = []
+        
+        # Pop elements until we find the maximum value
+        while self.stack and self.stack[-1] != max_val:
+            temp_stack.append(self.pop())
+        
+        # Pop the maximum value
+        result = self.pop()
+        
+        # Push back the temporary elements
+        while temp_stack:
+            self.push(temp_stack.pop())
+        
+        return result
+
+
+# Alternative solution using two stacks (more space efficient for popMax)
+class MaxStackOptimized:
+    """
+    Alternative implementation using auxiliary stack only when needed.
+    More efficient for popMax operation in terms of space complexity.
+    """
+    
+    def __init__(self):
+        self.stack = []
+        self.max_vals = []  # Stack to track maximums
+    
+    def push(self, x: int) -> None:
+        self.stack.append(x)
+        if not self.max_vals or x >= self.max_vals[-1]:
+            self.max_vals.append(x)
+    
+    def pop(self) -> int:
+        if not self.stack:
+            return None
+        
+        val = self.stack.pop()
+        if self.max_vals and val == self.max_vals[-1]:
+            self.max_vals.pop()
+        return val
+    
+    def top(self) -> int:
+        return self.stack[-1] if self.stack else None
+    
+    def peekMax(self) -> int:
+        return self.max_vals[-1] if self.max_vals else None
+    
+    def popMax(self) -> int:
+        if not self.stack:
+            return None
+        
+        max_val = self.max_vals[-1]
+        temp = []
+        
+        # Remove elements until we find the max
+        while self.stack[-1] != max_val:
+            temp.append(self.pop())
+        
+        # Remove the max element
+        result = self.pop()
+        
+        # Restore the temporary elements
+        for val in reversed(temp):
+            self.push(val)
+        
+        return result
+
+
+# Test the implementation
+def test_max_stack():
+    """Test function to verify the MaxStack implementation."""
+    
+    print("Testing MaxStack...")
+    stack = MaxStack()
+    
+    # Test case 1: Basic operations
+    stack.push(5)
+    stack.push(1)
+    stack.push(5)
+    print(f"top(): {stack.top()}")        # Expected: 5
+    print(f"popMax(): {stack.popMax()}")  # Expected: 5
+    print(f"top(): {stack.top()}")        # Expected: 1
+    print(f"peekMax(): {stack.peekMax()}")# Expected: 5
+    print(f"pop(): {stack.pop()}")        # Expected: 1
+    print(f"top(): {stack.top()}")        # Expected: 5
+    
+    print("\n" + "="*40)
+    
+    # Test case 2: Multiple same max values
+    stack2 = MaxStack()
+    stack2.push(5)
+    stack2.push(1)
+    stack2.push(5)
+    stack2.push(2)
+    print(f"peekMax(): {stack2.peekMax()}")  # Expected: 5
+    print(f"popMax(): {stack2.popMax()}")   # Expected: 5 (top-most)
+    print(f"peekMax(): {stack2.peekMax()}")  # Expected: 5 (remaining one)
+    print(f"popMax(): {stack2.popMax()}")   # Expected: 5
+    print(f"peekMax(): {stack2.peekMax()}")  # Expected: 2
+
+
+if __name__ == "__main__":
+    test_max_stack()
