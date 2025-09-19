@@ -1,0 +1,46 @@
+# The knows API is already defined for you.
+# return a bool, whether a knows b
+# def knows(a: int, b: int) -> bool:
+
+class Solution:
+    def findCelebrity(self, n: int) -> int:
+        """
+        Find the celebrity in a group of n people (0 to n-1).
+        
+        A celebrity is defined as someone who:
+        1. Everyone knows the celebrity
+        2. The celebrity knows nobody
+        
+        Args:
+            n: int - number of people (0 to n-1)
+            
+        Returns:
+            int - index of celebrity, or -1 if no celebrity exists
+        """
+        # Step 1: Find potential celebrity candidate
+        # Use elimination process - if person A knows person B,
+        # then A cannot be a celebrity (celebrities know nobody)
+        candidate = 0
+        
+        for i in range(1, n):
+            if knows(candidate, i):
+                # Current candidate knows person i, so candidate can't be celebrity
+                # Person i could potentially be the celebrity
+                candidate = i
+        
+        # Step 2: Verify if the candidate is actually a celebrity
+        # Check two conditions:
+        # 1. Everyone knows the candidate
+        # 2. Candidate knows nobody
+        
+        for i in range(n):
+            if i != candidate:
+                # Check if candidate knows person i (should be False)
+                if knows(candidate, i):
+                    return -1  # Celebrity shouldn't know anyone
+                
+                # Check if person i knows candidate (should be True)
+                if not knows(i, candidate):
+                    return -1  # Everyone should know celebrity
+        
+        return candidate
