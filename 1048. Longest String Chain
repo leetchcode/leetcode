@@ -1,0 +1,42 @@
+"""
+        Problem: Longest String Chain
+        
+        A word chain is a sequence of words [word_1, word_2, ..., word_k] with k >= 1, where:
+        - word_1 is a predecessor of word_2
+        - word_2 is a predecessor of word_3  
+        - ... and so on
+        
+        word1 is a predecessor of word2 if and only if we can insert exactly one letter 
+        anywhere in word1 without changing the order of other characters to make it equal to word2.
+        
+        Example:
+        Input: words = ["a","b","ba","bca","bac","bc","cab","cba"]
+        Output: 4
+        Explanation: One of the longest word chains is ["a","ba","bca","bcab"] (if "bcab" existed)
+        Actually: ["a","ba","bac","bcab"] or similar chains of length 4.
+        
+        Approach 1: Dynamic Programming with Memoization (Top-down)
+        - For each word, try removing each character to find predecessors
+        - Use memoization to avoid recomputation
+        """
+        
+        word_set = set(words)
+        memo = {}
+        
+        def dfs(word):
+            if word in memo:
+                return memo[word]
+            
+            max_chain = 1  # At minimum, the word itself forms a chain of length 1
+            
+            # Try removing each character to find predecessors
+            for i in range(len(word)):
+                predecessor = word[:i] + word[i+1:]
+                if predecessor in word_set:
+                    max_chain = max(max_chain, dfs(predecessor) + 1)
+            
+            memo[word] = max_chain
+            return max_chain
+        
+        # Try starting from each word and find the maximum chain length
+        return max(dfs(word) for word in words)
