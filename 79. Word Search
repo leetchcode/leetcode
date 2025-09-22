@@ -1,0 +1,106 @@
+class Solution:
+    def exist(self, board: list[list[str]], word: str) -> bool:
+        """
+        Problem: Word Search (LeetCode 79)
+        
+        Given an m x n grid of characters and a string word, return true if the word 
+        exists in the grid. The word can be constructed from letters of sequentially 
+        adjacent cells (horizontally or vertically neighboring). The same letter cell 
+        may not be used more than once.
+        
+        Examples:
+        board = [["A","B","C","E"],
+                 ["S","F","C","S"], 
+                 ["A","D","E","E"]]
+        
+        word = "ABCCED" -> True
+        word = "SEE" -> True  
+        word = "ABCB" -> False
+        
+        Approach: DFS + Backtracking
+        Time: O(N * 4^L) where N = board cells, L = word length
+        Space: O(L) for recursion stack
+        """
+        if not board or not board[0] or not word:
+            return False
+        
+        rows, cols = len(board), len(board[0])
+        
+        def dfs(row, col, index):
+            # Base case: found the complete word
+            if index == len(word):
+                return True
+            
+            # Check boundaries and character match
+            if (row < 0 or row >= rows or 
+                col < 0 or col >= cols or 
+                board[row][col] != word[index]):
+                return False
+            
+            # Mark current cell as visited by temporarily changing it
+            temp = board[row][col]
+            board[row][col] = '#'  # Mark as visited
+            
+            # Explore all 4 directions
+            found = (dfs(row + 1, col, index + 1) or  # Down
+                    dfs(row - 1, col, index + 1) or   # Up
+                    dfs(row, col + 1, index + 1) or   # Right
+                    dfs(row, col - 1, index + 1))     # Left
+            
+            # Backtrack: restore the original character
+            board[row][col] = temp
+            
+            return found
+        
+        # Try starting from each cell
+        for i in range(rows):
+            for j in range(cols):
+                if dfs(i, j, 0):
+                    return True
+        
+        return False
+
+
+class SolutionWithVisited:
+    def exist(self, board: list[list[str]], word: str) -> bool:
+        """
+        Alternative approach using separate visited matrix
+        (More memory but doesn't modify input)
+        """
+        if not board or not board[0] or not word:
+            return False
+        
+        rows, cols = len(board), len(board[0])
+        
+        def dfs(row, col, index, visited):
+            if index == len(word):
+                return True
+            
+            if (row < 0 or row >= rows or 
+                col < 0 or col >= cols or 
+                visited[row][col] or 
+                board[row][col] != word[index]):
+                return False
+            
+            # Mark as visited
+            visited[row][col] = True
+            
+            # Explore 4 directions
+            directions = [(0, 1), (0, -1), (1, 0), (-1, 0)]
+            for dr, dc in directions:
+                if dfs(row + dr, col + dc, index + 1, visited):
+                    visited[row][col] = False  # Backtrack
+                    return True
+            
+            # Backtrack
+            visited[row][col] = False
+            return False
+        
+        # Try from each starting position
+        for i in range(rows):
+            for j in range(cols):
+                visited = [[False] * cols for _ in range(rows)]
+                if dfs(i, j, 0, visited):
+                    return True
+        
+        return False
