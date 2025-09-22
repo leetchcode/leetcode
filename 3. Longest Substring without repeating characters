@@ -1,0 +1,23 @@
+def lengthOfLongestSubstring(s: str) -> int:
+    if not s:
+        return 0
+    
+    start = 0
+    char_count = {}  # character -> count
+    max_len = 0
+    
+    for end in range(len(s)):
+        char = s[end]  # FIX 1: Use character, not index
+        char_count[char] = char_count.get(char, 0) + 1
+
+        # FIX 2: Shrink window while we have duplicates
+        while char_count[char] > 1:  # While current character appears more than once
+            left_char = s[start]
+            char_count[left_char] -= 1
+            if char_count[left_char] == 0:
+                del char_count[left_char]  # FIX 4: Delete specific key
+            start += 1
+
+        max_len = max(max_len, end - start + 1)
+
+    return max_len
