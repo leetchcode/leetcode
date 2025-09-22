@@ -1,0 +1,29 @@
+class Solution:
+    def addBinary(self, a: str, b: str) -> str:
+        str1 = a
+        str2 = b
+        if not str1:
+            return str2
+        if not str2:
+            return str1
+        
+        i = len(str1) - 1
+        j = len(str2) - 1
+        carry = 0
+        res = []
+        while i>=0 or j>=0:
+            d1 = int(str1[i]) if i>=0 else 0
+            d2 = int(str2[j]) if j>=0 else 0
+            sum = d1 + d2 + carry
+            d = sum % 2
+            res.append(str(d))
+            carry = sum //2
+            i-=1
+            j-=1
+        
+        if carry:
+            res.append(str(carry))
+            
+        
+        return "".join(res[::-1])
+        
