@@ -1,0 +1,75 @@
+class Solution:
+    def isSymmetric(self, root: TreeNode) -> bool:
+        """
+        Problem: Symmetric Tree (LeetCode 101)
+        
+        Given the root of a binary tree, check whether it is a mirror 
+        of itself (i.e., symmetric around its center).
+        
+        Examples:
+        Input: root = [1,2,2,3,4,4,3]
+        Output: true
+        
+        Input: root = [1,2,2,null,3,null,3]  
+        Output: false
+        
+        Approach 1: Recursive Solution
+        Time: O(n), Space: O(h) where h is height of tree
+        """
+        if not root:
+            return True
+        
+        def is_mirror(left, right):
+            # Both are None - symmetric
+            if not left and not right:
+                return True
+            
+            # One is None, other isn't - not symmetric
+            if not left or not right:
+                return False
+            
+            # Values must be equal and subtrees must be mirrors
+            return (left.val == right.val and 
+                    is_mirror(left.left, right.right) and
+                    is_mirror(left.right, right.left))
+        
+        return is_mirror(root.left, root.right)
+
+
+class SolutionIterative:
+    def isSymmetric(self, root: TreeNode) -> bool:
+        """
+        Approach 2: Iterative Solution using Queue/Stack
+        Time: O(n), Space: O(w) where w is maximum width of tree
+        
+        Uses BFS-like approach with a queue to compare nodes level by level
+        """
+        if not root:
+            return True
+        
+        from collections import deque
+        
+        # Queue stores pairs of nodes that should be mirrors of each other
+        queue = deque([(root.left, root.right)])
+        
+        while queue:
+            left, right = queue.popleft()
+            
+            # Both None - continue checking
+            if not left and not right:
+                continue
+            
+            # One None, other not - not symmetric
+            if not left or not right:
+                return False
+            
+            # Values don't match - not symmetric
+            if left.val != right.val:
+                return False
+            
+            # Add mirror pairs to queue
+            queue.append((left.left, right.right))  # Outer children
+            queue.append((left.right, right.left))  # Inner children
+        
+        return True
+
