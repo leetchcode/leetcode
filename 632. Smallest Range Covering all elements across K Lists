@@ -1,0 +1,69 @@
+from typing import List
+import heapq
+
+class Solution:
+    def smallestRange(self, nums: List[List[int]]) -> List[int]:
+        # Initialize the best range found so far to infinity
+        # This will be updated as we find smaller ranges
+        range_min = float('-inf')
+        range_max = float('inf')
+
+        # Min heap to store (value, list_index, element_index)
+        # The heap will always contain exactly one element from each list
+        # until one list is exhausted
+        heap = []
+        
+        # Track the maximum value among current elements in heap
+        # We need both min (from heap) and max to calculate range size
+        max_val = float('-inf')
+        
+        # INITIALIZATION PHASE:
+        # Put the first element from each list into the heap
+        # This ensures we start with one element from each of the k lists
+        for i in range(len(nums)):
+            val = nums[i][0]  # First element of list i
+            
+            # Push (value, list_index, element_index) into min heap
+            # list_index: which list this element came from
+            # element_index: position within that list (starting at 0)
+            heapq.heappush(heap, (val, i, 0))
+            
+            # Always update max_val when adding elements to heap
+            # Since we're adding to heap, this element could be our new maximum
+            max_val = max(max_val, val)
+        
+        # MAIN PROCESSING PHASE:
+        # Continue until we can no longer maintain k elements (one from each list)
+        while heap:
+            # Get the minimum element across all current k elements
+            # heap[0] is always the minimum due to min heap property
+            min_val, list_index, elem_index = heapq.heappop(heap)
+            
+            # CHECK IF CURRENT RANGE IS BETTER:
+            # Current range is [min_val, max_val]
+            # Compare with best range found so far [range_min, range_max]
+            if max_val - min_val < range_max - range_min:
+                # Found a smaller range! Update our answer
+                range_max = max_val
+                range_min = min_val
+            
+            # TERMINATION CHECK:
+            # If we've reached the end of any list, we cannot maintain
+            # k elements anymore (one from each list), so we must stop
+            if elem_index + 1 == len(nums[list_index]):
+                break
+            
+            # ADVANCE TO NEXT ELEMENT:
+            # Move to the next element in the same list that just lost its minimum
+            new_val = nums[list_index][elem_index + 1]
+            
+            # Update max_val since we're adding a new element
+            # The new element might be larger than our current maximum
+            max_val = max(max_val, new_val)
+            
+            # Add the new element back to heap to maintain k elements
+            # Now we again have one element from each list
+            heapq.heappush(heap, (new_val, list_index, elem_index + 1))
+        
+        # Return the smallest range that covers all k lists
+        return [range_min, range_max]
