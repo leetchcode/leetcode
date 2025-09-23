@@ -1,0 +1,32 @@
+def findMin(self, nums: list[int]) -> int:
+        """
+        Approach: Find the rotation point explicitly
+        The minimum element is at the rotation point
+        """
+        n = len(nums)
+        if n == 1:
+            return nums[0]
+        
+        # Check if array is not rotated
+        if nums[0] < nums[n - 1]:
+            return nums[0]
+        
+        left, right = 0, n - 1
+        
+        while left < right:
+            mid = (left + right) // 2
+            
+            # Found the rotation point
+            if nums[mid] > nums[mid + 1]:
+                return nums[mid + 1]
+            
+            if nums[mid - 1] > nums[mid]:
+                return nums[mid]
+            
+            # Decide which half to search
+            if nums[mid] > nums[0]:
+                left = mid + 1
+            else:
+                right = mid - 1
+        
+        return nums[0]  # Shouldn't reach here with valid input
