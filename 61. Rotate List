@@ -1,0 +1,128 @@
+# Definition for singly-linked list.
+# class ListNode:
+#     def __init__(self, val=0, next=None):
+#         self.val = val
+#         self.next = next
+
+class Solution:
+    def rotateRight(self, head: Optional[ListNode], k: int) -> Optional[ListNode]:
+        # EDGE CASE HANDLING:
+        # Return early for cases where no rotation is needed or possible
+        if not head or not head.next or k == 0:
+            return head
+        
+        # STEP 1: FIND THE LENGTH AND LOCATE THE ORIGINAL TAIL
+        n = 1  # Counter for list length (start with 1 since we have at least one node)
+        curr = head  # Pointer to traverse the list
+        old_tail = head  # Will eventually point to the last node
+        
+        # Traverse to the end while counting nodes
+        while curr.next:
+            n += 1  # Increment length counter
+            curr = curr.next  # Move to next node
+            old_tail = curr  # Update old_tail to current node (will be last after loop)
+        
+        # At this point:
+        # - n = total length of the list
+        # - old_tail points to the last node in the original list
+        
+        # STEP 2: NORMALIZE THE ROTATION AMOUNT
+        k = k % n  # Handle cases where k > n (rotating by full cycles)
+        
+        # If k becomes 0 after normalization, no effective rotation is needed
+        # Example: list of length 5 rotated by k=5 or k=10 stays the same
+        if k == 0:
+            return head
+        
+        # STEP 3: FIND THE NEW TAIL POSITION
+        # After rotating right by k positions, the new tail will be at
+        # position (n - k - 1) from the start (0-indexed)
+        # 
+        # Why (n - k - 1)?
+        # - We want to cut the list k positions from the end
+        # - The new tail is the node just before where we cut
+        # - If we cut at position (n - k), new tail is at (n - k - 1)
+        
+        new_tail = head  # Start from head
+        
+        # Move (n - k - 1) steps to reach the new tail position
+        for _ in range(n - k - 1):
+            new_tail = new_tail.next
+        
+        # STEP 4: IDENTIFY THE NEW HEAD AND BREAK THE CONNECTION
+        # The new head is the node right after the new tail
+        new_head = new_tail.next
+        
+        # Break the connection at new tail to separate the two parts
+        new_tail.next = None
+        
+        # STEP 5: CONNECT THE ORIGINAL TAIL TO THE ORIGINAL HEAD
+        # This completes the rotation by putting the original beginning
+        # after the rotated part
+        old_tail.next = head
+        
+        # Return the new head of the rotated list
+        return new_head
+
+
+# ALGORITHM EXPLANATION:
+"""
+HOW THE ROTATION WORKS:
+
+Original: 1 -> 2 -> 3 -> 4 -> 5 -> NULL, k = 2
+                            ^
+                         old_tail
+
+Step 1: Count length (n = 5) and find old_tail (node 5)
+
+Step 2: Normalize k = 2 % 5 = 2 (no change needed)
+
+Step 3: Find new_tail at position (5 - 2 - 1) = 2 (0-indexed)
+        So new_tail = node 3
+
+Step 4: new_head = new_tail.next = node 4
+        Break: 1 -> 2 -> 3 -> NULL    4 -> 5 -> NULL
+
+Step 5: Connect old_tail to original head:
+        1 -> 2 -> 3 -> NULL
+        ^
+        |
+        5 <- 4
+        
+Final result: 4 -> 5 -> 1 -> 2 -> 3 -> NULL
+
+VISUAL BREAKDOWN:
+- Last k=2 nodes (4,5) move to the front
+- Remaining nodes (1,2,3) move to the back  
+- Connection: 4->5->1->2->3
+"""
+
+
+# EDGE CASES HANDLED:
+"""
+1. Empty list (head = None): Return None immediately
+2. Single node (head.next = None): No rotation possible, return as-is  
+3. k = 0: No rotation needed, return original
+4. k >= n: Use k % n to get effective rotation amount
+5. k % n = 0: After normalization, no rotation needed
+
+EXAMPLES:
+- [1,2,3], k=0: Return [1,2,3] (no rotation)
+- [1,2,3], k=3: k%3=0, return [1,2,3] (full cycle)
+- [1,2,3], k=4: k%3=1, return [3,1,2] (rotate by 1)
+- [1], k=1: Return [1] (single node)
+"""
+
+
+# TIME & SPACE COMPLEXITY:
+"""
+TIME COMPLEXITY: O(n)
+- First traversal to count length: O(n)
+- Second traversal to find new tail: O(n) in worst case
+- Overall: O(n)
+
+SPACE COMPLEXITY: O(1)  
+- Only using a constant number of pointer variables
+- No additional data structures needed
+- Optimal space usage
+"""
