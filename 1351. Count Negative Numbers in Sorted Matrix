@@ -1,0 +1,63 @@
+class Solution:
+    def countNegatives(self, grid: List[List[int]]) -> int:
+        """
+        Count negative numbers in a sorted matrix.
+        Matrix is sorted in non-increasing order both row-wise and column-wise.
+        
+        Approach: Use binary search on each row to find the first negative number,
+        then count all numbers from that position to the end of the row.
+        
+        Time Complexity: O(m * log n) where m = rows, n = columns
+        Space Complexity: O(1)
+        """
+        m = len(grid)        # Number of rows
+        n = len(grid[0])     # Number of columns
+        
+        def search(row, m, n):
+            """
+            Binary search to find the index of the first negative number in a row.
+            
+            Args:
+                row: Current row index to search in
+                m: Total number of rows (not used but kept for consistency)
+                n: Total number of columns
+                
+            Returns:
+                Index of first negative number, or -1 if no negative numbers exist
+            """
+            l = 0        # Left pointer
+            r = n - 1    # Right pointer
+            
+            while l <= r:
+                mid = (l + r) // 2
+                
+                # If current element is negative
+                if grid[row][mid] < 0:
+                    # Check if this is the first negative number:
+                    # Either it's at index 0, or the previous element is non-negative
+                    if mid == 0 or grid[row][mid - 1] >= 0:
+                        return mid  # Found the first negative number
+                    else:
+                        # There are negative numbers to the left, search left half
+                        r = mid - 1
+                else:
+                    # Current element is non-negative, search right half
+                    l = mid + 1
+            
+            # No negative numbers found in this row
+            return -1
+        
+        count = 0
+        
+        # Process each row
+        for row in range(m):
+            # Find the index of first negative number in current row
+            col = search(row, m, n)
+            
+            # If negative numbers exist in this row
+            if col != -1:
+                # All numbers from 'col' to end of row are negative
+                # since the row is sorted in non-increasing order
+                count += (n - col)
+        
+        return count
