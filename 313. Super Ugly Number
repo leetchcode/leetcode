@@ -1,0 +1,223 @@
+import heapq
+
+class Solution:
+    def nthSuperUglyNumber(self, n, primes):
+        """
+        Find the nth super ugly number using min heap approach.
+        
+        A super ugly number is a positive integer whose prime factors are 
+        limited to the given list of prime numbers.
+        
+        Algorithm:
+        1. Use a min heap to always get the smallest unprocessed number
+        2. For each number popped from heap, multiply it by all primes
+        3. Add results to heap (avoid duplicates using set)
+        4. The nth number popped is our answer
+        
+        Time Complexity: O(n * k * log(n*k)) where k is len(primes)
+        Space Complexity: O(n * k) for heap and seen set
+        
+        Args:
+            n: Find the nth super ugly number (1-indexed)
+            primes: List of prime numbers to use as factors
+            
+        Returns:
+            The nth super ugly number
+        """
+        if n == 1:
+            return 1
+        
+        # Min heap to store candidates, starting with 1
+        heap = [1]
+        seen = {1}  # Set to avoid duplicate numbers in heap
+        
+        # Generate n super ugly numbers
+        for i in range(n):
+            # Get the smallest number from heap
+            curr = heapq.heappop(heap)
+            
+            # If this is the nth number, return it
+            if i == n - 1:
+                return curr
+            
+            # Generate new candidates by multiplying current number with each prime
+            for prime in primes:
+                new_num = curr * prime
+                
+                # Only add if we haven't seen this number before
+                if new_num not in seen:
+                    seen.add(new_num)
+                    heapq.heappush(heap, new_num)
+        
+        return -1  # Should never reach here
+
+
+class SolutionOptimized:
+    def nthSuperUglyNumber(self, n, primes):
+        """
+        Optimized solution using dynamic programming with pointers.
+        Similar to "Ugly Number II" but generalized for any set of primes.
+        
+        Key insight: Each super ugly number is formed by multiplying a smaller 
+        super ugly number with one of the prime factors.
+        
+        Algorithm:
+        1. Keep array of super ugly numbers found so far
+        2. For each prime, maintain a pointer to track which super ugly number 
+           to multiply it with next
+        3. At each step, find the minimum among all prime*ugly_number combinations
+        4. Add this minimum to result and advance appropriate pointers
+        
+        Time Complexity: O(n * k) where k is len(primes)
+        Space Complexity: O(n + k)
+        """
+        if n == 1:
+            return 1
+        
+        # Array to store super ugly numbers
+        ugly = [1]  # ugly[0] = 1 (first super ugly number)
+        
+        # For each prime, maintain index pointing to next ugly number to multiply
+        indices = [0] * len(primes)
+        
+        # For each prime, precompute the next candidate
+        candidates = [prime for prime in primes]
+        
+        for i in range(1, n):
+            # Find the minimum among all candidates
+            next_ugly = min(candidates)
+            ugly.append(next_ugly)
+            
+            # Update all indices and candidates that produced this minimum
+            for j in range(len(primes)):
+                if candidates[j] == next_ugly:
+                    indices[j] += 1
+                    candidates[j] = ugly[indices[j]] * primes[j]
+        
+        return ugly[n - 1]
+
+
+class SolutionHeapOptimized:
+    def nthSuperUglyNumber(self, n, primes):
+        """
+        Memory-optimized heap solution that avoids storing all seen numbers.
+        Uses tuple (value, prime_index, ugly_index) to track generation path.
+        
+        Time Complexity: O(n * k * log k) 
+        Space Complexity: O(k) - much better than basic heap solution
+        """
+        if n == 1:
+            return 1
+        
+        ugly = [1]
+        # Heap stores (value, prime_index, ugly_number_index)
+        heap = [(prime, i, 0) for i, prime in enumerate(primes)]
+        heapq.heapify(heap)
+        
+        for _ in range(n - 1):
+            # Get minimum value and its generation info
+            val, prime_idx, ugly_idx = heapq.heappop(heap)
+            
+            # Skip duplicates - if this value was already added
+            if val == ugly[-1]:
+                # Push next candidate from same generation path
+                next_val = primes[prime_idx] * ugly[ugly_idx + 1] if ugly_idx + 1 < len(ugly) else float('inf')
+                if next_val != float('inf'):
+                    heapq.heappush(heap, (next_val, prime_idx, ugly_idx + 1))
+                continue
+            
+            # Add this value as next super ugly number
+            ugly.append(val)
+            
+            # Generate next candidate from this path
+            if ugly_idx + 1 < len(ugly):
+                next_val = primes[prime_idx] * ugly[ugly_idx + 1]
+                heapq.heappush(heap, (next_val, prime_idx, ugly_idx + 1))
+            
+            # Also generate first candidate for this new ugly number with all primes
+            for i, prime in enumerate(primes):
+                heapq.heappush(heap, (val * prime, i, len(ugly) - 1))
+        
+        return ugly[-1]
+
+
+# Test cases and performance comparison
+def test_solutions():
+    """Test all solutions with various cases"""
+    
+    test_cases = [
+        # Basic cases
+        (12, [2, 7, 13, 19], 32),  # Expected: 32
+        (1, [2, 3, 5], 1),         # Expected: 1 (edge case)
+        (10, [2, 3, 5], 12),       # Classic ugly numbers
+        (5, [3, 5, 7], 9),         # Expected: 9
+        (15, [2, 3, 5], 24),       # Larger case
+        
+        # Single prime
+        (5, [2], 16),              # Powers of 2: 1,2,4,8,16
+        
+        # Large primes
+        (8, [7, 19, 29, 37], 303), # Test with larger primes
+    ]
+    
+    solutions = [
+        ("Heap with Set", Solution()),
+        ("DP with Pointers", SolutionOptimized()),
+        ("Heap Optimized", SolutionHeapOptimized())
+    ]
+    
+    for i, (n, primes, expected) in enumerate(test_cases):
+        print(f"Test Case {i+1}: n={n}, primes={primes}, expected={expected}")
+        print("-" * 60)
+        
+        for name, solution in solutions:
+            try:
+                result = solution.nthSuperUglyNumber(n, primes[:])  # Copy to avoid modification
+                status = "✓ PASS" if result == expected else "✗ FAIL"
+                print(f"{name:20s}: {result:6d} {status}")
+            except Exception as e:
+                print(f"{name:20s}: ERROR - {e}")
+        
+        print()
+
+
+def demonstrate_algorithm():
+    """Demonstrate how the algorithm works step by step"""
+    print("Algorithm Demonstration: n=5, primes=[2, 3, 5]")
+    print("=" * 50)
+    
+    n, primes = 5, [2, 3, 5]
+    ugly = [1]
+    indices = [0, 0, 0]  # Pointers for each prime
+    
+    print(f"Initial: ugly = {ugly}")
+    print(f"Indices: {indices} (pointing to ugly[0]=1 for each prime)")
+    print()
+    
+    for i in range(1, n):
+        # Calculate candidates
+        candidates = [ugly[indices[j]] * primes[j] for j in range(len(primes))]
+        print(f"Step {i}:")
+        print(f"  Candidates: {[f'{ugly[indices[j]]}*{primes[j]}={candidates[j]}' for j in range(len(primes))]}")
+        
+        # Find minimum
+        next_ugly = min(candidates)
+        ugly.append(next_ugly)
+        
+        # Update indices that produced this minimum
+        for j in range(len(primes)):
+            if candidates[j] == next_ugly:
+                indices[j] += 1
+        
+        print(f"  Next ugly: {next_ugly}")
+        print(f"  Updated indices: {indices}")
+        print(f"  Ugly so far: {ugly}")
+        print()
+    
+    print(f"Final answer: {ugly[n-1]}")
+
+
+if __name__ == "__main__":
+    test_solutions()
+    print("\n" + "="*60 + "\n")
+    demonstrate_algorithm()
