@@ -1,0 +1,70 @@
+import heapq
+from collections import defaultdict, deque
+
+class Solution:
+    def maxProbability(self, n, edges, succProb, start, end):
+        """
+        Find the path with maximum probability from start to end node.
+        
+        This is a modified Dijkstra's algorithm problem where instead of finding
+        shortest path (minimum distance), we find the path with maximum probability.
+        
+        Key modifications to standard Dijkstra:
+        1. Use max heap instead of min heap (negate probabilities)
+        2. Multiply probabilities instead of adding distances
+        3. Use >= comparison instead of <= for relaxation
+        
+        Time Complexity: O((V + E) * log V) where V = nodes, E = edges
+        Space Complexity: O(V + E) for graph representation and heap
+        
+        Args:
+            n: Number of nodes (0 to n-1)
+            edges: List of [u, v] representing bidirectional edges
+            succProb: List of success probabilities for each edge
+            start: Starting node
+            end: Target node
+            
+        Returns:
+            Maximum probability from start to end (0.0 if no path exists)
+        """
+        # Build adjacency list representation of graph
+        graph = defaultdict(list)
+        for i, (u, v) in enumerate(edges):
+            prob = succProb[i]
+            # Bidirectional edges
+            graph[u].append((v, prob))
+            graph[v].append((u, prob))
+        
+        # Dijkstra's algorithm with max heap
+        # Use negative probabilities to simulate max heap with Python's min heap
+        max_heap = [(-1.0, start)]  # (-probability, node)
+        
+        # Track maximum probability to reach each node
+        max_prob = [0.0] * n
+        max_prob[start] = 1.0
+        
+        while max_heap:
+            # Get node with current maximum probability
+            curr_prob, node = heapq.heappop(max_heap)
+            curr_prob = -curr_prob  # Convert back to positive
+            
+            # If we reached the target, return the probability
+            if node == end:
+                return curr_prob
+            
+            # Skip if we've already found a better path to this node
+            if curr_prob < max_prob[node]:
+                continue
+            
+            # Explore neighbors
+            for neighbor, edge_prob in graph[node]:
+                # Calculate probability through current path
+                new_prob = curr_prob * edge_prob
+                
+                # If this path gives better probability, update and add to heap
+                if new_prob > max_prob[neighbor]:
+                    max_prob[neighbor] = new_prob
+                    heapq.heappush(max_heap, (-new_prob, neighbor))
+        
+        # No path found from start to end
+        return 0.0
