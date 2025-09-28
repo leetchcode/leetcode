@@ -1,0 +1,80 @@
+def findCircleNum(isConnected):
+    """
+    Find the number of provinces (connected components) in the graph.
+    
+    Args:
+        isConnected: List[List[int]] - adjacency matrix where isConnected[i][j] = 1 
+                    if cities i and j are directly connected, 0 otherwise
+    
+    Returns:
+        int - number of provinces
+    """
+    n = len(isConnected)
+    visited = [False] * n
+    provinces = 0
+    
+    def dfs(city):
+        """DFS to visit all cities in the current province"""
+        visited[city] = True
+        # Check all other cities
+        for neighbor in range(n):
+            # If connected and not visited, explore it
+            if isConnected[city][neighbor] == 1 and not visited[neighbor]:
+                dfs(neighbor)
+    
+    # Check each city
+    for city in range(n):
+        if not visited[city]:
+            # Found a new province, explore all connected cities
+            dfs(city)
+            provinces += 1
+    
+    return provinces
+
+
+# Alternative solution using Union-Find (Disjoint Set Union)
+def findCircleNum_unionfind(isConnected):
+    """
+    Union-Find approach to solve the same problem.
+    """
+    n = len(isConnected)
+    parent = list(range(n))  # Each city is its own parent initially
+    
+    def find(x):
+        """Find root parent with path compression"""
+        if parent[x] != x:
+            parent[x] = find(parent[x])
+        return parent[x]
+    
+    def union(x, y):
+        """Union two components"""
+        root_x, root_y = find(x), find(y)
+        if root_x != root_y:
+            parent[root_x] = root_y
+    
+    # Union all connected cities
+    for i in range(n):
+        for j in range(i + 1, n):
+            if isConnected[i][j] == 1:
+                union(i, j)
+    
+    # Count unique root parents
+    return len(set(find(i) for i in range(n)))
+
+
+# Test cases
+if __name__ == "__main__":
+    # Test case 1
+    isConnected1 = [[1,1,0],[1,1,0],[0,0,1]]
+    print(f"Test 1 - DFS: {findCircleNum(isConnected1)}")  # Expected: 2
+    print(f"Test 1 - Union-Find: {findCircleNum_unionfind(isConnected1)}")  # Expected: 2
+    
+    # Test case 2  
+    isConnected2 = [[1,0,0],[0,1,0],[0,0,1]]
+    print(f"Test 2 - DFS: {findCircleNum(isConnected2)}")  # Expected: 3
+    print(f"Test 2 - Union-Find: {findCircleNum_unionfind(isConnected2)}")  # Expected: 3
+    
+    # Test case 3
+    isConnected3 = [[1,0,0,1],[0,1,1,0],[0,1,1,1],[1,0,1,1]]
+    print(f"Test 3 - DFS: {findCircleNum(isConnected3)}")  # Expected: 1
+    print(f"Test 3 - Union-Find: {findCircleNum_unionfind(isConnected3)}")  # Expected: 1
