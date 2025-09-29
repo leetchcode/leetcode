@@ -1,0 +1,29 @@
+def singleNumber(arr):
+    """
+    Find two elements that appear once while all others appear twice.
+    
+    Approach: Use XOR bit manipulation
+    1. XOR all numbers -> result is XOR of the two unique numbers (a ^ b)
+    2. Find a set bit in the result (differs between a and b)
+    3. Partition array based on this bit and XOR each partition
+    
+    Time: O(n), Space: O(1)
+    """
+    # Step 1: XOR all numbers to get a ^ b
+    xor_all = 0
+    for num in arr:
+        xor_all ^= num
+    
+    # Step 2: Find rightmost set bit in xor_all
+    # This bit differs between the two unique numbers
+    rightmost_bit = xor_all & -xor_all
+    
+    # Step 3: Partition numbers and XOR each group
+    num1, num2 = 0, 0
+    for num in arr:
+        if num & rightmost_bit:
+            num1 ^= num  # Group where bit is set
+        else:
+            num2 ^= num  # Group where bit is not set
+    
+    return [num1, num2]
