@@ -1,0 +1,376 @@
+from collections import defaultdict
+
+class Solution:
+    def findRepeatedDnaSequences(self, s):
+        """
+        Find all 10-letter-long DNA sequences that occur more than once.
+        
+        Straightforward approach using a hash set to track seen sequences.
+        
+        Algorithm:
+        1. Slide a window of size 10 across the string
+        2. Track each sequence in a set
+        3. If we see a sequence again, add it to result
+        
+        Time Complexity: O(n) where n is length of string
+        Space Complexity: O(n) for storing sequences
+        
+        Args:
+            s: DNA string containing only 'A', 'C', 'G', 'T'
+            
+        Returns:
+            List of all 10-letter sequences that appear more than once
+        """
+        if len(s) < 10:
+            return []
+        
+        seen = set()      # Sequences we've encountered once
+        repeated = set()  # Sequences that appear more than once
+        
+        # Slide window across string
+        for i in range(len(s) - 9):
+            # Extract 10-letter sequence
+            sequence = s[i:i+10]
+            
+            # If we've seen it before, it's repeated
+            if sequence in seen:
+                repeated.add(sequence)
+            else:
+                seen.add(sequence)
+        
+        return list(repeated)
+
+
+class SolutionCounter:
+    def findRepeatedDnaSequences(self, s):
+        """
+        Alternative using dictionary to count occurrences.
+        
+        Slightly less efficient in space but more flexible if we need counts.
+        
+        Time Complexity: O(n)
+        Space Complexity: O(n)
+        """
+        if len(s) < 10:
+            return []
+        
+        count = defaultdict(int)
+        
+        # Count all sequences
+        for i in range(len(s) - 9):
+            sequence = s[i:i+10]
+            count[sequence] += 1
+        
+        # Return sequences that appear more than once
+        return [seq for seq, cnt in count.items() if cnt > 1]
+
+
+class SolutionRollingHash:
+    def findRepeatedDnaSequences(self, s):
+        """
+        Optimized solution using rolling hash (Rabin-Karp algorithm).
+        
+        Instead of storing full 10-character strings, we encode each sequence
+        as an integer using 2-bit encoding:
+        A = 0 (00), C = 1 (01), G = 2 (10), T = 3 (11)
+        
+        A 10-letter sequence needs only 20 bits (10 letters × 2 bits).
+        
+        Benefits:
+        - Integer comparison is faster than string comparison
+        - Rolling hash allows O(1) update per window slide
+        - More memory efficient (int vs string)
+        
+        Time Complexity: O(n)
+        Space Complexity: O(n) but more memory efficient than string storage
+        """
+        if len(s) < 10:
+            return []
+        
+        # Map characters to 2-bit values
+        char_to_num = {'A': 0, 'C': 1, 'G': 2, 'T': 3}
+        
+        seen = set()
+        repeated = set()
+        
+        # Build initial hash for first 10 characters
+        hash_value = 0
+        for i in range(10):
+            hash_value = (hash_value << 2) | char_to_num[s[i]]
+        
+        seen.add(hash_value)
+        
+        # Slide window and update hash
+        mask = (1 << 20) - 1  # Mask to keep only 20 bits (10 letters × 2 bits)
+        
+        for i in range(10, len(s)):
+            # Remove leftmost character and add new rightmost character
+            # Shift left by 2 bits, add new char, keep only 20 bits
+            hash_value = ((hash_value << 2) | char_to_num[s[i]]) & mask
+            
+            if hash_value in seen:
+                repeated.add(hash_value)
+            else:
+                seen.add(hash_value)
+        
+        # Convert hash values back to strings for result
+        num_to_char = {0: 'A', 1: 'C', 2: 'G', 3: 'T'}
+        result = []
+        
+        for hash_val in repeated:
+            sequence = []
+            temp = hash_val
+            for _ in range(10):
+                sequence.append(num_to_char[temp & 3])  # Get last 2 bits
+                temp >>= 2  # Shift right by 2 bits
+            result.append(''.join(reversed(sequence)))
+        
+        return result
+
+
+class SolutionRollingHashOptimized:
+    def findRepeatedDnaSequences(self, s):
+        """
+        Cleaner version of rolling hash that stores original strings
+        to avoid reconstruction overhead.
+        
+        Best practical solution: Fast integer operations + easy string retrieval.
+        
+        Time Complexity: O(n)
+        Space Complexity: O(n)
+        """
+        if len(s) < 10:
+            return []
+        
+        # Map characters to 2-bit values
+        char_map = {'A': 0, 'C': 1, 'G': 2, 'T': 3}
+        
+        seen_hashes = set()
+        repeated_sequences = set()
+        
+        # Build initial hash for first 10 characters
+        hash_value = 0
+        for i in range(10):
+            hash_value = (hash_value << 2) | char_map[s[i]]
+        
+        seen_hashes.add(hash_value)
+        
+        # Mask to keep only rightmost 20 bits
+        mask = (1 << 20) - 1
+        
+        # Slide window
+        for i in range(10, len(s)):
+            # Rolling hash: remove leftmost 2 bits, add rightmost 2 bits
+            hash_value = ((hash_value << 2) | char_map[s[i]]) & mask
+            
+            if hash_value in seen_hashes:
+                # Store actual sequence for easy return
+                repeated_sequences.add(s[i-9:i+1])
+            else:
+                seen_hashes.add(hash_value)
+        
+        return list(repeated_sequences)
+
+
+def test_solutions():
+    """Test all solutions with various test cases"""
+    
+    test_cases = [
+        # Basic test case with repeats
+        (
+            "AAAAACCCCCAAAAACCCCCCAAAAAGGGTTT",
+            {"AAAAACCCCC", "CCCCCAAAAA"}
+        ),
+        
+        # All same character
+        (
+            "AAAAAAAAAAAAA",  # 13 A's
+            {"AAAAAAAAAA"}     # "AAAAAAAAAA" appears 4 times
+        ),
+        
+        # No repeats
+        (
+            "ACGTACGTAC",
+            set()
+        ),
+        
+        # Exact length (no repeats possible)
+        (
+            "AAAAAAAAAA",  # Exactly 10 chars
+            set()
+        ),
+        
+        # Too short
+        (
+            "ACGT",
+            set()
+        ),
+        
+        # Multiple different repeats
+        (
+            "AAAAAAAAAACCCCCCCCCCCCCCCCCCCCC",
+            {"AAAAAAAAAA", "CCCCCCCCCC"}
+        ),
+        
+        # Overlapping repeats
+        (
+            "AAAAAAAAAAAA",  # 12 A's
+            {"AAAAAAAAAA"}   # Multiple overlapping occurrences
+        ),
+        
+        # Real DNA-like sequence
+        (
+            "GAGAGAGAGAGAGAGAGAGA",
+            {"GAGAGAGAGA", "AGAGAGAGAG"}
+        ),
+        
+        # Edge case: 11 characters with repeat
+        (
+            "AAAAAAAAAAA",  # 11 A's
+            {"AAAAAAAAAA"}   # Appears twice (positions 0 and 1)
+        ),
+    ]
+    
+    solutions = [
+        ("Hash Set (Simple)", Solution()),
+        ("Counter Dict", SolutionCounter()),
+        ("Rolling Hash", SolutionRollingHash()),
+        ("Rolling Hash Optimized", SolutionRollingHashOptimized())
+    ]
+    
+    print("Testing Repeated DNA Sequences Solutions")
+    print("=" * 70)
+    
+    for i, (dna, expected) in enumerate(test_cases):
+        print(f"\nTest Case {i+1}:")
+        print(f"DNA: {dna}")
+        print(f"Expected: {expected if expected else 'No repeats'}")
+        print("-" * 70)
+        
+        for name, solution in solutions:
+            try:
+                result = solution.findRepeatedDnaSequences(dna)
+                result_set = set(result)
+                
+                is_correct = result_set == expected
+                status = "✓ PASS" if is_correct else "✗ FAIL"
+                
+                print(f"{name:25s}: {result_set if result_set else 'No repeats'}")
+                print(f"{'':25s}  {status}")
+                
+                if not is_correct:
+                    print(f"{'':25s}  Expected: {expected}")
+                    print(f"{'':25s}  Got: {result_set}")
+                
+            except Exception as e:
+                print(f"{name:25s}: ERROR - {e}")
+
+
+def demonstrate_rolling_hash():
+    """Demonstrate how rolling hash works"""
+    print("\n" + "=" * 70)
+    print("Rolling Hash Demonstration: DNA = 'AAAAACCCCC'")
+    print("=" * 70)
+    print()
+    
+    s = "AAAAACCCCC"
+    char_map = {'A': 0, 'C': 1, 'G': 2, 'T': 3}
+    
+    print("Character encoding: A=0 (00), C=1 (01), G=2 (10), T=3 (11)")
+    print("Each character uses 2 bits")
+    print()
+    
+    # Initial hash
+    print("Step 1: Build initial hash for first 10 characters")
+    hash_value = 0
+    for i in range(10):
+        char = s[i]
+        val = char_map[char]
+        hash_value = (hash_value << 2) | val
+        print(f"  {char} (val={val}): hash = {hash_value:020b} (binary) = {hash_value} (decimal)")
+    
+    print(f"\nSequence '{s[0:10]}' has hash: {hash_value}")
+    print(f"Binary representation: {hash_value:020b} (20 bits)")
+    print()
+    
+    # Show how encoding works
+    print("Understanding the encoding:")
+    print(f"  'AAAAAAAAAA' = 00 00 00 00 00 00 00 00 00 00 (binary)")
+    print(f"               = {0:020b}")
+    print(f"  'CCCCCAAAAA' = 01 01 01 01 01 00 00 00 00 00 (binary)")
+    print(f"               = {int('01010101010000000000', 2):020b} = {int('01010101010000000000', 2)}")
+    print()
+    
+    print("Key benefits of rolling hash:")
+    print("  1. Integer comparison is faster than string comparison")
+    print("  2. Less memory (20 bits vs 10 bytes)")
+    print("  3. O(1) window update with bit operations")
+    print("  4. Can handle collisions if needed")
+
+
+def demonstrate_algorithm():
+    """Demonstrate the basic algorithm step by step"""
+    print("\n" + "=" * 70)
+    print("Algorithm Demonstration: DNA = 'AAAAACCCCCAAAAACCCCC'")
+    print("=" * 70)
+    print()
+    
+    s = "AAAAACCCCCAAAAACCCCC"
+    seen = set()
+    repeated = set()
+    
+    print("Looking for all 10-letter sequences that appear more than once:")
+    print()
+    
+    for i in range(len(s) - 9):
+        seq = s[i:i+10]
+        
+        if seq in seen:
+            if seq not in repeated:
+                print(f"Position {i}: '{seq}' - REPEATED! (seen before)")
+                repeated.add(seq)
+        else:
+            print(f"Position {i}: '{seq}' - First occurrence")
+            seen.add(seq)
+    
+    print()
+    print(f"Result: {repeated}")
+
+
+def analyze_complexity():
+    """Analyze time and space complexity of different approaches"""
+    print("\n" + "=" * 70)
+    print("Complexity Analysis")
+    print("=" * 70)
+    print()
+    
+    print("For string of length n:")
+    print()
+    
+    print("1. Hash Set Solution:")
+    print("   Time:  O(n) - single pass, but string operations")
+    print("   Space: O(n) - stores up to n sequences")
+    print("   Pros:  Simple, easy to understand")
+    print("   Cons:  String comparison and hashing overhead")
+    print()
+    
+    print("2. Rolling Hash Solution:")
+    print("   Time:  O(n) - single pass with bit operations")
+    print("   Space: O(n) - stores integers instead of strings")
+    print("   Pros:  Faster operations, less memory per entry")
+    print("   Cons:  More complex implementation")
+    print()
+    
+    print("Practical notes:")
+    print("   - For n < 1000: Simple hash set is fine")
+    print("   - For n > 10000: Rolling hash shows benefits")
+    print("   - Rolling hash uses ~4 bytes per entry")
+    print("   - String storage uses ~10 bytes per entry")
+    print("   - Integer operations are typically 3-5x faster")
+
+
+if __name__ == "__main__":
+    test_solutions()
+    demonstrate_algorithm()
+    demonstrate_rolling_hash()
+    analyze_complexity()
