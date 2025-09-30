@@ -1,0 +1,317 @@
+class Solution:
+    def maxProduct(self, nums):
+        """
+        Find the contiguous subarray with the largest product.
+        
+        Key insight: Unlike sum, products can change dramatically with negatives.
+        A negative number can turn the smallest (most negative) product into 
+        the largest product, and vice versa.
+        
+        Strategy: Track both maximum and minimum products ending at each position.
+        - max_prod: Maximum product ending at current position
+        - min_prod: Minimum product ending at current position
+        
+        For each number, we have three choices:
+        1. Start fresh from current number
+        2. Multiply current number with previous max
+        3. Multiply current number with previous min (important for negatives!)
+        
+        Time Complexity: O(n)
+        Space Complexity: O(1)
+        
+        Args:
+            nums: List of integers
+            
+        Returns:
+            Maximum product of any contiguous subarray
+        """
+        if not nums:
+            return 0
+        
+        # Initialize with first element
+        max_prod = nums[0]  # Max product ending at current position
+        min_prod = nums[0]  # Min product ending at current position
+        result = nums[0]    # Global maximum product
+        
+        # Process remaining elements
+        for i in range(1, len(nums)):
+            curr = nums[i]
+            
+            # Store previous max before updating (since min_prod needs it)
+            temp_max = max_prod
+            
+            # Calculate new max product ending at current position
+            # Three choices: current num alone, curr * prev_max, curr * prev_min
+            max_prod = max(curr, curr * temp_max, curr * min_prod)
+            
+            # Calculate new min product ending at current position
+            # Important: A negative number can make the min very small
+            min_prod = min(curr, curr * temp_max, curr * min_prod)
+            
+            # Update global maximum
+            result = max(result, max_prod)
+        
+        return result
+
+
+class SolutionExplicit:
+    def maxProduct(self, nums):
+        """
+        More explicit version showing the logic clearly.
+        Same algorithm but with clearer variable names and comments.
+        
+        Time Complexity: O(n)
+        Space Complexity: O(1)
+        """
+        if not nums:
+            return 0
+        
+        # Track maximum and minimum products ending at current position
+        current_max = nums[0]
+        current_min = nums[0]
+        global_max = nums[0]
+        
+        for i in range(1, len(nums)):
+            num = nums[i]
+            
+            # If current number is negative, swap max and min
+            # because multiplying by negative flips the sign
+            if num < 0:
+                current_max, current_min = current_min, current_max
+            
+            # Update current max and min
+            # Either start fresh with current number or extend previous subarray
+            current_max = max(num, current_max * num)
+            current_min = min(num, current_min * num)
+            
+            # Update global maximum
+            global_max = max(global_max, current_max)
+        
+        return global_max
+
+
+class SolutionDP:
+    def maxProduct(self, nums):
+        """
+        Dynamic Programming solution with explicit arrays.
+        Good for understanding the state transitions.
+        
+        dp_max[i] = maximum product of subarray ending at index i
+        dp_min[i] = minimum product of subarray ending at index i
+        
+        Time Complexity: O(n)
+        Space Complexity: O(n) - can be optimized to O(1)
+        """
+        if not nums:
+            return 0
+        
+        n = len(nums)
+        
+        # DP arrays
+        dp_max = [0] * n  # Maximum product ending at index i
+        dp_min = [0] * n  # Minimum product ending at index i
+        
+        # Base case
+        dp_max[0] = nums[0]
+        dp_min[0] = nums[0]
+        result = nums[0]
+        
+        # Fill DP arrays
+        for i in range(1, n):
+            curr = nums[i]
+            
+            # Three choices: start fresh, extend max, extend min
+            dp_max[i] = max(curr, curr * dp_max[i-1], curr * dp_min[i-1])
+            dp_min[i] = min(curr, curr * dp_max[i-1], curr * dp_min[i-1])
+            
+            result = max(result, dp_max[i])
+        
+        return result
+
+
+class SolutionBruteForce:
+    def maxProduct(self, nums):
+        """
+        Brute force solution for comparison/understanding.
+        Check all possible subarrays.
+        
+        Time Complexity: O(n²)
+        Space Complexity: O(1)
+        
+        Not efficient but useful for validation and understanding the problem.
+        """
+        if not nums:
+            return 0
+        
+        max_product = float('-inf')
+        
+        # Check all subarrays
+        for i in range(len(nums)):
+            product = 1
+            for j in range(i, len(nums)):
+                product *= nums[j]
+                max_product = max(max_product, product)
+        
+        return max_product
+
+
+def test_solutions():
+    """Test all solutions with various test cases"""
+    
+    test_cases = [
+        # Basic cases
+        ([2, 3, -2, 4], 6),         # [2,3] gives max product 6
+        ([-2, 0, -1], 0),            # Single 0 is the max
+        ([-2], -2),                  # Single negative number
+        ([0, 2], 2),                 # Zero in array
+        
+        # All positives
+        ([1, 2, 3, 4], 24),         # Entire array
+        
+        # All negatives (even count)
+        ([-2, -3, -4], 12),         # Even number of negatives: [-3, -4]
+        
+        # All negatives (odd count)  
+        ([-2, -3, -4, -5], 120),    # Even count in subarray: all four
+        ([-1, -2, -3], 6),          # [-2, -3] gives 6
+        
+        # Mix with zeros
+        ([2, -5, -2, -4, 3], 24),   # [-5, -2, -4] gives 40? No: [2,-5,-2,-4] = 80? No
+        ([0, 2, -3, 0, 4], 4),      # Best is single 4
+        
+        # Large negative products
+        ([-2, 3, -4], 24),          # All three: -2*3*-4 = 24
+        
+        # Single elements
+        ([5], 5),
+        ([0], 0),
+        ([-5], -5),
+        
+        # Multiple zeros
+        ([0, 0, 0], 0),
+        
+        # Complex case
+        ([2, -5, -2, -4, 3, -1, 2], 240),  # Need to trace this
+    ]
+    
+    solutions = [
+        ("Optimized O(1) Space", Solution()),
+        ("Explicit Swap Version", SolutionExplicit()),
+        ("DP with Arrays", SolutionDP()),
+        ("Brute Force O(n²)", SolutionBruteForce())
+    ]
+    
+    print("Testing Maximum Product Subarray Solutions")
+    print("=" * 70)
+    
+    for i, (nums, expected) in enumerate(test_cases):
+        print(f"\nTest Case {i+1}: nums = {nums}")
+        print(f"Expected: {expected}")
+        print("-" * 70)
+        
+        all_correct = True
+        for name, solution in solutions:
+            try:
+                result = solution.maxProduct(nums[:])  # Copy to avoid modification
+                is_correct = result == expected
+                status = "✓ PASS" if is_correct else "✗ FAIL"
+                
+                if not is_correct:
+                    all_correct = False
+                
+                print(f"{name:25s}: {result:6d} {status}")
+                
+            except Exception as e:
+                print(f"{name:25s}: ERROR - {e}")
+                all_correct = False
+        
+        if not all_correct:
+            print("⚠️  Some solutions failed - check expected value")
+
+
+def demonstrate_algorithm():
+    """Demonstrate how the algorithm works step by step"""
+    print("\n" + "=" * 70)
+    print("Algorithm Demonstration: nums = [2, 3, -2, 4]")
+    print("=" * 70)
+    print()
+    
+    nums = [2, 3, -2, 4]
+    
+    max_prod = nums[0]
+    min_prod = nums[0]
+    result = nums[0]
+    
+    print(f"Initial (i=0, num={nums[0]}):")
+    print(f"  max_prod = {max_prod}, min_prod = {min_prod}, result = {result}")
+    print()
+    
+    for i in range(1, len(nums)):
+        curr = nums[i]
+        
+        print(f"Step {i} (num={curr}):")
+        print(f"  Before: max_prod={max_prod}, min_prod={min_prod}")
+        
+        # Show the three choices
+        choice1 = curr
+        choice2 = curr * max_prod
+        choice3 = curr * min_prod
+        
+        print(f"  Three choices for max:")
+        print(f"    1. Start fresh: {choice1}")
+        print(f"    2. Extend max: {curr} × {max_prod} = {choice2}")
+        print(f"    3. Extend min: {curr} × {min_prod} = {choice3}")
+        
+        temp_max = max_prod
+        max_prod = max(choice1, choice2, choice3)
+        min_prod = min(curr, curr * temp_max, curr * min_prod)
+        
+        print(f"  After: max_prod={max_prod}, min_prod={min_prod}")
+        
+        result = max(result, max_prod)
+        print(f"  Global result = {result}")
+        print()
+    
+    print(f"Final Answer: {result}")
+    print("\nKey Insight: At i=2 (num=-2), multiplying by min_prod (6) gives -12,")
+    print("which becomes new min. Later, if we had another negative, this could")
+    print("become the max. This is why tracking both max and min is crucial!")
+
+
+def demonstrate_why_track_min():
+    """Show why tracking minimum is essential"""
+    print("\n" + "=" * 70)
+    print("Why Track Minimum? Example: nums = [-2, 3, -4]")
+    print("=" * 70)
+    print()
+    
+    nums = [-2, 3, -4]
+    print("Without tracking min, we might miss that [-2, 3, -4] = 24!")
+    print()
+    
+    max_prod = nums[0]
+    min_prod = nums[0]
+    result = nums[0]
+    
+    for i in range(len(nums)):
+        if i == 0:
+            print(f"i=0, num={nums[i]}: max={max_prod}, min={min_prod}")
+        else:
+            curr = nums[i]
+            temp_max = max_prod
+            
+            max_prod = max(curr, curr * temp_max, curr * min_prod)
+            min_prod = min(curr, curr * temp_max, curr * min_prod)
+            result = max(result, max_prod)
+            
+            print(f"i={i}, num={curr}: max={max_prod}, min={min_prod}")
+    
+    print(f"\nFinal: {result}")
+    print("\nAt i=2, num=-4 multiplied by min_prod=-6 gives 24!")
+    print("This is why we need to track the minimum product!")
+
+
+if __name__ == "__main__":
+    test_solutions()
+    demonstrate_algorithm()
+    demonstrate_why_track_min()
