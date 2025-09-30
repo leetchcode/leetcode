@@ -1,0 +1,396 @@
+class Solution:
+    def rob(self, nums):
+        """
+        Find maximum amount that can be robbed without robbing adjacent houses.
+        
+        Key insight: At each house, we have two choices:
+        1. Rob current house + max from (i-2) houses back
+        2. Don't rob current house, keep max from (i-1) houses back
+        
+        Recurrence relation:
+        dp[i] = max(nums[i] + dp[i-2], dp[i-1])
+        
+        Optimized to O(1) space by only tracking last two values.
+        
+        Time Complexity: O(n)
+        Space Complexity: O(1)
+        
+        Args:
+            nums: List of integers representing money in each house
+            
+        Returns:
+            Maximum amount of money that can be robbed
+        """
+        if not nums:
+            return 0
+        if len(nums) == 1:
+            return nums[0]
+        
+        # Track max money robbed up to previous two houses
+        prev2 = nums[0]           # Max money up to house 0
+        prev1 = max(nums[0], nums[1])  # Max money up to house 1
+        
+        # Process remaining houses
+        for i in range(2, len(nums)):
+            # Either rob current house + prev2, or skip current (keep prev1)
+            current = max(nums[i] + prev2, prev1)
+            
+            # Update for next iteration
+            prev2 = prev1
+            prev1 = current
+        
+        return prev1
+
+
+class SolutionDP:
+    def rob(self, nums):
+        """
+        Dynamic Programming solution with explicit DP array.
+        Good for understanding the state transitions.
+        
+        dp[i] = maximum money that can be robbed from houses 0 to i
+        
+        Time Complexity: O(n)
+        Space Complexity: O(n) - can be optimized to O(1)
+        
+        Args:
+            nums: List of money in each house
+            
+        Returns:
+            Maximum amount that can be robbed
+        """
+        if not nums:
+            return 0
+        if len(nums) == 1:
+            return nums[0]
+        
+        n = len(nums)
+        dp = [0] * n
+        
+        # Base cases
+        dp[0] = nums[0]
+        dp[1] = max(nums[0], nums[1])
+        
+        # Fill DP array
+        for i in range(2, n):
+            # Two choices: rob current or skip current
+            rob_current = nums[i] + dp[i-2]
+            skip_current = dp[i-1]
+            dp[i] = max(rob_current, skip_current)
+        
+        return dp[n-1]
+
+
+class SolutionRecursiveMemo:
+    def rob(self, nums):
+        """
+        Recursive solution with memoization (top-down DP).
+        
+        Helps understand the problem recursively before converting to iterative.
+        
+        Time Complexity: O(n)
+        Space Complexity: O(n) for memo and recursion stack
+        """
+        if not nums:
+            return 0
+        
+        memo = {}
+        
+        def rob_from(i):
+            """
+            Returns max money that can be robbed from houses i to end.
+            
+            Args:
+                i: Starting house index
+                
+            Returns:
+                Maximum money from houses i onwards
+            """
+            # Base cases
+            if i >= len(nums):
+                return 0
+            
+            # Check memo
+            if i in memo:
+                return memo[i]
+            
+            # Two choices: rob current house or skip it
+            rob_current = nums[i] + rob_from(i + 2)
+            skip_current = rob_from(i + 1)
+            
+            # Store and return best choice
+            memo[i] = max(rob_current, skip_current)
+            return memo[i]
+        
+        return rob_from(0)
+
+
+class SolutionRecursiveNoMemo:
+    def rob(self, nums):
+        """
+        Pure recursive solution without memoization.
+        
+        INEFFICIENT - included only for understanding the recurrence relation.
+        
+        Time Complexity: O(2^n) - exponential!
+        Space Complexity: O(n) for recursion stack
+        
+        DO NOT USE FOR LARGE INPUTS - will timeout.
+        """
+        if not nums:
+            return 0
+        
+        def rob_from(i):
+            # Base cases
+            if i >= len(nums):
+                return 0
+            
+            # Two choices
+            rob_current = nums[i] + rob_from(i + 2)
+            skip_current = rob_from(i + 1)
+            
+            return max(rob_current, skip_current)
+        
+        return rob_from(0)
+
+
+class SolutionAlternative:
+    def rob(self, nums):
+        """
+        Alternative formulation with clearer variable names.
+        
+        Time Complexity: O(n)
+        Space Complexity: O(1)
+        """
+        if not nums:
+            return 0
+        
+        # rob = max money if we rob current house
+        # not_rob = max money if we don't rob current house
+        rob = 0
+        not_rob = 0
+        
+        for money in nums:
+            # If we rob current house, we can't have robbed previous
+            # If we don't rob current, we keep the previous max
+            new_rob = not_rob + money
+            new_not_rob = max(rob, not_rob)
+            
+            rob = new_rob
+            not_rob = new_not_rob
+        
+        return max(rob, not_rob)
+
+
+def test_solutions():
+    """Test all solutions with various test cases"""
+    
+    test_cases = [
+        # Basic examples
+        ([1, 2, 3, 1], 4),          # Rob house 0 and 2: 1 + 3 = 4
+        ([2, 7, 9, 3, 1], 12),      # Rob house 0, 2, 4: 2 + 9 + 1 = 12
+        
+        # Edge cases
+        ([1], 1),                    # Single house
+        ([1, 2], 2),                 # Two houses, rob second
+        ([2, 1], 2),                 # Two houses, rob first
+        ([], 0),                     # Empty array
+        
+        # All same values
+        ([5, 5, 5, 5], 10),         # Rob alternating: 5 + 5 = 10
+        
+        # Increasing values
+        ([1, 2, 3, 4, 5], 9),       # Rob 1, 3, 5: 1 + 3 + 5 = 9
+        
+        # Decreasing values
+        ([5, 4, 3, 2, 1], 9),       # Rob 5, 3, 1: 5 + 3 + 1 = 9
+        
+        # Large difference at start
+        ([100, 1, 1, 100], 200),    # Rob 100, 100: 200
+        
+        # Pattern that might confuse greedy
+        ([2, 1, 1, 2], 4),          # Rob first and last: 2 + 2 = 4
+        
+        # Longer sequence
+        ([5, 3, 4, 11, 2], 16),     # Rob 5, 11: 16
+        
+        # Three houses
+        ([1, 3, 1], 3),             # Rob middle house: 3
+        ([9, 1, 1], 9),             # Rob first house: 9
+    ]
+    
+    solutions = [
+        ("Optimized O(1) Space", Solution()),
+        ("DP Array O(n) Space", SolutionDP()),
+        ("Recursive + Memo", SolutionRecursiveMemo()),
+        ("Alternative Formulation", SolutionAlternative()),
+        # Skip pure recursive for large inputs
+    ]
+    
+    print("Testing House Robber Solutions")
+    print("=" * 70)
+    
+    for i, (nums, expected) in enumerate(test_cases):
+        print(f"\nTest Case {i+1}: nums = {nums}")
+        print(f"Expected: {expected}")
+        print("-" * 70)
+        
+        for name, solution in solutions:
+            try:
+                result = solution.rob(nums[:])  # Copy to avoid modification
+                is_correct = result == expected
+                status = "✓ PASS" if is_correct else "✗ FAIL"
+                
+                print(f"{name:30s}: {result:4d} {status}")
+                
+            except Exception as e:
+                print(f"{name:30s}: ERROR - {e}")
+    
+    # Test pure recursive only on small inputs
+    print("\n" + "=" * 70)
+    print("Testing Pure Recursive (small inputs only):")
+    print("-" * 70)
+    small_tests = test_cases[:6]  # Only test first few cases
+    sol_recursive = SolutionRecursiveNoMemo()
+    
+    for i, (nums, expected) in enumerate(small_tests):
+        result = sol_recursive.rob(nums[:])
+        status = "✓" if result == expected else "✗"
+        print(f"Test {i+1}: {result:4d} {status}")
+
+
+def demonstrate_algorithm():
+    """Demonstrate how the DP algorithm works step by step"""
+    print("\n" + "=" * 70)
+    print("Algorithm Demonstration: nums = [2, 7, 9, 3, 1]")
+    print("=" * 70)
+    print()
+    
+    nums = [2, 7, 9, 3, 1]
+    n = len(nums)
+    
+    print("Building DP array where dp[i] = max money from houses 0 to i")
+    print()
+    
+    dp = [0] * n
+    dp[0] = nums[0]
+    dp[1] = max(nums[0], nums[1])
+    
+    print(f"Base cases:")
+    print(f"  dp[0] = nums[0] = {dp[0]}")
+    print(f"  dp[1] = max(nums[0], nums[1]) = max({nums[0]}, {nums[1]}) = {dp[1]}")
+    print()
+    
+    for i in range(2, n):
+        rob_current = nums[i] + dp[i-2]
+        skip_current = dp[i-1]
+        dp[i] = max(rob_current, skip_current)
+        
+        print(f"House {i} (money={nums[i]}):")
+        print(f"  Option 1 - Rob this house:  {nums[i]} + dp[{i-2}] = {nums[i]} + {dp[i-2]} = {rob_current}")
+        print(f"  Option 2 - Skip this house: dp[{i-1}] = {skip_current}")
+        print(f"  dp[{i}] = max({rob_current}, {skip_current}) = {dp[i]}")
+        print()
+    
+    print(f"Final DP array: {dp}")
+    print(f"Maximum money: {dp[n-1]}")
+    print()
+    
+    # Show which houses were robbed
+    print("Tracing back which houses were robbed:")
+    robbed = []
+    i = n - 1
+    while i >= 0:
+        if i == 0:
+            robbed.append(0)
+            break
+        elif i == 1:
+            if nums[1] > nums[0]:
+                robbed.append(1)
+            else:
+                robbed.append(0)
+            break
+        else:
+            # If dp[i] != dp[i-1], we robbed house i
+            if dp[i] != dp[i-1]:
+                robbed.append(i)
+                i -= 2  # Skip next house
+            else:
+                i -= 1
+    
+    robbed.reverse()
+    print(f"Houses robbed: {robbed}")
+    print(f"Money from each: {[nums[i] for i in robbed]}")
+    print(f"Total: {sum(nums[i] for i in robbed)}")
+
+
+def demonstrate_recurrence():
+    """Show the recurrence relation visually"""
+    print("\n" + "=" * 70)
+    print("Understanding the Recurrence Relation")
+    print("=" * 70)
+    print()
+    
+    print("At each house i, we make a choice:")
+    print()
+    print("Choice 1: ROB house i")
+    print("  → Get nums[i] + max money from houses 0 to i-2")
+    print("  → Can't rob house i-1 (adjacent)")
+    print("  → Result: nums[i] + dp[i-2]")
+    print()
+    print("Choice 2: DON'T ROB house i")
+    print("  → Keep max money from houses 0 to i-1")
+    print("  → Result: dp[i-1]")
+    print()
+    print("Recurrence: dp[i] = max(nums[i] + dp[i-2], dp[i-1])")
+    print()
+    print("Example with nums = [5, 3, 4, 11, 2]:")
+    print()
+    print("  i=0: dp[0] = 5 (only one house)")
+    print("  i=1: dp[1] = max(5, 3) = 5 (rob house 0)")
+    print("  i=2: dp[2] = max(4+5, 5) = 9 (rob houses 0,2)")
+    print("  i=3: dp[3] = max(11+5, 9) = 16 (rob houses 0,3)")
+    print("  i=4: dp[4] = max(2+9, 16) = 16 (rob houses 0,3)")
+    print()
+    print("  Answer: 16 (rob houses at indices 0 and 3)")
+
+
+def compare_space_complexity():
+    """Compare space complexity of different approaches"""
+    print("\n" + "=" * 70)
+    print("Space Complexity Comparison")
+    print("=" * 70)
+    print()
+    
+    print("1. DP Array Approach: O(n) space")
+    print("   Stores dp[i] for all houses")
+    print("   Easy to understand and debug")
+    print()
+    
+    print("2. Optimized Two Variables: O(1) space")
+    print("   Only needs previous two values")
+    print("   Notice: dp[i] only depends on dp[i-1] and dp[i-2]")
+    print("   Variables: prev1 (dp[i-1]) and prev2 (dp[i-2])")
+    print()
+    
+    print("Optimization insight:")
+    print("  Since we only need the last two values, we can")
+    print("  replace the entire array with just two variables!")
+    print()
+    
+    print("Code transformation:")
+    print("  Before: dp[i] = max(nums[i] + dp[i-2], dp[i-1])")
+    print("  After:  current = max(nums[i] + prev2, prev1)")
+    print()
+    
+    print("For n=1,000,000:")
+    print("  DP Array:  ~8 MB (1M integers × 8 bytes)")
+    print("  Optimized: ~16 bytes (2 integers)")
+    print("  Savings:   99.9998% memory reduction!")
+
+
+if __name__ == "__main__":
+    test_solutions()
+    demonstrate_algorithm()
+    demonstrate_recurrence()
+    compare_space_complexity()
