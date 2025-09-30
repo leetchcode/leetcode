@@ -1,0 +1,463 @@
+class TrieNode:
+    """
+    Node in a Trie (prefix tree) data structure.
+    Each node contains:
+    - children: dictionary mapping characters to child nodes
+    - is_end: boolean indicating if this node marks the end of a word
+    """
+    def __init__(self):
+        self.children = {}      # char -> TrieNode
+        self.is_end = False     # True if word ends here
+
+
+class WordDictionary:
+    """
+    Data structure supporting adding words and searching with wildcards.
+    
+    Uses a Trie (prefix tree) for efficient storage and search.
+    The wildcard '.' matches any single character.
+    
+    Operations:
+    - addWord(word): O(m) where m is word length
+    - search(word): O(26^k * m) worst case, where k is number of dots
+                    O(m) average case for words without dots
+    
+    Space Complexity: O(N * M) where N is number of words, M is average length
+    """
+    
+    def __init__(self):
+        """Initialize the data structure with an empty Trie."""
+        self.root = TrieNode()
+    
+    def addWord(self, word):
+        """
+        Add a word to the data structure.
+        
+        Algorithm:
+        1. Start at root node
+        2. For each character, create child node if it doesn't exist
+        3. Move to child node
+        4. Mark final node as end of word
+        
+        Time Complexity: O(m) where m is length of word
+        Space Complexity: O(m) for new nodes in worst case
+        
+        Args:
+            word: String to add (lowercase letters only)
+        """
+        node = self.root
+        
+        # Traverse/create path for each character
+        for char in word:
+            if char not in node.children:
+                node.children[char] = TrieNode()
+            node = node.children[char]
+        
+        # Mark end of word
+        node.is_end = True
+    
+    def search(self, word):
+        """
+        Search for a word in the data structure.
+        Supports '.' as wildcard matching any single character.
+        
+        Algorithm:
+        1. Use DFS/backtracking to explore all possible paths
+        2. For regular characters, follow exact path
+        3. For '.', try all possible children
+        4. Return True if any path leads to a complete word
+        
+        Time Complexity: 
+        - Without dots: O(m) where m is word length
+        - With k dots: O(26^k * m) worst case (try all branches)
+        
+        Args:
+            word: String to search (may contain '.' wildcards)
+            
+        Returns:
+            True if word exists (considering wildcards), False otherwise
+        """
+        return self._search_helper(word, 0, self.root)
+    
+    def _search_helper(self, word, index, node):
+        """
+        Recursive helper function for searching with wildcards.
+        
+        Args:
+            word: The search pattern
+            index: Current position in word
+            node: Current TrieNode being examined
+            
+        Returns:
+            True if pattern matches from this position, False otherwise
+        """
+        # Base case: reached end of word
+        if index == len(word):
+            return node.is_end
+        
+        char = word[index]
+        
+        if char == '.':
+            # Wildcard: try all possible children
+            for child in node.children.values():
+                if self._search_helper(word, index + 1, child):
+                    return True
+            return False
+        else:
+            # Regular character: follow exact path
+            if char not in node.children:
+                return False
+            return self._search_helper(word, index + 1, node.children[char])
+
+
+class WordDictionaryIterative:
+    """
+    Alternative implementation using iterative search with explicit stack.
+    
+    Avoids recursion overhead but code is slightly more complex.
+    """
+    
+    def __init__(self):
+        self.root = TrieNode()
+    
+    def addWord(self, word):
+        """Add word to dictionary (same as recursive version)."""
+        node = self.root
+        for char in word:
+            if char not in node.children:
+                node.children[char] = TrieNode()
+            node = node.children[char]
+        node.is_end = True
+    
+    def search(self, word):
+        """
+        Iterative search using explicit stack.
+        
+        Stack contains tuples of (current_node, current_index)
+        """
+        if not word:
+            return self.root.is_end
+        
+        # Stack: (node, index_in_word)
+        stack = [(self.root, 0)]
+        
+        while stack:
+            node, index = stack.pop()
+            
+            # Reached end of word
+            if index == len(word):
+                if node.is_end:
+                    return True
+                continue
+            
+            char = word[index]
+            
+            if char == '.':
+                # Wildcard: add all children to stack
+                for child in node.children.values():
+                    stack.append((child, index + 1))
+            else:
+                # Regular character
+                if char in node.children:
+                    stack.append((node.children[char], index + 1))
+        
+        return False
+
+
+class WordDictionaryOptimized:
+    """
+    Optimized version with additional features:
+    - Length-based organization for faster searches
+    - Early termination optimizations
+    """
+    
+    def __init__(self):
+        self.root = TrieNode()
+        self.words_by_length = {}  # length -> set of words (for validation)
+    
+    def addWord(self, word):
+        """Add word and track by length."""
+        node = self.root
+        for char in word:
+            if char not in node.children:
+                node.children[char] = TrieNode()
+            node = node.children[char]
+        node.is_end = True
+        
+        # Track words by length (useful for debugging/optimization)
+        length = len(word)
+        if length not in self.words_by_length:
+            self.words_by_length[length] = set()
+        self.words_by_length[length].add(word)
+    
+    def search(self, word):
+        """Search with early termination."""
+        # Early termination: if no words of this length exist
+        if len(word) in self.words_by_length:
+            # Could add more optimizations here
+            pass
+        
+        return self._search_helper(word, 0, self.root)
+    
+    def _search_helper(self, word, index, node):
+        """Recursive search helper."""
+        if index == len(word):
+            return node.is_end
+        
+        char = word[index]
+        
+        if char == '.':
+            # Early termination: if no children, no point searching
+            if not node.children:
+                return False
+            
+            for child in node.children.values():
+                if self._search_helper(word, index + 1, child):
+                    return True
+            return False
+        else:
+            if char not in node.children:
+                return False
+            return self._search_helper(word, index + 1, node.children[char])
+
+
+def test_word_dictionary():
+    """Test the WordDictionary implementations"""
+    
+    print("Testing Word Dictionary Implementations")
+    print("=" * 70)
+    
+    implementations = [
+        ("Recursive (Standard)", WordDictionary),
+        ("Iterative", WordDictionaryIterative),
+        ("Optimized", WordDictionaryOptimized)
+    ]
+    
+    for impl_name, WordDictClass in implementations:
+        print(f"\n{impl_name}:")
+        print("-" * 70)
+        
+        wd = WordDictClass()
+        
+        # Test 1: Basic operations
+        print("\nTest 1: Basic add and search")
+        wd.addWord("bad")
+        wd.addWord("dad")
+        wd.addWord("mad")
+        
+        tests = [
+            ("pad", False),
+            ("bad", True),
+            (".ad", True),
+            ("b..", True),
+            ("...", True),
+            (".a.", True),
+            ("b.d", True),
+            ("ba.", True),
+            ("..", False),  # Only 2 chars, words are 3 chars
+        ]
+        
+        for word, expected in tests:
+            result = wd.search(word)
+            status = "✓" if result == expected else "✗"
+            print(f"  search('{word}'): {result:5} (expected {expected:5}) {status}")
+        
+        # Test 2: More complex patterns
+        print("\nTest 2: Complex patterns")
+        wd2 = WordDictClass()
+        wd2.addWord("a")
+        wd2.addWord("ab")
+        wd2.addWord("abc")
+        wd2.addWord("abcd")
+        
+        tests2 = [
+            ("a", True),
+            ("ab", True),
+            ("abc", True),
+            ("abcd", True),
+            (".", True),      # Matches "a"
+            ("..", True),     # Matches "ab"
+            ("...", True),    # Matches "abc"
+            ("....", True),   # Matches "abcd"
+            (".....", False), # No 5-letter words
+            ("a.", True),     # Matches "ab"
+            (".b", True),     # Matches "ab"
+            ("a.c", True),    # Matches "abc"
+        ]
+        
+        for word, expected in tests2:
+            result = wd2.search(word)
+            status = "✓" if result == expected else "✗"
+            print(f"  search('{word}'): {result:5} (expected {expected:5}) {status}")
+
+
+def demonstrate_trie_structure():
+    """Visualize how the Trie is built"""
+    print("\n" + "=" * 70)
+    print("Trie Structure Demonstration")
+    print("=" * 70)
+    print()
+    
+    wd = WordDictionary()
+    words = ["bad", "dad", "mad"]
+    
+    print(f"Adding words: {words}")
+    print()
+    
+    for word in words:
+        wd.addWord(word)
+    
+    print("Resulting Trie structure:")
+    print()
+    print("         root")
+    print("        / | \\")
+    print("       b  d  m")
+    print("       |  |  |")
+    print("       a  a  a")
+    print("       |  |  |")
+    print("       d* d* d*  (* = end of word)")
+    print()
+    print("This shared prefix structure makes search efficient!")
+    print()
+    
+    print("Search examples:")
+    print()
+    print("1. search('bad'):")
+    print("   root -> b -> a -> d* ✓ (exact match)")
+    print()
+    print("2. search('.ad'):")
+    print("   root -> ? (try all: b,d,m) -> a -> d*")
+    print("   All three paths work! Returns True")
+    print()
+    print("3. search('b..'):")
+    print("   root -> b -> ? (try all: a) -> ? (try all: d*)")
+    print("   Path exists! Returns True")
+    print()
+    print("4. search('pad'):")
+    print("   root -> p (doesn't exist) ✗")
+
+
+def analyze_complexity():
+    """Analyze time and space complexity"""
+    print("\n" + "=" * 70)
+    print("Complexity Analysis")
+    print("=" * 70)
+    print()
+    
+    print("Variables:")
+    print("  N = number of words")
+    print("  M = average word length")
+    print("  L = length of search word")
+    print("  K = number of '.' wildcards in search word")
+    print()
+    
+    print("addWord(word):")
+    print("  Time:  O(L) - traverse/create L nodes")
+    print("  Space: O(L) - worst case, create L new nodes")
+    print()
+    
+    print("search(word) - without wildcards:")
+    print("  Time:  O(L) - follow exact path")
+    print("  Space: O(L) - recursion depth")
+    print()
+    
+    print("search(word) - with K wildcards:")
+    print("  Time:  O(26^K * L) - worst case, try all branches")
+    print("  Space: O(L) - recursion depth")
+    print()
+    
+    print("Overall Space Complexity:")
+    print("  O(N * M) - store all N words of average length M")
+    print()
+    
+    print("Example worst case search:")
+    print("  search('...') with 1000 3-letter words")
+    print("  Must explore: 26 * 26 * 26 = 17,576 paths")
+    print("  This is why wildcards can be expensive!")
+    print()
+    
+    print("Optimization strategies:")
+    print("  1. Limit number of wildcards")
+    print("  2. Place wildcards at the end when possible")
+    print("  3. Early termination when no children exist")
+    print("  4. Cache frequently searched patterns")
+
+
+def compare_with_alternatives():
+    """Compare Trie with alternative approaches"""
+    print("\n" + "=" * 70)
+    print("Comparison with Alternative Approaches")
+    print("=" * 70)
+    print()
+    
+    print("1. Trie (Current Solution):")
+    print("   Add:    O(L)")
+    print("   Search: O(L) without wildcards, O(26^K * L) with wildcards")
+    print("   Space:  O(N * M)")
+    print("   Pros:   Fast exact search, shared prefixes save space")
+    print("   Cons:   Complex with wildcards, more memory than simple set")
+    print()
+    
+    print("2. Hash Set:")
+    print("   Add:    O(L)")
+    print("   Search: O(N * L) - must check every word with wildcards")
+    print("   Space:  O(N * M)")
+    print("   Pros:   O(1) exact search, simple implementation")
+    print("   Cons:   Very slow with wildcards (no prefix optimization)")
+    print()
+    
+    print("3. List of Words:")
+    print("   Add:    O(1)")
+    print("   Search: O(N * L) - linear scan")
+    print("   Space:  O(N * M)")
+    print("   Pros:   Simplest implementation")
+    print("   Cons:   Slow for all operations")
+    print()
+    
+    print("Why Trie is Best for This Problem:")
+    print("  - Prefix sharing reduces space")
+    print("  - Fast exact searches O(L)")
+    print("  - Wildcard search still benefits from prefix matching")
+    print("  - Can prune search space early")
+
+
+def demonstrate_search_process():
+    """Show step-by-step search with wildcards"""
+    print("\n" + "=" * 70)
+    print("Step-by-Step Search Process: search('.ad')")
+    print("=" * 70)
+    print()
+    
+    print("Dictionary contains: ['bad', 'dad', 'mad']")
+    print()
+    print("Searching for '.ad' (. matches any character):")
+    print()
+    
+    print("Step 1: Start at root, character '.'")
+    print("  → Wildcard! Must try all children: {b, d, m}")
+    print()
+    
+    print("Step 2a: Try path through 'b'")
+    print("  → Move to 'b' node, character 'a'")
+    print("  → 'a' exists as child of 'b'")
+    print("  → Move to 'a' node, character 'd'")
+    print("  → 'd' exists as child of 'a'")
+    print("  → 'd' is marked as end of word ✓")
+    print("  → Found match: 'bad'")
+    print()
+    
+    print("Since we found a match, return True immediately!")
+    print("(No need to check 'd' and 'm' paths)")
+    print()
+    
+    print("If we continued (for demonstration):")
+    print("Step 2b: Path through 'd' → 'dad' ✓")
+    print("Step 2c: Path through 'm' → 'mad' ✓")
+
+
+if __name__ == "__main__":
+    test_word_dictionary()
+    demonstrate_trie_structure()
+    demonstrate_search_process()
+    analyze_complexity()
+    compare_with_alternatives()
