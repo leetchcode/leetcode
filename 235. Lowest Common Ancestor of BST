@@ -1,0 +1,458 @@
+# Definition for a binary tree node.
+class TreeNode:
+    def __init__(self, val=0, left=None, right=None):
+        self.val = val
+        self.left = left
+        self.right = right
+
+
+class Solution:
+    def lowestCommonAncestor(self, root, p, q):
+        """
+        Find the lowest common ancestor (LCA) of two nodes in a BST.
+        
+        Key insight: Use BST property to guide search!
+        - If both p and q are less than root, LCA is in left subtree
+        - If both p and q are greater than root, LCA is in right subtree
+        - Otherwise, root is the LCA (split point)
+        
+        The LCA is the "split point" where p and q diverge to different subtrees,
+        OR where one node is an ancestor of the other.
+        
+        Time Complexity: O(h) where h is height of tree
+                        O(log n) for balanced BST, O(n) for skewed tree
+        Space Complexity: O(1) - no extra space used
+        
+        Args:
+            root: Root of the BST
+            p: First node
+            q: Second node
+            
+        Returns:
+            The lowest common ancestor node
+        """
+        current = root
+        
+        while current:
+            # Both nodes are in left subtree
+            if p.val < current.val and q.val < current.val:
+                current = current.left
+            # Both nodes are in right subtree
+            elif p.val > current.val and q.val > current.val:
+                current = current.right
+            else:
+                # Found the split point!
+                # Either current is between p and q,
+                # or current is p or q itself (one is ancestor of other)
+                return current
+        
+        return None  # Should never reach here if p and q exist in tree
+
+
+class SolutionRecursive:
+    def lowestCommonAncestor(self, root, p, q):
+        """
+        Recursive solution - more elegant but uses O(h) space.
+        
+        Time Complexity: O(h)
+        Space Complexity: O(h) for recursion stack
+        
+        Args:
+            root: Root of the BST
+            p: First node
+            q: Second node
+            
+        Returns:
+            The lowest common ancestor node
+        """
+        # Base case: empty tree
+        if not root:
+            return None
+        
+        # If both nodes are smaller, go left
+        if p.val < root.val and q.val < root.val:
+            return self.lowestCommonAncestor(root.left, p, q)
+        
+        # If both nodes are larger, go right
+        elif p.val > root.val and q.val > root.val:
+            return self.lowestCommonAncestor(root.right, p, q)
+        
+        # Otherwise, this is the split point (LCA)
+        else:
+            return root
+
+
+class SolutionGenericBinaryTree:
+    def lowestCommonAncestor(self, root, p, q):
+        """
+        Generic solution that works for ANY binary tree (not just BST).
+        Doesn't use BST property, so it's less efficient for BSTs.
+        
+        This is the solution for LeetCode 236 (LCA of Binary Tree).
+        Included here for comparison.
+        
+        Time Complexity: O(n) - must visit all nodes in worst case
+        Space Complexity: O(h) for recursion stack
+        
+        Args:
+            root: Root of the binary tree
+            p: First node
+            q: Second node
+            
+        Returns:
+            The lowest common ancestor node
+        """
+        # Base case: if we reach null or find p or q
+        if not root or root == p or root == q:
+            return root
+        
+        # Search both subtrees
+        left = self.lowestCommonAncestor(root.left, p, q)
+        right = self.lowestCommonAncestor(root.right, p, q)
+        
+        # If both subtrees return non-null, root is LCA
+        if left and right:
+            return root
+        
+        # Otherwise, return whichever is non-null
+        return left if left else right
+
+
+class SolutionWithPath:
+    def lowestCommonAncestor(self, root, p, q):
+        """
+        Alternative approach: Find paths to both nodes, then find divergence point.
+        
+        Less efficient but demonstrates another way to think about the problem.
+        
+        Time Complexity: O(h) to find each path, O(h) to compare = O(h)
+        Space Complexity: O(h) for storing paths
+        """
+        def find_path(root, target):
+            """Find path from root to target node."""
+            path = []
+            current = root
+            
+            while current:
+                path.append(current)
+                if target.val < current.val:
+                    current = current.left
+                elif target.val > current.val:
+                    current = current.right
+                else:  # Found target
+                    break
+            
+            return path
+        
+        # Find paths to both nodes
+        path_p = find_path(root, p)
+        path_q = find_path(root, q)
+        
+        # Find last common node in both paths
+        lca = root
+        for i in range(min(len(path_p), len(path_q))):
+            if path_p[i] == path_q[i]:
+                lca = path_p[i]
+            else:
+                break
+        
+        return lca
+
+
+# Helper functions for testing
+def build_bst():
+    """
+    Build example BST:
+            6
+          /   \
+         2     8
+        / \   / \
+       0   4 7   9
+          / \
+         3   5
+    """
+    root = TreeNode(6)
+    root.left = TreeNode(2)
+    root.right = TreeNode(8)
+    root.left.left = TreeNode(0)
+    root.left.right = TreeNode(4)
+    root.right.left = TreeNode(7)
+    root.right.right = TreeNode(9)
+    root.left.right.left = TreeNode(3)
+    root.left.right.right = TreeNode(5)
+    return root
+
+
+def find_node(root, val):
+    """Helper to find a node with given value."""
+    if not root:
+        return None
+    if root.val == val:
+        return root
+    if val < root.val:
+        return find_node(root.left, val)
+    return find_node(root.right, val)
+
+
+def test_solutions():
+    """Test all solutions with various test cases"""
+    
+    print("Testing Lowest Common Ancestor of BST Solutions")
+    print("=" * 70)
+    
+    # Build test tree
+    root = build_bst()
+    
+    print("\nTest BST structure:")
+    print("        6")
+    print("      /   \\")
+    print("     2     8")
+    print("    / \\   / \\")
+    print("   0   4 7   9")
+    print("      / \\")
+    print("     3   5")
+    print()
+    
+    # Test cases: (p_val, q_val, expected_lca_val)
+    test_cases = [
+        (2, 8, 6),   # Nodes on different sides of root
+        (2, 4, 2),   # One node is ancestor of other
+        (3, 5, 4),   # Both in same subtree
+        (0, 5, 2),   # Both in left subtree
+        (7, 9, 8),   # Both in right subtree
+        (0, 9, 6),   # Extremes on different sides
+        (3, 4, 4),   # Parent and child
+        (2, 2, 2),   # Same node
+    ]
+    
+    solutions = [
+        ("Iterative (Optimal)", Solution()),
+        ("Recursive", SolutionRecursive()),
+        ("Generic Binary Tree", SolutionGenericBinaryTree()),
+        ("Path-based", SolutionWithPath())
+    ]
+    
+    for i, (p_val, q_val, expected) in enumerate(test_cases):
+        print(f"Test Case {i+1}: LCA({p_val}, {q_val})")
+        print(f"Expected: {expected}")
+        print("-" * 70)
+        
+        p = find_node(root, p_val)
+        q = find_node(root, q_val)
+        
+        for name, solution in solutions:
+            try:
+                result = solution.lowestCommonAncestor(root, p, q)
+                result_val = result.val if result else None
+                is_correct = result_val == expected
+                status = "✓ PASS" if is_correct else "✗ FAIL"
+                
+                print(f"{name:25s}: {result_val} {status}")
+                
+            except Exception as e:
+                print(f"{name:25s}: ERROR - {e}")
+        
+        print()
+
+
+def demonstrate_algorithm():
+    """Demonstrate how the algorithm works step by step"""
+    print("=" * 70)
+    print("Algorithm Demonstration: Finding LCA(3, 5)")
+    print("=" * 70)
+    print()
+    
+    root = build_bst()
+    p = find_node(root, 3)
+    q = find_node(root, 5)
+    
+    print("Tree structure:")
+    print("        6")
+    print("      /   \\")
+    print("     2     8")
+    print("    / \\   / \\")
+    print("   0   4 7   9")
+    print("      / \\")
+    print("     3   5  <- Finding LCA of these")
+    print()
+    
+    print("Step-by-step process:")
+    print()
+    
+    current = root
+    step = 1
+    
+    while current:
+        print(f"Step {step}: At node {current.val}")
+        print(f"  p.val = {p.val}, q.val = {q.val}")
+        
+        if p.val < current.val and q.val < current.val:
+            print(f"  Both {p.val} and {q.val} < {current.val}")
+            print(f"  → Go LEFT")
+            current = current.left
+        elif p.val > current.val and q.val > current.val:
+            print(f"  Both {p.val} and {q.val} > {current.val}")
+            print(f"  → Go RIGHT")
+            current = current.right
+        else:
+            print(f"  Split point found!")
+            print(f"  {p.val} and {q.val} are on different sides of {current.val}")
+            print(f"  (or {current.val} equals one of them)")
+            print(f"  → LCA = {current.val}")
+            break
+        
+        print()
+        step += 1
+
+
+def demonstrate_split_point():
+    """Explain the concept of split point"""
+    print("\n" + "=" * 70)
+    print("Understanding the 'Split Point' Concept")
+    print("=" * 70)
+    print()
+    
+    print("The LCA is the deepest node where p and q 'split' to different subtrees.")
+    print()
+    
+    print("Case 1: Nodes on different sides")
+    print("        6  <- LCA(2, 8) = 6")
+    print("      /   \\")
+    print("     2     8")
+    print("  p splits left, q splits right from node 6")
+    print()
+    
+    print("Case 2: One node is ancestor of other")
+    print("        6")
+    print("      /   \\")
+    print("     2  <- LCA(2, 4) = 2")
+    print("    / \\")
+    print("   0   4")
+    print("  Node 2 is the ancestor of node 4")
+    print("  The split happens AT node 2 itself")
+    print()
+    
+    print("Case 3: Both in same subtree")
+    print("        6")
+    print("      /   \\")
+    print("     2     8")
+    print("    / \\")
+    print("   0   4  <- LCA(3, 5) = 4")
+    print("      / \\")
+    print("     3   5")
+    print("  Must go into subtree to find where they split")
+
+
+def compare_bst_vs_binary_tree():
+    """Compare BST-specific vs generic solution"""
+    print("\n" + "=" * 70)
+    print("BST Solution vs Generic Binary Tree Solution")
+    print("=" * 70)
+    print()
+    
+    print("BST-Specific Solution (LeetCode 235):")
+    print("  • Uses BST property: left < root < right")
+    print("  • Can determine direction without searching")
+    print("  • Time: O(h) where h is height")
+    print("  • Space: O(1) iterative, O(h) recursive")
+    print("  • Only visits nodes on path from root to LCA")
+    print()
+    
+    print("Generic Binary Tree Solution (LeetCode 236):")
+    print("  • Works for any binary tree structure")
+    print("  • Must search both subtrees")
+    print("  • Time: O(n) in worst case")
+    print("  • Space: O(h) for recursion")
+    print("  • May visit many more nodes")
+    print()
+    
+    print("Example: Finding LCA(3, 5) in our tree")
+    print()
+    
+    print("BST approach visits:")
+    print("  6 → 2 → 4 (only 3 nodes!)")
+    print()
+    
+    print("Generic approach might visit:")
+    print("  All nodes in worst case to determine which subtrees contain p and q")
+    print()
+    
+    print("Key takeaway: Always exploit BST property when available!")
+
+
+def analyze_edge_cases():
+    """Analyze various edge cases"""
+    print("\n" + "=" * 70)
+    print("Edge Cases and Special Scenarios")
+    print("=" * 70)
+    print()
+    
+    print("1. One node is ancestor of the other:")
+    print("   LCA(2, 4) = 2")
+    print("   The ancestor itself is the LCA!")
+    print()
+    
+    print("2. Both nodes are the same:")
+    print("   LCA(4, 4) = 4")
+    print("   A node is its own ancestor")
+    print()
+    
+    print("3. Nodes at maximum distance:")
+    print("   LCA(0, 9) = 6 (root)")
+    print("   Opposite ends of tree")
+    print()
+    
+    print("4. Adjacent nodes:")
+    print("   LCA(3, 4) = 4 (parent-child)")
+    print("   LCA(6, 7) = 6 (parent-child)")
+    print()
+    
+    print("5. Balanced vs Skewed trees:")
+    print("   Balanced: O(log n) time")
+    print("   Skewed (all left/right): O(n) time")
+
+
+def show_complexity_analysis():
+    """Show detailed complexity analysis"""
+    print("\n" + "=" * 70)
+    print("Complexity Analysis")
+    print("=" * 70)
+    print()
+    
+    print("BST Solution (Iterative):")
+    print("  Time Complexity:")
+    print("    Best case:  O(1) - LCA is root")
+    print("    Average:    O(log n) - balanced BST")
+    print("    Worst case: O(n) - skewed tree (all left or all right)")
+    print()
+    print("  Space Complexity: O(1)")
+    print("    No recursion, only a few variables")
+    print()
+    
+    print("BST Solution (Recursive):")
+    print("  Time Complexity: Same as iterative")
+    print("  Space Complexity: O(h)")
+    print("    Recursion stack depth equals tree height")
+    print()
+    
+    print("Generic Binary Tree Solution:")
+    print("  Time Complexity: O(n)")
+    print("    Must potentially visit all nodes")
+    print("  Space Complexity: O(h)")
+    print("    Recursion stack")
+    print()
+    
+    print("Why BST solution is better:")
+    print("  • Uses BST property to guide search")
+    print("  • No need to search both subtrees")
+    print("  • Can use iterative approach with O(1) space")
+    print("  • Much faster for large trees")
+
+
+if __name__ == "__main__":
+    test_solutions()
+    demonstrate_algorithm()
+    demonstrate_split_point()
+    compare_bst_vs_binary_tree()
+    analyze_edge_cases()
+    show_complexity_analysis()
