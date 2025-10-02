@@ -1,0 +1,549 @@
+from collections import defaultdict, deque
+
+class Solution:
+    def validTree(self, n, edges):
+        """
+        Check if given edges form a valid tree.
+        
+        A valid tree must satisfy TWO conditions:
+        1. Must be connected (all nodes reachable from any node)
+        2. Must have no cycles (exactly n-1 edges for n nodes)
+        
+        Key insights:
+        - A tree with n nodes has exactly n-1 edges
+        - Must be fully connected (single component)
+        - No cycles allowed
+        
+        Approach: DFS/BFS to check connectivity and detect cycles
+        
+        Time Complexity: O(n + e) where e is number of edges
+        Space Complexity: O(n + e) for adjacency list and visited set
+        
+        Args:
+            n: Number of nodes (labeled 0 to n-1)
+            edges: List of edges [u, v]
+            
+        Returns:
+            True if edges form a valid tree, False otherwise
+        """
+        # Quick check: tree must have exactly n-1 edges
+        if len(edges) != n - 1:
+            return False
+        
+        # Build adjacency list (undirected graph)
+        graph = defaultdict(list)
+        for u, v in edges:
+            graph[u].append(v)
+            graph[v].append(u)
+        
+        # Check if graph is fully connected using BFS
+        visited = set()
+        queue = deque([0])  # Start from node 0
+        visited.add(0)
+        
+        while queue:
+            node = queue.popleft()
+            
+            for neighbor in graph[node]:
+                if neighbor not in visited:
+                    visited.add(neighbor)
+                    queue.append(neighbor)
+        
+        # All nodes must be visited (fully connected)
+        return len(visited) == n
+
+
+class SolutionDFS:
+    def validTree(self, n, edges):
+        """
+        DFS approach with explicit cycle detection.
+        
+        Tracks parent to avoid detecting false cycles in undirected graph.
+        
+        Time Complexity: O(n + e)
+        Space Complexity: O(n + e)
+        """
+        # Quick check: must have exactly n-1 edges
+        if len(edges) != n - 1:
+            return False
+        
+        # Build adjacency list
+        graph = defaultdict(list)
+        for u, v in edges:
+            graph[u].append(v)
+            graph[v].append(u)
+        
+        visited = set()
+        
+        def dfs(node, parent):
+            """
+            DFS to check for cycles.
+            
+            Args:
+                node: Current node
+                parent: Parent node (to avoid false cycle detection)
+                
+            Returns:
+                True if no cycle detected, False if cycle found
+            """
+            visited.add(node)
+            
+            for neighbor in graph[node]:
+                # Skip parent (edge we came from)
+                if neighbor == parent:
+                    continue
+                
+                # If neighbor already visited, we found a cycle
+                if neighbor in visited:
+                    return False
+                
+                # Recursively check neighbor
+                if not dfs(neighbor, node):
+                    return False
+            
+            return True
+        
+        # Start DFS from node 0 and check connectivity
+        return dfs(0, -1) and len(visited) == n
+
+
+class SolutionUnionFind:
+    def validTree(self, n, edges):
+        """
+        Union-Find (Disjoint Set Union) approach.
+        
+        Uses path compression and union by rank for efficiency.
+        A tree is valid if:
+        1. All nodes belong to same component
+        2. No cycles (union operations succeed for all edges)
+        
+        Time Complexity: O(n + e × α(n)) where α is inverse Ackermann
+        Space Complexity: O(n) for parent and rank arrays
+        
+        This is often the preferred solution in interviews.
+        """
+        # Quick check
+        if len(edges) != n - 1:
+            return False
+        
+        # Initialize Union-Find structure
+        parent = list(range(n))
+        rank = [0] * n
+        
+        def find(x):
+            """Find root with path compression."""
+            if parent[x] != x:
+                parent[x] = find(parent[x])  # Path compression
+            return parent[x]
+        
+        def union(x, y):
+            """
+            Union two sets.
+            
+            Returns:
+                True if union successful (no cycle), False if already connected
+            """
+            root_x = find(x)
+            root_y = find(y)
+            
+            # Already in same set (cycle detected)
+            if root_x == root_y:
+                return False
+            
+            # Union by rank
+            if rank[root_x] < rank[root_y]:
+                parent[root_x] = root_y
+            elif rank[root_x] > rank[root_y]:
+                parent[root_y] = root_x
+            else:
+                parent[root_y] = root_x
+                rank[root_x] += 1
+            
+            return True
+        
+        # Process all edges
+        for u, v in edges:
+            if not union(u, v):
+                return False  # Cycle detected
+        
+        # If we're here, no cycles and exactly n-1 edges
+        # This guarantees connectivity (tree property)
+        return True
+
+
+class SolutionIterativeDFS:
+    def validTree(self, n, edges):
+        """
+        Iterative DFS using explicit stack.
+        Avoids recursion depth issues.
+        
+        Time Complexity: O(n + e)
+        Space Complexity: O(n + e)
+        """
+        if len(edges) != n - 1:
+            return False
+        
+        # Build graph
+        graph = defaultdict(list)
+        for u, v in edges:
+            graph[u].append(v)
+            graph[v].append(u)
+        
+        visited = set()
+        stack = [(0, -1)]  # (node, parent)
+        
+        while stack:
+            node, parent = stack.pop()
+            
+            if node in visited:
+                continue
+            
+            visited.add(node)
+            
+            for neighbor in graph[node]:
+                if neighbor == parent:
+                    continue
+                if neighbor in visited:
+                    return False  # Cycle detected
+                stack.append((neighbor, node))
+        
+        return len(visited) == n
+
+
+def test_solutions():
+    """Test all solutions with various test cases"""
+    
+    test_cases = [
+        # Valid trees
+        (5, [[0,1],[0,2],[0,3],[1,4]], True),  # Star graph
+        (4, [[0,1],[1,2],[2,3]], True),         # Linear tree
+        (2, [[0,1]], True),                     # Simple edge
+        (1, [], True),                          # Single node
+        
+        # Invalid: has cycle
+        (5, [[0,1],[1,2],[2,3],[1,3],[1,4]], False),  # Cycle 1-2-3-1
+        
+        # Invalid: not connected
+        (4, [[0,1],[2,3]], False),              # Two components
+        
+        # Invalid: too many edges
+        (5, [[0,1],[0,2],[0,3],[1,4],[2,4]], False),  # Extra edge creates cycle
+        
+        # Invalid: too few edges
+        (5, [[0,1],[0,2],[0,3]], False),        # Disconnected node
+        
+        # Edge cases
+        (3, [[0,1],[0,2],[1,2]], False),        # Triangle (cycle)
+        (2, [], False),                         # Two nodes, no edges
+        (3, [[1,0],[2,0]], True),               # Tree rooted at 0
+        
+        # Larger valid tree
+        (6, [[0,1],[0,2],[1,3],[1,4],[2,5]], True),
+        
+        # Complete graph (not a tree)
+        (4, [[0,1],[0,2],[0,3],[1,2],[1,3],[2,3]], False),
+    ]
+    
+    solutions = [
+        ("BFS (Quick Check)", Solution()),
+        ("DFS with Cycle Detection", SolutionDFS()),
+        ("Union-Find", SolutionUnionFind()),
+        ("Iterative DFS", SolutionIterativeDFS())
+    ]
+    
+    print("Testing Graph Valid Tree Solutions")
+    print("=" * 70)
+    
+    for i, (n, edges, expected) in enumerate(test_cases):
+        print(f"\nTest Case {i+1}: n={n}, edges={edges}")
+        print(f"Expected: {expected}")
+        print("-" * 70)
+        
+        for name, solution in solutions:
+            try:
+                result = solution.validTree(n, edges[:])  # Copy edges
+                is_correct = result == expected
+                status = "✓ PASS" if is_correct else "✗ FAIL"
+                
+                print(f"{name:30s}: {result:5} {status}")
+                
+            except Exception as e:
+                print(f"{name:30s}: ERROR - {e}")
+
+
+def demonstrate_tree_properties():
+    """Demonstrate key properties of trees"""
+    print("\n" + "=" * 70)
+    print("Understanding Tree Properties")
+    print("=" * 70)
+    print()
+    
+    print("A valid tree with n nodes must satisfy:")
+    print()
+    print("1. Connectivity:")
+    print("   - All nodes must be reachable from any other node")
+    print("   - Forms a single connected component")
+    print()
+    print("2. Acyclic:")
+    print("   - No cycles allowed")
+    print("   - Any two nodes have exactly ONE path between them")
+    print()
+    print("3. Edge count:")
+    print("   - Must have EXACTLY n-1 edges")
+    print("   - Too few: disconnected components")
+    print("   - Too many: must contain a cycle")
+    print()
+    
+    print("Mathematical relationship:")
+    print("  For a tree: |E| = |V| - 1")
+    print("  Where |E| = number of edges, |V| = number of vertices")
+    print()
+    
+    print("Examples:")
+    print()
+    print("Valid tree (n=5, edges=4):")
+    print("      0")
+    print("     /|\\")
+    print("    1 2 3")
+    print("    |")
+    print("    4")
+    print("  ✓ Connected ✓ No cycles ✓ 4 edges")
+    print()
+    
+    print("Invalid: Cycle (n=4, edges=4):")
+    print("    0---1")
+    print("    |   |")
+    print("    3---2")
+    print("  ✓ Connected ✗ Has cycle (too many edges)")
+    print()
+    
+    print("Invalid: Disconnected (n=4, edges=2):")
+    print("    0---1    2---3")
+    print("  ✗ Not connected (too few edges)")
+
+
+def demonstrate_algorithms():
+    """Demonstrate different algorithm approaches"""
+    print("\n" + "=" * 70)
+    print("Algorithm Approaches Comparison")
+    print("=" * 70)
+    print()
+    
+    print("1. BFS/DFS with Edge Count Check:")
+    print("   Strategy:")
+    print("     - First check: len(edges) == n-1")
+    print("     - If true, just verify connectivity")
+    print("     - No cycle possible with exactly n-1 edges in connected graph")
+    print("   ")
+    print("   Pros: Simple, efficient")
+    print("   Cons: Requires building adjacency list")
+    print()
+    
+    print("2. DFS with Explicit Cycle Detection:")
+    print("   Strategy:")
+    print("     - Track parent to avoid false cycles in undirected graph")
+    print("     - If we visit a node that's already visited (and not parent): cycle!")
+    print("     - Check connectivity at end")
+    print("   ")
+    print("   Pros: Explicit cycle detection, educational")
+    print("   Cons: Slightly more complex")
+    print()
+    
+    print("3. Union-Find:")
+    print("   Strategy:")
+    print("     - Try to union nodes for each edge")
+    print("     - If nodes already in same set: cycle detected")
+    print("     - With n-1 edges and no cycles: guaranteed connected")
+    print("   ")
+    print("   Pros: Elegant, no graph building needed")
+    print("   Cons: Requires Union-Find implementation")
+    print()
+
+
+def visualize_example():
+    """Visualize step-by-step validation"""
+    print("\n" + "=" * 70)
+    print("Step-by-Step Example: n=5, edges=[[0,1],[0,2],[0,3],[1,4]]")
+    print("=" * 70)
+    print()
+    
+    print("Step 1: Check edge count")
+    print("  n = 5, len(edges) = 4")
+    print("  Required: n - 1 = 5 - 1 = 4 ✓")
+    print()
+    
+    print("Step 2: Build adjacency list")
+    print("  0: [1, 2, 3]")
+    print("  1: [0, 4]")
+    print("  2: [0]")
+    print("  3: [0]")
+    print("  4: [1]")
+    print()
+    
+    print("Step 3: BFS from node 0")
+    print("  Start: queue=[0], visited={0}")
+    print("  Pop 0: add neighbors 1,2,3 → queue=[1,2,3], visited={0,1,2,3}")
+    print("  Pop 1: add neighbor 4 → queue=[2,3,4], visited={0,1,2,3,4}")
+    print("  Pop 2: no new neighbors → queue=[3,4]")
+    print("  Pop 3: no new neighbors → queue=[4]")
+    print("  Pop 4: no new neighbors → queue=[]")
+    print()
+    
+    print("Step 4: Check connectivity")
+    print("  visited = {0,1,2,3,4}")
+    print("  len(visited) = 5 == n = 5 ✓")
+    print()
+    
+    print("Result: VALID TREE ✓")
+    print()
+    
+    print("Visual representation:")
+    print("      0")
+    print("     /|\\")
+    print("    1 2 3")
+    print("    |")
+    print("    4")
+
+
+def demonstrate_union_find():
+    """Demonstrate Union-Find algorithm"""
+    print("\n" + "=" * 70)
+    print("Union-Find Algorithm Demonstration")
+    print("=" * 70)
+    print()
+    
+    print("Example: n=4, edges=[[0,1],[1,2],[2,3]]")
+    print()
+    
+    parent = [0, 1, 2, 3]
+    print(f"Initial: parent = {parent}")
+    print("Each node is its own parent (separate sets)")
+    print()
+    
+    edges = [[0,1], [1,2], [2,3]]
+    
+    for i, (u, v) in enumerate(edges):
+        print(f"Step {i+1}: Process edge [{u},{v}]")
+        print(f"  Find root of {u}: {u}")
+        print(f"  Find root of {v}: {v}")
+        print(f"  Different roots? YES → Union them")
+        
+        # Simulate union
+        if i == 0:
+            parent[1] = 0
+        elif i == 1:
+            parent[2] = 0
+        elif i == 2:
+            parent[3] = 0
+        
+        print(f"  After union: parent = {parent}")
+        print()
+    
+    print("Final: All nodes in same set (parent[i] eventually points to 0)")
+    print("Result: VALID TREE ✓")
+    print()
+    
+    print("Example with cycle: n=3, edges=[[0,1],[1,2],[2,0]]")
+    print()
+    parent = [0, 1, 2]
+    print(f"Initial: parent = {parent}")
+    print()
+    
+    print("Step 1: Process edge [0,1]")
+    print("  Union 0 and 1 → parent = [0, 0, 2]")
+    print()
+    
+    print("Step 2: Process edge [1,2]")
+    print("  Union 1 and 2 → parent = [0, 0, 0]")
+    print()
+    
+    print("Step 3: Process edge [2,0]")
+    print("  Find root of 2: 0")
+    print("  Find root of 0: 0")
+    print("  Same root! → CYCLE DETECTED ✗")
+    print()
+    
+    print("Result: NOT A VALID TREE ✗")
+
+
+def analyze_complexity():
+    """Analyze time and space complexity"""
+    print("\n" + "=" * 70)
+    print("Complexity Analysis")
+    print("=" * 70)
+    print()
+    
+    print("BFS/DFS Approach:")
+    print("  Time:  O(n + e)")
+    print("    - Build graph: O(e)")
+    print("    - BFS/DFS traversal: O(n + e)")
+    print("  Space: O(n + e)")
+    print("    - Adjacency list: O(e)")
+    print("    - Visited set: O(n)")
+    print("    - Queue/Stack: O(n)")
+    print()
+    
+    print("Union-Find Approach:")
+    print("  Time:  O(n + e × α(n))")
+    print("    - Initialize: O(n)")
+    print("    - e union operations: O(e × α(n))")
+    print("    - α(n) is inverse Ackermann (practically constant)")
+    print("  Space: O(n)")
+    print("    - Parent array: O(n)")
+    print("    - Rank array: O(n)")
+    print("    - No graph storage needed!")
+    print()
+    
+    print("Key difference:")
+    print("  BFS/DFS: O(n + e) space (stores full graph)")
+    print("  Union-Find: O(n) space (no graph needed)")
+    print()
+    
+    print("For this problem:")
+    print("  Since e ≤ n-1 for valid trees, O(n + e) ≈ O(n)")
+    print("  All approaches are effectively linear time")
+
+
+def show_common_mistakes():
+    """Show common mistakes and how to avoid them"""
+    print("\n" + "=" * 70)
+    print("Common Mistakes and Edge Cases")
+    print("=" * 70)
+    print()
+    
+    print("1. Forgetting the edge count check:")
+    print("   ✗ Only checking connectivity")
+    print("   ✓ Check len(edges) == n-1 first")
+    print()
+    
+    print("2. False cycle detection in undirected graphs:")
+    print("   ✗ Detecting edge back to parent as cycle")
+    print("   ✓ Track parent and skip in DFS")
+    print()
+    
+    print("3. Not checking full connectivity:")
+    print("   ✗ Stopping after finding no cycles")
+    print("   ✓ Verify len(visited) == n")
+    print()
+    
+    print("4. Edge cases to test:")
+    print("   - Single node (n=1, edges=[]): TRUE")
+    print("   - Two nodes, no edge (n=2, edges=[]): FALSE")
+    print("   - Self-loop (n=1, edges=[[0,0]]): FALSE")
+    print("   - Disconnected components")
+    print("   - Complete graph (too many edges)")
+    print()
+    
+    print("5. Union-Find without path compression:")
+    print("   ✗ Can degrade to O(n) per operation")
+    print("   ✓ Use path compression for O(α(n))")
+
+
+if __name__ == "__main__":
+    test_solutions()
+    demonstrate_tree_properties()
+    demonstrate_algorithms()
+    visualize_example()
+    demonstrate_union_find()
+    analyze_complexity()
+    show_common_mistakes()
