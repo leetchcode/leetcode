@@ -1,0 +1,525 @@
+class Solution:
+    def intToRoman(self, num):
+        """
+        Convert integer to Roman numeral.
+        
+        Roman numerals use seven symbols:
+        I=1, V=5, X=10, L=50, C=100, D=500, M=1000
+        
+        Special subtraction cases:
+        IV=4, IX=9, XL=40, XC=90, CD=400, CM=900
+        
+        Strategy: Greedy approach using value-symbol pairs in descending order.
+        For each value, use as many times as possible, then move to next smaller.
+        
+        Time Complexity: O(1) - at most 13 symbols, constant operations
+        Space Complexity: O(1) - fixed size mapping
+        
+        Args:
+            num: Integer between 1 and 3999
+            
+        Returns:
+            Roman numeral string representation
+        """
+        # Define value-symbol mappings in descending order
+        # Include subtraction cases (4, 9, 40, 90, 400, 900)
+        values = [1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1]
+        symbols = ["M", "CM", "D", "CD", "C", "XC", "L", "XL", "X", "IX", "V", "IV", "I"]
+        
+        result = []
+        
+        # Process each value-symbol pair
+        for i in range(len(values)):
+            value = values[i]
+            symbol = symbols[i]
+            
+            # Use this symbol as many times as possible
+            count = num // value
+            if count > 0:
+                result.append(symbol * count)
+                num -= value * count
+            
+            # Early termination if num becomes 0
+            if num == 0:
+                break
+        
+        return ''.join(result)
+
+
+class SolutionTuples:
+    def intToRoman(self, num):
+        """
+        Cleaner version using list of tuples.
+        
+        Time Complexity: O(1)
+        Space Complexity: O(1)
+        """
+        # Value-symbol pairs in descending order
+        mappings = [
+            (1000, 'M'),
+            (900, 'CM'),
+            (500, 'D'),
+            (400, 'CD'),
+            (100, 'C'),
+            (90, 'XC'),
+            (50, 'L'),
+            (40, 'XL'),
+            (10, 'X'),
+            (9, 'IX'),
+            (5, 'V'),
+            (4, 'IV'),
+            (1, 'I')
+        ]
+        
+        result = []
+        
+        for value, symbol in mappings:
+            # Calculate how many times this symbol is used
+            count = num // value
+            if count:
+                result.append(symbol * count)
+                num -= value * count
+        
+        return ''.join(result)
+
+
+class SolutionWhileLoop:
+    def intToRoman(self, num):
+        """
+        Alternative using while loops for clarity.
+        Shows the greedy nature more explicitly.
+        
+        Time Complexity: O(1)
+        Space Complexity: O(1)
+        """
+        mappings = [
+            (1000, 'M'), (900, 'CM'), (500, 'D'), (400, 'CD'),
+            (100, 'C'), (90, 'XC'), (50, 'L'), (40, 'XL'),
+            (10, 'X'), (9, 'IX'), (5, 'V'), (4, 'IV'), (1, 'I')
+        ]
+        
+        result = []
+        
+        for value, symbol in mappings:
+            # Keep using this symbol while possible
+            while num >= value:
+                result.append(symbol)
+                num -= value
+        
+        return ''.join(result)
+
+
+class SolutionDigitByDigit:
+    def intToRoman(self, num):
+        """
+        Process digit by digit (thousands, hundreds, tens, ones).
+        More structured but longer code.
+        
+        Time Complexity: O(1)
+        Space Complexity: O(1)
+        """
+        # Define mappings for each digit position
+        thousands = ["", "M", "MM", "MMM"]
+        hundreds = ["", "C", "CC", "CCC", "CD", "D", "DC", "DCC", "DCCC", "CM"]
+        tens = ["", "X", "XX", "XXX", "XL", "L", "LX", "LXX", "LXXX", "XC"]
+        ones = ["", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX"]
+        
+        # Extract each digit and map to Roman numeral
+        return (thousands[num // 1000] +
+                hundreds[(num % 1000) // 100] +
+                tens[(num % 100) // 10] +
+                ones[num % 10])
+
+
+class SolutionRecursive:
+    def intToRoman(self, num):
+        """
+        Recursive solution for educational purposes.
+        Not necessarily better but shows another approach.
+        
+        Time Complexity: O(1)
+        Space Complexity: O(1) - limited recursion depth
+        """
+        mappings = [
+            (1000, 'M'), (900, 'CM'), (500, 'D'), (400, 'CD'),
+            (100, 'C'), (90, 'XC'), (50, 'L'), (40, 'XL'),
+            (10, 'X'), (9, 'IX'), (5, 'V'), (4, 'IV'), (1, 'I')
+        ]
+        
+        def convert(n, index=0):
+            """Recursively convert number to Roman."""
+            if n == 0 or index >= len(mappings):
+                return ""
+            
+            value, symbol = mappings[index]
+            
+            if n >= value:
+                # Use this symbol and recurse with remaining
+                return symbol + convert(n - value, index)
+            else:
+                # Try next symbol
+                return convert(n, index + 1)
+        
+        return convert(num)
+
+
+def test_solutions():
+    """Test all solutions with various test cases"""
+    
+    test_cases = [
+        # Basic single symbols
+        (1, "I"),
+        (5, "V"),
+        (10, "X"),
+        (50, "L"),
+        (100, "C"),
+        (500, "D"),
+        (1000, "M"),
+        
+        # Subtraction cases
+        (4, "IV"),
+        (9, "IX"),
+        (40, "XL"),
+        (90, "XC"),
+        (400, "CD"),
+        (900, "CM"),
+        
+        # Standard examples
+        (3, "III"),
+        (58, "LVIII"),  # L + V + III
+        (1994, "MCMXCIV"),  # M + CM + XC + IV
+        
+        # Complex numbers
+        (3749, "MMMDCCXLIX"),
+        (27, "XXVII"),
+        (246, "CCXLVI"),
+        (789, "DCCLXXXIX"),
+        (2421, "MMCDXXI"),
+        
+        # Edge cases
+        (3999, "MMMCMXCIX"),  # Maximum value
+        (444, "CDXLIV"),
+        (999, "CMXCIX"),
+        
+        # Round numbers
+        (10, "X"),
+        (20, "XX"),
+        (100, "C"),
+        (1000, "M"),
+        (2000, "MM"),
+        (3000, "MMM"),
+        
+        # Mixed patterns
+        (49, "XLIX"),
+        (94, "XCIV"),
+        (494, "CDXCIV"),
+        (944, "CMXLIV"),
+    ]
+    
+    solutions = [
+        ("Standard (Recommended)", Solution()),
+        ("Tuples Version", SolutionTuples()),
+        ("While Loop Version", SolutionWhileLoop()),
+        ("Digit-by-Digit", SolutionDigitByDigit()),
+        ("Recursive", SolutionRecursive())
+    ]
+    
+    print("Testing Integer to Roman Solutions")
+    print("=" * 70)
+    
+    for i, (num, expected) in enumerate(test_cases):
+        print(f"\nTest Case {i+1}: {num}")
+        print(f"Expected: {expected}")
+        print("-" * 70)
+        
+        for name, solution in solutions:
+            try:
+                result = solution.intToRoman(num)
+                is_correct = result == expected
+                status = "✓ PASS" if is_correct else "✗ FAIL"
+                
+                print(f"{name:30s}: {result:15s} {status}")
+                
+            except Exception as e:
+                print(f"{name:30s}: ERROR - {e}")
+
+
+def demonstrate_algorithm():
+    """Demonstrate how the greedy algorithm works step by step"""
+    print("\n" + "=" * 70)
+    print("Algorithm Demonstration: Converting 1994 to Roman")
+    print("=" * 70)
+    print()
+    
+    num = 1994
+    mappings = [
+        (1000, 'M'), (900, 'CM'), (500, 'D'), (400, 'CD'),
+        (100, 'C'), (90, 'XC'), (50, 'L'), (40, 'XL'),
+        (10, 'X'), (9, 'IX'), (5, 'V'), (4, 'IV'), (1, 'I')
+    ]
+    
+    print(f"Converting {num} to Roman numeral")
+    print()
+    
+    result = []
+    step = 1
+    
+    for value, symbol in mappings:
+        if num >= value:
+            count = num // value
+            print(f"Step {step}:")
+            print(f"  Current number: {num}")
+            print(f"  Try value {value} (symbol '{symbol}')")
+            print(f"  {num} ÷ {value} = {count} (use {count} time(s))")
+            print(f"  Add '{symbol * count}' to result")
+            
+            result.append(symbol * count)
+            num -= value * count
+            
+            print(f"  Remaining: {num}")
+            print(f"  Result so far: {''.join(result)}")
+            print()
+            step += 1
+        
+        if num == 0:
+            break
+    
+    print(f"Final result: {''.join(result)}")
+
+
+def explain_roman_numerals():
+    """Explain Roman numeral system"""
+    print("\n" + "=" * 70)
+    print("Understanding Roman Numerals")
+    print("=" * 70)
+    print()
+    
+    print("Basic Symbols:")
+    print("  I = 1")
+    print("  V = 5")
+    print("  X = 10")
+    print("  L = 50")
+    print("  C = 100")
+    print("  D = 500")
+    print("  M = 1000")
+    print()
+    
+    print("Addition Rule:")
+    print("  When a smaller symbol comes after a larger one, ADD")
+    print("  Examples:")
+    print("    VI = 5 + 1 = 6")
+    print("    VII = 5 + 1 + 1 = 7")
+    print("    XII = 10 + 1 + 1 = 12")
+    print("    LX = 50 + 10 = 60")
+    print()
+    
+    print("Subtraction Rule:")
+    print("  When a smaller symbol comes before a larger one, SUBTRACT")
+    print("  Only these combinations are valid:")
+    print("    IV = 5 - 1 = 4")
+    print("    IX = 10 - 1 = 9")
+    print("    XL = 50 - 10 = 40")
+    print("    XC = 100 - 10 = 90")
+    print("    CD = 500 - 100 = 400")
+    print("    CM = 1000 - 100 = 900")
+    print()
+    
+    print("Key observations:")
+    print("  • Only powers of 10 (I, X, C) can be subtracted")
+    print("  • Only from the next two higher symbols")
+    print("  • I can precede V or X")
+    print("  • X can precede L or C")
+    print("  • C can precede D or M")
+    print()
+    
+    print("Repetition Rules:")
+    print("  • A symbol can repeat up to 3 times")
+    print("  • III = 3 (valid)")
+    print("  • IIII = 4 (invalid, use IV)")
+    print("  • MMM = 3000 (valid)")
+    print("  • MMMM = 4000 (invalid, beyond range)")
+
+
+def demonstrate_examples():
+    """Demonstrate conversion of various numbers"""
+    print("\n" + "=" * 70)
+    print("Example Conversions")
+    print("=" * 70)
+    print()
+    
+    examples = [
+        (3, "III", "3 ones"),
+        (4, "IV", "5 - 1"),
+        (8, "VIII", "5 + 3"),
+        (9, "IX", "10 - 1"),
+        (27, "XXVII", "10 + 10 + 5 + 1 + 1"),
+        (58, "LVIII", "50 + 5 + 1 + 1 + 1"),
+        (1994, "MCMXCIV", "1000 + (1000-100) + (100-10) + (5-1)"),
+        (3749, "MMMDCCXLIX", "3000 + 700 + 40 + 9"),
+    ]
+    
+    for num, roman, explanation in examples:
+        print(f"{num:4d} → {roman:15s} ({explanation})")
+    print()
+    
+    print("Pattern observation:")
+    print("  • Start with largest values")
+    print("  • Use greedy approach (use as much as possible)")
+    print("  • Subtraction cases are treated as single units")
+
+
+def visualize_greedy_choice():
+    """Visualize why greedy works"""
+    print("\n" + "=" * 70)
+    print("Why Greedy Algorithm Works")
+    print("=" * 70)
+    print()
+    
+    print("Key insight: Roman numerals have a canonical representation")
+    print()
+    
+    print("For any number, there is exactly ONE correct Roman numeral")
+    print("The greedy approach finds this representation by:")
+    print("  1. Using the largest possible value first")
+    print("  2. Repeating until we can't use it anymore")
+    print("  3. Moving to the next smaller value")
+    print()
+    
+    print("Example: Converting 58")
+    print("  Can we use M (1000)? No, 58 < 1000")
+    print("  Can we use D (500)? No, 58 < 500")
+    print("  Can we use C (100)? No, 58 < 100")
+    print("  Can we use L (50)? Yes! 58 ≥ 50")
+    print("    → Use L once, remaining: 58 - 50 = 8")
+    print("  Can we use L (50)? No, 8 < 50")
+    print("  Can we use X (10)? No, 8 < 10")
+    print("  Can we use V (5)? Yes! 8 ≥ 5")
+    print("    → Use V once, remaining: 8 - 5 = 3")
+    print("  Can we use V (5)? No, 3 < 5")
+    print("  Can we use I (1)? Yes! 3 ≥ 1")
+    print("    → Use I three times, remaining: 3 - 3 = 0")
+    print()
+    print("Result: L + V + III = LVIII ✓")
+
+
+def analyze_complexity():
+    """Analyze time and space complexity"""
+    print("\n" + "=" * 70)
+    print("Complexity Analysis")
+    print("=" * 70)
+    print()
+    
+    print("Time Complexity: O(1)")
+    print("  • We have exactly 13 value-symbol pairs")
+    print("  • For each pair, we do at most constant operations")
+    print("  • Maximum result length is bounded:")
+    print("    - Largest number: 3999 = MMMCMXCIX (9 characters)")
+    print("    - Always processes in constant time")
+    print()
+    
+    print("Space Complexity: O(1)")
+    print("  • Fixed-size mapping (13 pairs)")
+    print("  • Result string is bounded by length")
+    print("  • No data structures that grow with input")
+    print()
+    
+    print("Why is it O(1) and not O(n)?")
+    print("  • Input range is limited: 1 ≤ num ≤ 3999")
+    print("  • Output length is bounded: max 9 characters")
+    print("  • Number of iterations is fixed: at most 13")
+    print("  • All operations are constant time")
+    print()
+    
+    print("Comparison of approaches:")
+    print("  Standard greedy:     Clean, fast")
+    print("  Digit-by-digit:      More code but very clear")
+    print("  Recursive:           Elegant but unnecessary overhead")
+    print("  All have same O(1) complexity!")
+
+
+def show_common_mistakes():
+    """Show common mistakes and how to avoid them"""
+    print("\n" + "=" * 70)
+    print("Common Mistakes and Pitfalls")
+    print("=" * 70)
+    print()
+    
+    print("1. Forgetting subtraction cases:")
+    print("   ✗ Only including basic symbols (I, V, X, L, C, D, M)")
+    print("   ✓ Must include: IV, IX, XL, XC, CD, CM")
+    print()
+    
+    print("2. Wrong order in mapping:")
+    print("   ✗ Processing in ascending order")
+    print("   ✓ Must process in DESCENDING order (largest first)")
+    print()
+    
+    print("3. Not handling subtraction cases as single units:")
+    print("   ✗ Treating 9 as V + IIII (invalid)")
+    print("   ✓ Treating 9 as IX (correct)")
+    print()
+    
+    print("4. Incorrect greedy logic:")
+    print("   ✗ Using only one of each symbol")
+    print("   ✓ Use each symbol as many times as needed")
+    print()
+    
+    print("5. Missing mappings:")
+    print("   ✗ Forgetting 900, 400, 90, 40")
+    print("   ✓ All subtraction cases must be in mapping")
+    print()
+    
+    print("6. Off-by-one errors:")
+    print("   ✗ num > value (should be num >= value)")
+    print("   ✓ Use >= for correct comparison")
+
+
+def demonstrate_digit_by_digit():
+    """Show how digit-by-digit approach works"""
+    print("\n" + "=" * 70)
+    print("Digit-by-Digit Approach")
+    print("=" * 70)
+    print()
+    
+    num = 1994
+    print(f"Converting {num}")
+    print()
+    
+    thousands = num // 1000
+    hundreds = (num % 1000) // 100
+    tens = (num % 100) // 10
+    ones = num % 10
+    
+    print(f"Breaking down {num}:")
+    print(f"  Thousands: {thousands} → {thousands} × 1000 = {thousands * 1000}")
+    print(f"  Hundreds:  {hundreds} → {hundreds} × 100 = {hundreds * 100}")
+    print(f"  Tens:      {tens} → {tens} × 10 = {tens * 10}")
+    print(f"  Ones:      {ones} → {ones} × 1 = {ones * 1}")
+    print()
+    
+    # Mappings
+    thousands_map = ["", "M", "MM", "MMM"]
+    hundreds_map = ["", "C", "CC", "CCC", "CD", "D", "DC", "DCC", "DCCC", "CM"]
+    tens_map = ["", "X", "XX", "XXX", "XL", "L", "LX", "LXX", "LXXX", "XC"]
+    ones_map = ["", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX"]
+    
+    print("Converting each digit:")
+    print(f"  Thousands {thousands} → {thousands_map[thousands]}")
+    print(f"  Hundreds  {hundreds} → {hundreds_map[hundreds]}")
+    print(f"  Tens      {tens} → {tens_map[tens]}")
+    print(f"  Ones      {ones} → {ones_map[ones]}")
+    print()
+    
+    result = thousands_map[thousands] + hundreds_map[hundreds] + tens_map[tens] + ones_map[ones]
+    print(f"Result: {result}")
+
+
+if __name__ == "__main__":
+    test_solutions()
+    explain_roman_numerals()
+    demonstrate_algorithm()
+    demonstrate_examples()
+    visualize_greedy_choice()
+    analyze_complexity()
+    demonstrate_digit_by_digit()
+    show_common_mistakes()
