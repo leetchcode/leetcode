@@ -1,21 +1,133 @@
+from typing import List
+
 class Solution:
     def productExceptSelf(self, nums: List[int]) -> List[int]:
-        if len(nums) == 0:
-            return [0]
-        n = len(nums)
-        left = [1]*n
-        right = [1]*n
-
-        for i in range(1, n, 1):
-            left[i] = left[i-1]*nums[i-1]
-
-        for i in range(n-2, -1, -1):
-            right[i] = right[i+1]*nums[i+1]
-
-        output = [1]*n
-        for i in range(n):
-            output[i] = left[i] * right[i]
-
-        return output        
-
+        """
+        Return array where answer[i] = product of all elements except nums[i].
+        Must run in O(n) time without using division.
         
+        Approach: Use prefix and suffix products
+        - First pass: calculate prefix products (product of all elements to the left)
+        - Second pass: calculate suffix products and multiply with prefix
+        
+        Time Complexity: O(n)
+        Space Complexity: O(1) excluding output array
+        """
+        n = len(nums)
+        answer = [1] * n
+        
+        # Calculate prefix products
+        # answer[i] will contain product of all elements to the left of i
+        prefix = 1
+        for i in range(n):
+            answer[i] = prefix
+            prefix *= nums[i]
+        
+        # Calculate suffix products and multiply with prefix
+        # Traverse from right, multiply answer[i] with product of all elements to the right
+        suffix = 1
+        for i in range(n - 1, -1, -1):
+            answer[i] *= suffix
+            suffix *= nums[i]
+        
+        return answer
+
+
+class SolutionWithExtraSpace:
+    def productExceptSelf(self, nums: List[int]) -> List[int]:
+        """
+        Alternative approach using separate prefix and suffix arrays.
+        Easier to understand but uses O(n) extra space.
+        
+        Time Complexity: O(n)
+        Space Complexity: O(n)
+        """
+        n = len(nums)
+        
+        # prefix[i] = product of all elements from 0 to i-1
+        prefix = [1] * n
+        for i in range(1, n):
+            prefix[i] = prefix[i-1] * nums[i-1]
+        
+        # suffix[i] = product of all elements from i+1 to n-1
+        suffix = [1] * n
+        for i in range(n - 2, -1, -1):
+            suffix[i] = suffix[i+1] * nums[i+1]
+        
+        # answer[i] = prefix[i] * suffix[i]
+        answer = [prefix[i] * suffix[i] for i in range(n)]
+        
+        return answer
+
+
+def visualize_solution(nums: List[int]):
+    """Helper function to visualize how the solution works"""
+    n = len(nums)
+    print(f"Input: {nums}\n")
+    
+    # Show prefix products
+    print("Prefix products (product of all elements to the LEFT):")
+    prefix = [1] * n
+    for i in range(n):
+        if i > 0:
+            prefix[i] = prefix[i-1] * nums[i-1]
+        print(f"  Index {i}: {prefix[i]} (product of elements before index {i})")
+    
+    # Show suffix products
+    print("\nSuffix products (product of all elements to the RIGHT):")
+    suffix = [1] * n
+    for i in range(n - 1, -1, -1):
+        if i < n - 1:
+            suffix[i] = suffix[i+1] * nums[i+1]
+        print(f"  Index {i}: {suffix[i]} (product of elements after index {i})")
+    
+    # Show final answer
+    print("\nFinal answer (prefix * suffix):")
+    answer = [prefix[i] * suffix[i] for i in range(n)]
+    for i in range(n):
+        print(f"  Index {i}: {prefix[i]} × {suffix[i]} = {answer[i]}")
+    
+    print(f"\nOutput: {answer}\n")
+    return answer
+
+
+# Test cases
+if __name__ == "__main__":
+    sol = Solution()
+    
+    # Test case 1
+    print("=" * 60)
+    print("Test Case 1:")
+    print("=" * 60)
+    nums1 = [1, 2, 3, 4]
+    visualize_solution(nums1)
+    result1 = sol.productExceptSelf(nums1)
+    print(f"Verification: {result1}")
+    print(f"Expected: [24, 12, 8, 6]\n")
+    
+    # Test case 2
+    print("=" * 60)
+    print("Test Case 2:")
+    print("=" * 60)
+    nums2 = [-1, 1, 0, -3, 3]
+    visualize_solution(nums2)
+    result2 = sol.productExceptSelf(nums2)
+    print(f"Verification: {result2}")
+    print(f"Expected: [0, 0, 9, 0, 0]\n")
+    
+    # Test case 3
+    print("=" * 60)
+    print("Test Case 3:")
+    print("=" * 60)
+    nums3 = [2, 3, 4, 5]
+    result3 = sol.productExceptSelf(nums3)
+    print(f"Input: {nums3}")
+    print(f"Output: {result3}")
+    print(f"Expected: [60, 40, 30, 24]")
+    
+    # Verify manually for nums3
+    print("\nManual verification:")
+    print(f"  Index 0: 3×4×5 = {3*4*5}")
+    print(f"  Index 1: 2×4×5 = {2*4*5}")
+    print(f"  Index 2: 2×3×5 = {2*3*5}")
+    print(f"  Index 3: 2×3×4 = {2*3*4}")
