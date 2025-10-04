@@ -1,0 +1,121 @@
+from typing import List, Optional
+
+# Definition for a binary tree node.
+class TreeNode:
+    def __init__(self, val=0, left=None, right=None):
+        self.val = val
+        self.left = left
+        self.right = right
+
+class Solution:
+    def createBinaryTree(self, descriptions: List[List[int]]) -> Optional[TreeNode]:
+        """
+        Build a binary tree from parent-child descriptions.
+        Each description is [parent, child, isLeft] where:
+        - parent: value of parent node
+        - child: value of child node  
+        - isLeft: 1 if child is left child, 0 if right child
+        
+        Time Complexity: O(n) where n is number of descriptions
+        Space Complexity: O(n) for storing nodes and children set
+        """
+        # Dictionary to store all nodes by their values
+        nodes = {}
+        
+        # Set to track all children (helps identify root)
+        children = set()
+        
+        # Process each description
+        for parent_val, child_val, is_left in descriptions:
+            # Create parent node if doesn't exist
+            if parent_val not in nodes:
+                nodes[parent_val] = TreeNode(parent_val)
+            
+            # Create child node if doesn't exist
+            if child_val not in nodes:
+                nodes[child_val] = TreeNode(child_val)
+            
+            # Link parent to child
+            if is_left:
+                nodes[parent_val].left = nodes[child_val]
+            else:
+                nodes[parent_val].right = nodes[child_val]
+            
+            # Mark this value as a child
+            children.add(child_val)
+        
+        # Find root: the node that appears as parent but never as child
+        for node_val in nodes:
+            if node_val not in children:
+                return nodes[node_val]
+        
+        return None
+
+
+# Helper function to print tree (for testing)
+def print_tree(root: Optional[TreeNode], level=0, prefix="Root: "):
+    """Print tree structure for visualization"""
+    if root is not None:
+        print(" " * (level * 4) + prefix + str(root.val))
+        if root.left or root.right:
+            if root.left:
+                print_tree(root.left, level + 1, "L--- ")
+            else:
+                print(" " * ((level + 1) * 4) + "L--- None")
+            if root.right:
+                print_tree(root.right, level + 1, "R--- ")
+            else:
+                print(" " * ((level + 1) * 4) + "R--- None")
+
+
+# Helper function for level-order traversal (for verification)
+def level_order(root: Optional[TreeNode]) -> List[Optional[int]]:
+    """Return level-order traversal of tree"""
+    if not root:
+        return []
+    
+    result = []
+    queue = [root]
+    
+    while queue:
+        node = queue.pop(0)
+        if node:
+            result.append(node.val)
+            queue.append(node.left)
+            queue.append(node.right)
+        else:
+            result.append(None)
+    
+    # Remove trailing None values
+    while result and result[-1] is None:
+        result.pop()
+    
+    return result
+
+
+# Test cases
+if __name__ == "__main__":
+    sol = Solution()
+    
+    # Test case 1
+    print("Test Case 1:")
+    descriptions1 = [[20,15,1],[20,17,0],[50,20,1],[50,80,0],[80,19,1]]
+    root1 = sol.createBinaryTree(descriptions1)
+    print_tree(root1)
+    print("Level order:", level_order(root1))
+    print()
+    
+    # Test case 2
+    print("Test Case 2:")
+    descriptions2 = [[1,2,1],[2,3,0],[3,4,1]]
+    root2 = sol.createBinaryTree(descriptions2)
+    print_tree(root2)
+    print("Level order:", level_order(root2))
+    print()
+    
+    # Test case 3
+    print("Test Case 3:")
+    descriptions3 = [[85,82,1],[74,85,1],[39,70,0],[82,38,1],[74,39,0],[39,13,1]]
+    root3 = sol.createBinaryTree(descriptions3)
+    print_tree(root3)
+    print("Level order:", level_order(root3))
