@@ -1,0 +1,569 @@
+import bisect
+
+class Solution:
+    def findTheDistanceValue(self, arr1, arr2, d):
+        """
+        Count elements in arr1 where |arr1[i] - arr2[j]| > d for ALL j.
+        
+        Brute force approach: For each element in arr1, check all elements in arr2.
+        
+        Time Complexity: O(n * m) where n = len(arr1), m = len(arr2)
+        Space Complexity: O(1)
+        
+        Args:
+            arr1: First array
+            arr2: Second array
+            d: Distance threshold
+            
+        Returns:
+            Count of valid elements in arr1
+        """
+        count = 0
+        
+        for num1 in arr1:
+            # Check if this element is valid
+            is_valid = True
+            
+            for num2 in arr2:
+                # If any element in arr2 is within distance d, invalid
+                if abs(num1 - num2) <= d:
+                    is_valid = False
+                    break
+            
+            if is_valid:
+                count += 1
+        
+        return count
+
+
+class SolutionBinarySearch:
+    def findTheDistanceValue(self, arr1, arr2, d):
+        """
+        Optimized solution using binary search.
+        
+        Key insight: For arr1[i] to be valid, all elements in arr2 must be
+        either < arr1[i] - d OR > arr1[i] + d.
+        
+        Strategy:
+        1. Sort arr2
+        2. For each element in arr1, use binary search to find closest element in arr2
+        3. Check if closest element is outside [arr1[i] - d, arr1[i] + d] range
+        
+        Time Complexity: O(m log m + n log m) where n = len(arr1), m = len(arr2)
+        Space Complexity: O(1) if we can modify arr2, O(m) otherwise
+        
+        This is the optimal solution.
+        """
+        # Sort arr2 for binary search
+        arr2.sort()
+        count = 0
+        
+        for num in arr1:
+            # Find position where num would be inserted in sorted arr2
+            pos = bisect.bisect_left(arr2, num)
+            
+            # Check elements around insertion position
+            is_valid = True
+            
+            # Check element at or after insertion position
+            if pos < len(arr2) and abs(num - arr2[pos]) <= d:
+                is_valid = False
+            
+            # Check element before insertion position
+            if pos > 0 and abs(num - arr2[pos - 1]) <= d:
+                is_valid = False
+            
+            if is_valid:
+                count += 1
+        
+        return count
+
+
+class SolutionBinarySearchCleaner:
+    def findTheDistanceValue(self, arr1, arr2, d):
+        """
+        Cleaner version of binary search solution with helper function.
+        
+        Time Complexity: O(m log m + n log m)
+        Space Complexity: O(1)
+        """
+        arr2.sort()
+        
+        def is_valid(num):
+            """Check if num is valid (far from all elements in arr2)."""
+            # Find closest element using binary search
+            pos = bisect.bisect_left(arr2, num)
+            
+            # Check element at position (>= num)
+            if pos < len(arr2) and arr2[pos] - num <= d:
+                return False
+            
+            # Check element before position (< num)
+            if pos > 0 and num - arr2[pos - 1] <= d:
+                return False
+            
+            return True
+        
+        return sum(is_valid(num) for num in arr1)
+
+
+class SolutionRangeCheck:
+    def findTheDistanceValue(self, arr1, arr2, d):
+        """
+        Alternative binary search: Check if [num-d, num+d] range overlaps with arr2.
+        
+        For num to be valid, no element in arr2 should be in [num-d, num+d].
+        
+        Time Complexity: O(m log m + n log m)
+        Space Complexity: O(1)
+        """
+        arr2.sort()
+        count = 0
+        
+        for num in arr1:
+            # Find if any element exists in range [num-d, num+d]
+            # Use binary search to find leftmost element >= num-d
+            left_pos = bisect.bisect_left(arr2, num - d)
+            
+            # Check if this element is within [num-d, num+d]
+            if left_pos < len(arr2) and arr2[left_pos] <= num + d:
+                # Found an element in the range, not valid
+                continue
+            
+            count += 1
+        
+        return count
+
+
+class SolutionSetOptimization:
+    def findTheDistanceValue(self, arr1, arr2, d):
+        """
+        Optimization using set for faster lookup (only works for small d).
+        
+        For each element in arr1, check if any value in range exists in arr2.
+        
+        Time Complexity: O(n * d + m) where d is the distance threshold
+        Space Complexity: O(m) for the set
+        
+        Only efficient when d is small compared to array sizes.
+        """
+        arr2_set = set(arr2)
+        count = 0
+        
+        for num in arr1:
+            is_valid = True
+            
+            # Check all values in range [num-d, num+d]
+            for offset in range(-d, d + 1):
+                if num + offset in arr2_set:
+                    is_valid = False
+                    break
+            
+            if is_valid:
+                count += 1
+        
+        return count
+
+
+class SolutionMinMaxOptimization:
+    def findTheDistanceValue(self, arr1, arr2, d):
+        """
+        Optimization: Use min/max of arr2 for early filtering.
+        
+        If num < min(arr2) - d or num > max(arr2) + d, 
+        it's automatically valid without checking each element.
+        
+        Time Complexity: O(n * m) worst case, but faster in practice
+        Space Complexity: O(1)
+        """
+        if not arr2:
+            return len(arr1)
+        
+        min_arr2 = min(arr2)
+        max_arr2 = max(arr2)
+        count = 0
+        
+        for num in arr1:
+            # Early check: if num is far from entire range of arr2
+            if num < min_arr2 - d or num > max_arr2 + d:
+                count += 1
+                continue
+            
+            # Otherwise, check each element
+            is_valid = True
+            for num2 in arr2:
+                if abs(num - num2) <= d:
+                    is_valid = False
+                    break
+            
+            if is_valid:
+                count += 1
+        
+        return count
+
+
+def test_solutions():
+    """Test all solutions with various test cases"""
+    
+    test_cases = [
+        # Basic examples
+        ([4, 5, 8], [10, 9, 1, 8], 2, 2),
+        # Explanation: 4 and 5 are valid (distance > 2 from all in arr2)
+        
+        ([1, 4, 2, 3], [-4, -3, 6, 10, 20, 30], 3, 2),
+        # 2 and 3 are valid
+        
+        ([2, 1, 100, 3], [-5, -2, 10, -3, 7], 6, 1),
+        # Only 100 is valid
+        
+        # Edge cases
+        ([1], [2], 0, 0),  # Distance exactly 1, threshold 0
+        ([1], [2], 1, 1),  # Distance exactly 1, threshold 1
+        ([1], [2], 2, 1),  # Distance 1, threshold 2
+        
+        # All valid
+        ([1, 2, 3], [10, 11, 12], 5, 3),
+        
+        # None valid
+        ([1, 2, 3], [1, 2, 3], 0, 0),
+        
+        # Large distance
+        ([5], [1, 10], 3, 1),  # 5 is 4 away from 1, 5 away from 10
+        
+        # Negative numbers
+        ([-10, -5, 0], [-3, -2, -1], 2, 1),  # -10 is valid
+        
+        # Duplicate values
+        ([1, 1, 1], [5, 5, 5], 3, 3),
+    ]
+    
+    solutions = [
+        ("Brute Force", Solution()),
+        ("Binary Search (Optimal)", SolutionBinarySearch()),
+        ("Binary Search (Clean)", SolutionBinarySearchCleaner()),
+        ("Range Check", SolutionRangeCheck()),
+        ("Set Optimization", SolutionSetOptimization()),
+        ("Min/Max Optimization", SolutionMinMaxOptimization())
+    ]
+    
+    print("Testing Find the Distance Value Between Two Arrays Solutions")
+    print("=" * 70)
+    
+    for i, (arr1, arr2, d, expected) in enumerate(test_cases):
+        print(f"\nTest Case {i+1}:")
+        print(f"arr1 = {arr1}")
+        print(f"arr2 = {arr2}")
+        print(f"d = {d}")
+        print(f"Expected: {expected}")
+        print("-" * 70)
+        
+        for name, solution in solutions:
+            try:
+                # Copy arrays since some solutions modify them
+                result = solution.findTheDistanceValue(arr1[:], arr2[:], d)
+                is_correct = result == expected
+                status = "✓ PASS" if is_correct else "✗ FAIL"
+                
+                print(f"{name:30s}: {result} {status}")
+                
+            except Exception as e:
+                print(f"{name:30s}: ERROR - {e}")
+
+
+def demonstrate_algorithm():
+    """Demonstrate how the algorithm works step by step"""
+    print("\n" + "=" * 70)
+    print("Algorithm Demonstration: Brute Force")
+    print("=" * 70)
+    print()
+    
+    arr1 = [4, 5, 8]
+    arr2 = [10, 9, 1, 8]
+    d = 2
+    
+    print(f"arr1 = {arr1}")
+    print(f"arr2 = {arr2}")
+    print(f"d = {d}")
+    print()
+    print("Checking each element in arr1:")
+    print()
+    
+    count = 0
+    
+    for i, num1 in enumerate(arr1):
+        print(f"Element {i+1}: {num1}")
+        is_valid = True
+        
+        for num2 in arr2:
+            distance = abs(num1 - num2)
+            print(f"  |{num1} - {num2}| = {distance}", end="")
+            
+            if distance <= d:
+                print(f" ≤ {d} → TOO CLOSE ✗")
+                is_valid = False
+                break
+            else:
+                print(f" > {d} ✓")
+        
+        if is_valid:
+            print(f"  → {num1} is VALID (far from all elements)")
+            count += 1
+        else:
+            print(f"  → {num1} is INVALID")
+        print()
+    
+    print(f"Total valid elements: {count}")
+
+
+def demonstrate_binary_search():
+    """Demonstrate binary search optimization"""
+    print("\n" + "=" * 70)
+    print("Binary Search Optimization Demonstration")
+    print("=" * 70)
+    print()
+    
+    arr1 = [4, 5, 8]
+    arr2 = [10, 9, 1, 8]
+    d = 2
+    
+    print(f"arr1 = {arr1}")
+    print(f"arr2 = {arr2}")
+    print(f"d = {d}")
+    print()
+    
+    # Sort arr2
+    arr2_sorted = sorted(arr2)
+    print(f"Sorted arr2 = {arr2_sorted}")
+    print()
+    
+    print("Key insight: Only need to check CLOSEST element in arr2")
+    print("If closest element is > d away, all others are too!")
+    print()
+    
+    for num in arr1:
+        print(f"Checking {num}:")
+        
+        # Find insertion position
+        pos = bisect.bisect_left(arr2_sorted, num)
+        print(f"  Binary search insertion position: {pos}")
+        print(f"  arr2_sorted: {arr2_sorted[:pos]} | [{num}] | {arr2_sorted[pos:]}")
+        
+        # Check neighbors
+        closest_dist = float('inf')
+        
+        # Check right neighbor
+        if pos < len(arr2_sorted):
+            dist_right = abs(num - arr2_sorted[pos])
+            print(f"  Right neighbor: {arr2_sorted[pos]}, distance = {dist_right}")
+            closest_dist = min(closest_dist, dist_right)
+        
+        # Check left neighbor
+        if pos > 0:
+            dist_left = abs(num - arr2_sorted[pos - 1])
+            print(f"  Left neighbor: {arr2_sorted[pos - 1]}, distance = {dist_left}")
+            closest_dist = min(closest_dist, dist_left)
+        
+        if closest_dist > d:
+            print(f"  → Closest distance = {closest_dist} > {d} → VALID ✓")
+        else:
+            print(f"  → Closest distance = {closest_dist} ≤ {d} → INVALID ✗")
+        print()
+
+
+def explain_optimization():
+    """Explain why binary search is better"""
+    print("\n" + "=" * 70)
+    print("Why Binary Search Optimization?")
+    print("=" * 70)
+    print()
+    
+    print("Brute Force Approach:")
+    print("  • For each element in arr1, check ALL elements in arr2")
+    print("  • Time: O(n × m)")
+    print("  • For n=1000, m=1000: 1,000,000 comparisons")
+    print()
+    
+    print("Binary Search Approach:")
+    print("  • Sort arr2 once: O(m log m)")
+    print("  • For each element in arr1:")
+    print("    - Binary search to find closest: O(log m)")
+    print("    - Check at most 2 neighbors: O(1)")
+    print("  • Time: O(m log m + n log m)")
+    print("  • For n=1000, m=1000: ~10,000 + ~10,000 = 20,000 operations")
+    print()
+    
+    print("Key insight:")
+    print("  If the CLOSEST element in arr2 is > d away,")
+    print("  then ALL elements in arr2 must be > d away!")
+    print()
+    print("  In sorted arr2, closest element is one of two neighbors")
+    print("  of where arr1[i] would be inserted.")
+    print()
+    
+    print("Example:")
+    print("  arr1[i] = 5, d = 2")
+    print("  arr2 (sorted) = [1, 3, 8, 10]")
+    print()
+    print("  Binary search: 5 would go between 3 and 8")
+    print("  Only need to check:")
+    print("    Left neighbor: |5 - 3| = 2 ≤ 2 → INVALID")
+    print("  Don't need to check 1 or 10 (they're farther!)")
+
+
+def visualize_valid_range():
+    """Visualize the valid/invalid range concept"""
+    print("\n" + "=" * 70)
+    print("Valid Range Visualization")
+    print("=" * 70)
+    print()
+    
+    num = 10
+    d = 3
+    
+    print(f"For arr1[i] = {num} with d = {d}:")
+    print()
+    print("Valid region: arr2 elements must be OUTSIDE [{}, {}]".format(num - d, num + d))
+    print()
+    print("Number line:")
+    print()
+    print("  0   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15  16  17")
+    print("  |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|")
+    print("  ✓   ✓   ✓   ✓   ✓   ✓   ✗   ✗   ✗   ✗  [10] ✗   ✗   ✗   ✓   ✓   ✓   ✓")
+    print("                      |<- d=3 ->|     |<- d=3 ->|")
+    print("                      7         10         13")
+    print()
+    print("  ✓ = VALID (distance > 3)")
+    print("  ✗ = INVALID (distance ≤ 3)")
+    print()
+    print("arr2 examples:")
+    print("  arr2 = [5, 6]:     Both in valid region → num is VALID")
+    print("  arr2 = [5, 8]:     8 in invalid region → num is INVALID")
+    print("  arr2 = [14, 15]:   Both in valid region → num is VALID")
+
+
+def analyze_complexity():
+    """Analyze time and space complexity of different approaches"""
+    print("\n" + "=" * 70)
+    print("Complexity Analysis")
+    print("=" * 70)
+    print()
+    
+    print("1. Brute Force:")
+    print("   Time:  O(n × m)")
+    print("     • For each of n elements in arr1")
+    print("     • Check all m elements in arr2")
+    print("   Space: O(1)")
+    print()
+    
+    print("2. Binary Search (Optimal):")
+    print("   Time:  O(m log m + n log m)")
+    print("     • Sort arr2: O(m log m)")
+    print("     • For each of n elements: O(log m) binary search")
+    print("   Space: O(1) if can modify arr2, O(m) otherwise")
+    print()
+    
+    print("3. Set Optimization (when d is small):")
+    print("   Time:  O(m + n × d)")
+    print("     • Build set: O(m)")
+    print("     • For each element: check d values")
+    print("   Space: O(m) for the set")
+    print("   Note: Only better when d << m")
+    print()
+    
+    print("Comparison for n=1000, m=1000:")
+    print("  Brute Force:     1,000,000 operations")
+    print("  Binary Search:   ~20,000 operations (50× faster!)")
+    print()
+    
+    print("When to use each:")
+    print("  • Small arrays (n, m < 100): Brute force is fine")
+    print("  • Large arrays: Binary search is much better")
+    print("  • Very small d: Set approach might be competitive")
+
+
+def show_edge_cases():
+    """Demonstrate edge cases"""
+    print("\n" + "=" * 70)
+    print("Edge Cases")
+    print("=" * 70)
+    print()
+    
+    print("1. Distance threshold d = 0:")
+    print("   Only exact matches are invalid")
+    print("   arr1=[1,2,3], arr2=[2], d=0")
+    print("   → 1 and 3 are valid (distance = 1 > 0)")
+    print()
+    
+    print("2. Empty arr2:")
+    print("   All elements in arr1 are valid")
+    print("   arr1=[1,2,3], arr2=[], d=5")
+    print("   → Count = 3")
+    print()
+    
+    print("3. All elements within distance:")
+    print("   arr1=[1,2,3], arr2=[2], d=10")
+    print("   → Count = 0 (all within distance 10)")
+    print()
+    
+    print("4. All elements far away:")
+    print("   arr1=[1,2,3], arr2=[100,200], d=5")
+    print("   → Count = 3 (all far enough)")
+    print()
+    
+    print("5. Negative numbers:")
+    print("   Works the same, abs() handles sign")
+    print("   arr1=[-5], arr2=[0], d=4")
+    print("   → |-5 - 0| = 5 > 4 → valid")
+    print()
+    
+    print("6. Duplicate values:")
+    print("   Each element counted independently")
+    print("   arr1=[5,5,5], arr2=[1], d=2")
+    print("   → All three 5's are valid → count = 3")
+
+
+def show_common_mistakes():
+    """Show common mistakes"""
+    print("\n" + "=" * 70)
+    print("Common Mistakes")
+    print("=" * 70)
+    print()
+    
+    print("1. Wrong inequality:")
+    print("   ✗ if abs(num1 - num2) < d: is_valid = False")
+    print("   ✓ if abs(num1 - num2) <= d: is_valid = False")
+    print("   Distance EQUAL to d makes it invalid!")
+    print()
+    
+    print("2. Not checking both neighbors in binary search:")
+    print("   ✗ Only checking arr2[pos]")
+    print("   ✓ Check both arr2[pos] and arr2[pos-1]")
+    print("   Closest could be on either side!")
+    print()
+    
+    print("3. Off-by-one in binary search:")
+    print("   ✗ if pos < len(arr2) and abs(num - arr2[pos]) < d:")
+    print("   ✓ if pos < len(arr2) and abs(num - arr2[pos]) <= d:")
+    print()
+    
+    print("4. Forgetting to break early:")
+    print("   ✗ Continue checking after finding invalid")
+    print("   ✓ break immediately when found too close")
+    print("   Optimization matters for large arrays!")
+    print()
+    
+    print("5. Modifying original array without permission:")
+    print("   ✗ arr2.sort() directly")
+    print("   ✓ arr2 = sorted(arr2) or copy first")
+    print("   Unless problem allows modification")
+
+
+if __name__ == "__main__":
+    test_solutions()
+    demonstrate_algorithm()
+    demonstrate_binary_search()
+    explain_optimization()
+    visualize_valid_range()
+    analyze_complexity()
+    show_edge_cases()
+    show_common_mistakes()
