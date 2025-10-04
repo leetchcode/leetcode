@@ -1,0 +1,589 @@
+class Solution:
+    def reverseWords(self, s):
+        """
+        Reverse the order of words in a string.
+        
+        A word is defined as a sequence of non-space characters.
+        Input may contain leading/trailing spaces and multiple spaces between words.
+        Output should have words reversed with single space between them.
+        
+        Simple approach using built-in functions.
+        
+        Time Complexity: O(n)
+        Space Complexity: O(n)
+        
+        Args:
+            s: Input string
+            
+        Returns:
+            String with words reversed
+        """
+        # Split by whitespace (handles multiple spaces automatically)
+        words = s.split()
+        
+        # Reverse the list of words
+        words.reverse()
+        
+        # Join with single space
+        return ' '.join(words)
+
+
+class SolutionOneLiner:
+    def reverseWords(self, s):
+        """
+        One-liner solution using Python idioms.
+        
+        Time Complexity: O(n)
+        Space Complexity: O(n)
+        """
+        return ' '.join(s.split()[::-1])
+
+
+class SolutionTwoPointers:
+    def reverseWords(self, s):
+        """
+        Manual two-pointer solution without using split/reverse.
+        
+        Algorithm:
+        1. Extract words manually by scanning through string
+        2. Reverse the order of extracted words
+        3. Join with single space
+        
+        Time Complexity: O(n)
+        Space Complexity: O(n)
+        """
+        words = []
+        i = 0
+        n = len(s)
+        
+        while i < n:
+            # Skip spaces
+            while i < n and s[i] == ' ':
+                i += 1
+            
+            # Extract word
+            if i < n:
+                word_start = i
+                while i < n and s[i] != ' ':
+                    i += 1
+                words.append(s[word_start:i])
+        
+        # Reverse words and join
+        result = []
+        for i in range(len(words) - 1, -1, -1):
+            result.append(words[i])
+        
+        return ' '.join(result)
+
+
+class SolutionInPlace:
+    def reverseWords(self, s):
+        """
+        Simulate in-place reversal (as if working with char array).
+        
+        This is how you'd solve it in languages without string splitting,
+        or if you need O(1) extra space (excluding output).
+        
+        Algorithm:
+        1. Clean string: remove extra spaces
+        2. Reverse entire string
+        3. Reverse each word individually
+        
+        Time Complexity: O(n)
+        Space Complexity: O(n) for result (O(1) if we can modify input)
+        """
+        # Convert to list (simulating char array)
+        chars = list(s.strip())
+        
+        # Remove extra spaces
+        cleaned = []
+        i = 0
+        while i < len(chars):
+            if chars[i] != ' ':
+                cleaned.append(chars[i])
+                i += 1
+            else:
+                # Add single space and skip multiple spaces
+                if cleaned and cleaned[-1] != ' ':
+                    cleaned.append(' ')
+                i += 1
+        
+        # Remove trailing space if any
+        if cleaned and cleaned[-1] == ' ':
+            cleaned.pop()
+        
+        # Step 1: Reverse entire string
+        self._reverse(cleaned, 0, len(cleaned) - 1)
+        
+        # Step 2: Reverse each word
+        start = 0
+        for i in range(len(cleaned) + 1):
+            if i == len(cleaned) or cleaned[i] == ' ':
+                # Found end of word, reverse it
+                self._reverse(cleaned, start, i - 1)
+                start = i + 1
+        
+        return ''.join(cleaned)
+    
+    def _reverse(self, arr, left, right):
+        """Reverse array in place between left and right indices."""
+        while left < right:
+            arr[left], arr[right] = arr[right], arr[left]
+            left += 1
+            right -= 1
+
+
+class SolutionStack:
+    def reverseWords(self, s):
+        """
+        Stack-based solution.
+        Natural LIFO behavior helps with reversal.
+        
+        Time Complexity: O(n)
+        Space Complexity: O(n)
+        """
+        words = []
+        current_word = []
+        
+        for char in s:
+            if char != ' ':
+                current_word.append(char)
+            elif current_word:
+                # End of word
+                words.append(''.join(current_word))
+                current_word = []
+        
+        # Don't forget last word
+        if current_word:
+            words.append(''.join(current_word))
+        
+        # Reverse using stack (or just reverse list)
+        words.reverse()
+        
+        return ' '.join(words)
+
+
+class SolutionDeque:
+    def reverseWords(self, s):
+        """
+        Solution using deque for efficient operations.
+        
+        Time Complexity: O(n)
+        Space Complexity: O(n)
+        """
+        from collections import deque
+        
+        words = deque()
+        current_word = []
+        
+        for char in s:
+            if char != ' ':
+                current_word.append(char)
+            elif current_word:
+                words.append(''.join(current_word))
+                current_word = []
+        
+        if current_word:
+            words.append(''.join(current_word))
+        
+        # Build result in reverse order
+        result = []
+        while words:
+            result.append(words.pop())  # Pop from right (reverse order)
+        
+        return ' '.join(result)
+
+
+def test_solutions():
+    """Test all solutions with various test cases"""
+    
+    test_cases = [
+        # Basic examples
+        ("the sky is blue", "blue is sky the"),
+        ("  hello world  ", "world hello"),
+        ("a good   example", "example good a"),
+        
+        # Edge cases
+        ("  Bob    Loves  Alice   ", "Alice Loves Bob"),
+        ("Alice does not even like bob", "bob like even not does Alice"),
+        
+        # Single word
+        ("hello", "hello"),
+        ("  hello  ", "hello"),
+        
+        # Two words
+        ("hello world", "world hello"),
+        
+        # Multiple spaces
+        ("a  b  c", "c b a"),
+        ("   a   b   c   ", "c b a"),
+        
+        # Many words
+        ("one two three four five", "five four three two one"),
+        
+        # Leading/trailing spaces
+        ("   leading", "leading"),
+        ("trailing   ", "trailing"),
+        ("   both   ", "both"),
+        
+        # Single character words
+        ("a b c d e", "e d c b a"),
+    ]
+    
+    solutions = [
+        ("Simple (Recommended)", Solution()),
+        ("One-Liner", SolutionOneLiner()),
+        ("Two Pointers", SolutionTwoPointers()),
+        ("In-Place Simulation", SolutionInPlace()),
+        ("Stack-Based", SolutionStack()),
+        ("Deque-Based", SolutionDeque())
+    ]
+    
+    print("Testing Reverse Words in a String Solutions")
+    print("=" * 70)
+    
+    for i, (s, expected) in enumerate(test_cases):
+        print(f"\nTest Case {i+1}:")
+        print(f"Input:    '{s}'")
+        print(f"Expected: '{expected}'")
+        print("-" * 70)
+        
+        for name, solution in solutions:
+            try:
+                result = solution.reverseWords(s)
+                is_correct = result == expected
+                status = "✓ PASS" if is_correct else "✗ FAIL"
+                
+                print(f"{name:25s}: '{result}' {status}")
+                
+            except Exception as e:
+                print(f"{name:25s}: ERROR - {e}")
+
+
+def demonstrate_algorithm():
+    """Demonstrate how different algorithms work step by step"""
+    print("\n" + "=" * 70)
+    print("Algorithm Demonstration: Simple Approach")
+    print("=" * 70)
+    print()
+    
+    s = "  hello   world  "
+    print(f"Input: '{s}'")
+    print()
+    
+    print("Step 1: Split by whitespace")
+    words = s.split()
+    print(f"  words = {words}")
+    print()
+    
+    print("Step 2: Reverse the list")
+    words.reverse()
+    print(f"  words = {words}")
+    print()
+    
+    print("Step 3: Join with single space")
+    result = ' '.join(words)
+    print(f"  result = '{result}'")
+    print()
+    
+    print(f"Output: '{result}'")
+
+
+def demonstrate_inplace():
+    """Demonstrate the in-place reversal algorithm"""
+    print("\n" + "=" * 70)
+    print("In-Place Algorithm Demonstration")
+    print("=" * 70)
+    print()
+    
+    s = "the sky is blue"
+    print(f"Input: '{s}'")
+    print()
+    
+    print("This algorithm is used when you can modify the input directly")
+    print("(e.g., in C/C++ with char arrays)")
+    print()
+    
+    print("Step 1: Reverse entire string")
+    chars = list(s)
+    chars.reverse()
+    print(f"  '{s}' → '{''.join(chars)}'")
+    print()
+    
+    print("Step 2: Reverse each word individually")
+    temp = ''.join(chars)
+    words = temp.split()
+    reversed_words = [word[::-1] for word in words]
+    print(f"  Words after individual reversal: {reversed_words}")
+    print()
+    
+    result = ' '.join(reversed_words)
+    print(f"Final: '{result}'")
+    print()
+    
+    print("Explanation:")
+    print("  1. 'the sky is blue' → 'eulb si yks eht' (reverse all)")
+    print("  2. 'eulb' → 'blue', 'si' → 'is', 'yks' → 'sky', 'eht' → 'the'")
+    print("  3. Result: 'blue is sky the'")
+
+
+def explain_space_handling():
+    """Explain how to handle spaces"""
+    print("\n" + "=" * 70)
+    print("Handling Spaces")
+    print("=" * 70)
+    print()
+    
+    print("Input string may have:")
+    print("  1. Leading spaces: '   hello world'")
+    print("  2. Trailing spaces: 'hello world   '")
+    print("  3. Multiple spaces between words: 'hello    world'")
+    print()
+    
+    print("Output requirements:")
+    print("  • No leading or trailing spaces")
+    print("  • Exactly one space between words")
+    print()
+    
+    examples = [
+        ("  hello  world  ", "world hello"),
+        ("a   b   c", "c b a"),
+        ("   single   ", "single"),
+    ]
+    
+    print("Examples:")
+    for inp, out in examples:
+        print(f"  '{inp}' → '{out}'")
+    print()
+    
+    print("Python's split() handles this automatically:")
+    print("  • split() with no arguments splits on ANY whitespace")
+    print("  • Consecutive spaces treated as single separator")
+    print("  • Leading/trailing spaces ignored")
+    print()
+    
+    s = "  hello   world  "
+    print(f"Example: '{s}'.split() = {s.split()}")
+
+
+def visualize_two_pointer():
+    """Visualize two-pointer extraction of words"""
+    print("\n" + "=" * 70)
+    print("Two-Pointer Word Extraction")
+    print("=" * 70)
+    print()
+    
+    s = "  hello  world  "
+    print(f"String: '{s}'")
+    print("Index:   0123456789...")
+    print()
+    
+    print("Process:")
+    print()
+    
+    print("1. Skip leading spaces (i=0,1)")
+    print("   i=2 → found 'h'")
+    print()
+    
+    print("2. Extract 'hello' (i=2 to 6)")
+    print("   word_start=2, scan until space at i=7")
+    print("   word = s[2:7] = 'hello'")
+    print()
+    
+    print("3. Skip spaces (i=7,8)")
+    print("   i=9 → found 'w'")
+    print()
+    
+    print("4. Extract 'world' (i=9 to 13)")
+    print("   word_start=9, scan until space at i=14")
+    print("   word = s[9:14] = 'world'")
+    print()
+    
+    print("5. Skip trailing spaces, reach end")
+    print()
+    
+    print("Words extracted: ['hello', 'world']")
+    print("Reversed: ['world', 'hello']")
+    print("Joined: 'world hello'")
+
+
+def analyze_complexity():
+    """Analyze time and space complexity"""
+    print("\n" + "=" * 70)
+    print("Complexity Analysis")
+    print("=" * 70)
+    print()
+    
+    print("All approaches have similar complexity:")
+    print()
+    
+    print("Time Complexity: O(n)")
+    print("  • Must scan entire string at least once")
+    print("  • split(): O(n)")
+    print("  • reverse(): O(k) where k is number of words")
+    print("  • join(): O(n)")
+    print("  • Total: O(n)")
+    print()
+    
+    print("Space Complexity: O(n)")
+    print("  • Need to store result string: O(n)")
+    print("  • Word list: O(n) in total")
+    print()
+    
+    print("In-Place Approach:")
+    print("  • If input is mutable (char array), can achieve O(1) extra space")
+    print("  • In Python, strings are immutable, so still O(n)")
+    print()
+    
+    print("Optimization notes:")
+    print("  • Can't do better than O(n) time (must read all characters)")
+    print("  • Can't do better than O(n) space (must store result)")
+    print("  • Built-in split() is highly optimized in Python")
+
+
+def show_edge_cases():
+    """Demonstrate edge cases"""
+    print("\n" + "=" * 70)
+    print("Edge Cases")
+    print("=" * 70)
+    print()
+    
+    cases = [
+        ("", "", "Empty string"),
+        ("   ", "", "Only spaces"),
+        ("a", "a", "Single character"),
+        ("  a  ", "a", "Single word with spaces"),
+        ("ab", "ab", "Single word, no spaces"),
+        ("a b", "b a", "Two single characters"),
+        ("  a  b  ", "b a", "Two words with many spaces"),
+    ]
+    
+    for inp, expected, description in cases:
+        print(f"{description}:")
+        print(f"  Input:  '{inp}'")
+        print(f"  Output: '{expected}'")
+        print()
+
+
+def show_common_mistakes():
+    """Show common mistakes"""
+    print("\n" + "=" * 70)
+    print("Common Mistakes")
+    print("=" * 70)
+    print()
+    
+    print("1. Not handling multiple spaces:")
+    print("   ✗ split(' ') - only splits on single space")
+    print("   ✓ split() - splits on any whitespace")
+    print()
+    print("   Example: 'a  b'.split(' ') = ['a', '', 'b']")
+    print("           'a  b'.split() = ['a', 'b']")
+    print()
+    
+    print("2. Not trimming leading/trailing spaces:")
+    print("   ✗ '  hello  '.split() is fine, but manual parsing needs trim")
+    print("   ✓ Use strip() before manual processing")
+    print()
+    
+    print("3. Adding extra spaces in output:")
+    print("   ✗ ' '.join(['hello', '', 'world']) = 'hello  world'")
+    print("   ✓ Filter out empty strings first")
+    print()
+    
+    print("4. In-place reversal: forgetting to reverse words:")
+    print("   ✗ Only reversing entire string")
+    print("   ✓ Reverse entire string, then reverse each word")
+    print()
+    
+    print("5. Not handling empty string:")
+    print("   ✗ Assuming at least one word exists")
+    print("   ✓ Check if words list is empty")
+
+
+def compare_approaches():
+    """Compare different approaches"""
+    print("\n" + "=" * 70)
+    print("Approach Comparison")
+    print("=" * 70)
+    print()
+    
+    print("1. Built-in split/reverse/join (Recommended):")
+    print("   Pros:")
+    print("     • Simplest and most Pythonic")
+    print("     • Handles spaces automatically")
+    print("     • Highly optimized")
+    print("   Cons:")
+    print("     • Uses built-in functions (might not show algorithm knowledge)")
+    print("   Best for: Production code, quick solutions")
+    print()
+    
+    print("2. Manual two-pointer:")
+    print("   Pros:")
+    print("     • Shows algorithm understanding")
+    print("     • No built-in split() used")
+    print("   Cons:")
+    print("     • More code")
+    print("     • Easier to make mistakes")
+    print("   Best for: Interviews where built-ins not allowed")
+    print()
+    
+    print("3. In-place simulation:")
+    print("   Pros:")
+    print("     • Demonstrates advanced technique")
+    print("     • O(1) extra space if input mutable")
+    print("   Cons:")
+    print("     • Most complex")
+    print("     • Not applicable in Python (strings immutable)")
+    print("   Best for: C/C++ interviews, showing expertise")
+    print()
+    
+    print("4. Stack/Deque:")
+    print("   Pros:")
+    print("     • Natural for reversal problems")
+    print("     • Good data structure practice")
+    print("   Cons:")
+    print("     • Overkill for this problem")
+    print("   Best for: Educational purposes")
+
+
+def demonstrate_variations():
+    """Show problem variations"""
+    print("\n" + "=" * 70)
+    print("Problem Variations")
+    print("=" * 70)
+    print()
+    
+    print("This problem can be modified to:")
+    print()
+    
+    print("1. Reverse characters in each word (keep word order):")
+    print("   'the sky is blue' → 'eht yks si eulb'")
+    print("   Solution: Split, reverse each word, join")
+    print()
+    
+    print("2. Reverse entire string:")
+    print("   'the sky is blue' → 'eulb si yks eht'")
+    print("   Solution: Just reverse the string")
+    print()
+    
+    print("3. Reverse words and characters:")
+    print("   'the sky is blue' → 'eulb si yks eht'")
+    print("   Solution: Reverse entire string (same as #2)")
+    print()
+    
+    print("4. Reverse k words at a time:")
+    print("   'a b c d e', k=2 → 'b a d c e'")
+    print("   Solution: Process in chunks of k")
+
+
+if __name__ == "__main__":
+    test_solutions()
+    demonstrate_algorithm()
+    demonstrate_inplace()
+    explain_space_handling()
+    visualize_two_pointer()
+    analyze_complexity()
+    show_edge_cases()
+    show_common_mistakes()
+    compare_approaches()
+    demonstrate_variations()
