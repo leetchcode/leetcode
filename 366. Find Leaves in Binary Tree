@@ -1,0 +1,263 @@
+from typing import List, Optional
+from collections import defaultdict
+
+# Definition for a binary tree node.
+class TreeNode:
+    def __init__(self, val=0, left=None, right=None):
+        self.val = val
+        self.left = left
+        self.right = right
+
+class Solution:
+    def findLeaves(self, root: Optional[TreeNode]) -> List[List[int]]:
+        """
+        Collect leaves level by level from bottom to top.
+        
+        Key insight: Instead of actually removing leaves, calculate the HEIGHT
+        of each node from the bottom. Leaves have height 0, their parents 
+        have height 1, etc. Group nodes by their height.
+        
+        Height definition: distance from the furthest leaf below
+        - Leaf nodes: height = 0
+        - Non-leaf: height = 1 + max(left_height, right_height)
+        
+        Time Complexity: O(n) - visit each node once
+        Space Complexity: O(n) - recursion stack and result storage
+        """
+        result = []
+        
+        def get_height(node):
+            """
+            Returns the height of the node.
+            Side effect: adds node value to appropriate result list.
+            """
+            if not node:
+                return -1  # null node has height -1
+            
+            # Calculate height from children
+            left_height = get_height(node.left)
+            right_height = get_height(node.right)
+            
+            # Current node's height
+            height = 1 + max(left_height, right_height)
+            
+            # Ensure result has enough lists
+            if height >= len(result):
+                result.append([])
+            
+            # Add current node to its height level
+            result[height].append(node.val)
+            
+            return height
+        
+        get_height(root)
+        return result
+
+
+class SolutionAlternative:
+    def findLeaves(self, root: Optional[TreeNode]) -> List[List[int]]:
+        """
+        Alternative implementation with explicit dictionary for clarity.
+        
+        Time Complexity: O(n)
+        Space Complexity: O(n)
+        """
+        height_map = defaultdict(list)
+        
+        def dfs(node):
+            """Returns height and populates height_map"""
+            if not node:
+                return -1
+            
+            left_height = dfs(node.left)
+            right_height = dfs(node.right)
+            
+            height = 1 + max(left_height, right_height)
+            height_map[height].append(node.val)
+            
+            return height
+        
+        max_height = dfs(root)
+        
+        # Convert map to list of lists
+        return [height_map[i] for i in range(max_height + 1)]
+
+
+def build_tree_from_list(values: List[Optional[int]]) -> Optional[TreeNode]:
+    """Build binary tree from level-order list representation"""
+    if not values or values[0] is None:
+        return None
+    
+    root = TreeNode(values[0])
+    queue = [root]
+    i = 1
+    
+    while queue and i < len(values):
+        node = queue.pop(0)
+        
+        # Left child
+        if i < len(values) and values[i] is not None:
+            node.left = TreeNode(values[i])
+            queue.append(node.left)
+        i += 1
+        
+        # Right child
+        if i < len(values) and values[i] is not None:
+            node.right = TreeNode(values[i])
+            queue.append(node.right)
+        i += 1
+    
+    return root
+
+
+def print_tree(root: Optional[TreeNode], level=0, prefix="Root: "):
+    """Print tree structure"""
+    if root:
+        print(" " * (level * 4) + prefix + str(root.val))
+        if root.left or root.right:
+            if root.left:
+                print_tree(root.left, level + 1, "L--- ")
+            else:
+                print(" " * ((level + 1) * 4) + "L--- None")
+            if root.right:
+                print_tree(root.right, level + 1, "R--- ")
+            else:
+                print(" " * ((level + 1) * 4) + "R--- None")
+
+
+def visualize_solution(root: Optional[TreeNode]):
+    """Visualize the height calculation process"""
+    print("Tree structure:")
+    print_tree(root)
+    print()
+    
+    height_map = {}
+    
+    def calculate_heights(node, path=""):
+        """Calculate and display height for each node"""
+        if not node:
+            return -1
+        
+        left_height = calculate_heights(node.left, path + "L")
+        right_height = calculate_heights(node.right, path + "R")
+        
+        height = 1 + max(left_height, right_height)
+        height_map[node.val] = height
+        
+        return height
+    
+    calculate_heights(root)
+    
+    print("Node heights (distance from furthest leaf):")
+    for val, height in sorted(height_map.items(), key=lambda x: x[1]):
+        print(f"  Node {val}: height = {height}")
+    print()
+    
+    # Group by height
+    print("Grouped by height (removal order):")
+    groups = defaultdict(list)
+    for val, height in height_map.items():
+        groups[height].append(val)
+    
+    for height in sorted(groups.keys()):
+        print(f"  Height {height}: {sorted(groups[height])}")
+    print()
+
+
+def trace_algorithm(root: Optional[TreeNode]):
+    """Trace through the algorithm step by step"""
+    print("=" * 60)
+    print("ALGORITHM TRACE")
+    print("=" * 60)
+    
+    call_stack = []
+    result = []
+    
+    def trace_dfs(node, depth=0):
+        indent = "  " * depth
+        
+        if not node:
+            print(f"{indent}└─ null node → height = -1")
+            return -1
+        
+        print(f"{indent}┌─ Processing node {node.val}")
+        call_stack.append(node.val)
+        
+        print(f"{indent}│  Checking left child:")
+        left_height = trace_dfs(node.left, depth + 1)
+        
+        print(f"{indent}│  Checking right child:")
+        right_height = trace_dfs(node.right, depth + 1)
+        
+        height = 1 + max(left_height, right_height)
+        
+        print(f"{indent}│  Height = 1 + max({left_height}, {right_height}) = {height}")
+        
+        # Add to result
+        while height >= len(result):
+            result.append([])
+        result[height].append(node.val)
+        
+        print(f"{indent}│  Added {node.val} to result[{height}]")
+        print(f"{indent}│  Current result: {result}")
+        print(f"{indent}└─ Returning height {height}")
+        
+        call_stack.pop()
+        return height
+    
+    trace_dfs(root)
+    
+    print("\nFinal result:", result)
+    print("=" * 60)
+    print()
+    
+    return result
+
+
+# Test cases
+if __name__ == "__main__":
+    sol = Solution()
+    
+    # Test case 1
+    print("Test Case 1:")
+    print("=" * 60)
+    values1 = [1, 2, 3, 4, 5]
+    root1 = build_tree_from_list(values1)
+    visualize_solution(root1)
+    result1 = sol.findLeaves(root1)
+    print(f"Result: {result1}")
+    print(f"Expected: [[4, 5, 3], [2], [1]]\n")
+    
+    # Test case 2
+    print("Test Case 2:")
+    print("=" * 60)
+    values2 = [1]
+    root2 = build_tree_from_list(values2)
+    visualize_solution(root2)
+    result2 = sol.findLeaves(root2)
+    print(f"Result: {result2}")
+    print(f"Expected: [[1]]\n")
+    
+    # Test case 3 with trace
+    print("Test Case 3 (with detailed trace):")
+    print("=" * 60)
+    values3 = [1, 2, 3, 4, 5]
+    root3 = build_tree_from_list(values3)
+    trace_algorithm(root3)
+    
+    # Test case 4: More complex tree
+    print("Test Case 4: Unbalanced Tree")
+    print("=" * 60)
+    #       1
+    #      / \
+    #     2   3
+    #    /   / \
+    #   4   5   6
+    #  /
+    # 7
+    values4 = [1, 2, 3, 4, None, 5, 6, 7]
+    root4 = build_tree_from_list(values4)
+    visualize_solution(root4)
+    result4 = sol.findLeaves(root4)
+    print(f"Result: {result4}")
+    print(f"Expected: [[7, 5, 6], [4, 3], [2], [1]]")
