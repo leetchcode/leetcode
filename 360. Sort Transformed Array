@@ -1,0 +1,237 @@
+from typing import List
+
+class Solution:
+    def sortTransformedArray(self, nums: List[int], a: int, b: int, c: int) -> List[int]:
+        """
+        Apply f(x) = ax^2 + bx + c to each element and return sorted result.
+        
+        Key insight: Quadratic functions are parabolas
+        - If a > 0: parabola opens upward (minimum at vertex)
+        - If a < 0: parabola opens downward (maximum at vertex)
+        - If a = 0: linear function (monotonic)
+        
+        Use two pointers from both ends to build result efficiently.
+        
+        Time Complexity: O(n)
+        Space Complexity: O(n) for result array
+        """
+        n = len(nums)
+        result = [0] * n
+        
+        def transform(x):
+            """Apply quadratic transformation"""
+            return a * x * x + b * x + c
+        
+        # Two pointers approach
+        left, right = 0, n - 1
+        
+        if a >= 0:
+            # Parabola opens upward: largest values at the ends
+            # Fill result from end to beginning
+            index = n - 1
+            while left <= right:
+                left_val = transform(nums[left])
+                right_val = transform(nums[right])
+                
+                if left_val >= right_val:
+                    result[index] = left_val
+                    left += 1
+                else:
+                    result[index] = right_val
+                    right -= 1
+                index -= 1
+        else:
+            # Parabola opens downward: smallest values at the ends
+            # Fill result from beginning to end
+            index = 0
+            while left <= right:
+                left_val = transform(nums[left])
+                right_val = transform(nums[right])
+                
+                if left_val <= right_val:
+                    result[index] = left_val
+                    left += 1
+                else:
+                    result[index] = right_val
+                    right -= 1
+                index += 1
+        
+        return result
+
+
+class SolutionBruteForce:
+    def sortTransformedArray(self, nums: List[int], a: int, b: int, c: int) -> List[int]:
+        """
+        Brute force approach: transform then sort.
+        
+        Time Complexity: O(n log n)
+        Space Complexity: O(n)
+        """
+        def transform(x):
+            return a * x * x + b * x + c
+        
+        result = [transform(x) for x in nums]
+        result.sort()
+        return result
+
+
+def visualize_parabola(nums: List[int], a: int, b: int, c: int):
+    """Visualize the quadratic transformation"""
+    print(f"Function: f(x) = {a}x² + {b}x + {c}")
+    print(f"Input array: {nums}")
+    print()
+    
+    # Calculate vertex
+    if a != 0:
+        vertex_x = -b / (2 * a)
+        vertex_y = a * vertex_x * vertex_x + b * vertex_x + c
+        print(f"Vertex: x = {vertex_x:.2f}, y = {vertex_y:.2f}")
+        
+        if a > 0:
+            print("Parabola opens: UPWARD ∪ (minimum at vertex)")
+            print("Strategy: Largest values at the ends, fill from back")
+        elif a < 0:
+            print("Parabola opens: DOWNWARD ∩ (maximum at vertex)")
+            print("Strategy: Smallest values at the ends, fill from front")
+    else:
+        print("Linear function (a = 0)")
+        if b > 0:
+            print("Monotonically increasing")
+        elif b < 0:
+            print("Monotonically decreasing")
+        else:
+            print("Constant function")
+    print()
+    
+    # Show transformations
+    print("Transformations:")
+    for x in nums:
+        y = a * x * x + b * x + c
+        print(f"  f({x:2d}) = {a}×{x}² + {b}×{x} + {c} = {y}")
+    print()
+
+
+def trace_two_pointer(nums: List[int], a: int, b: int, c: int):
+    """Trace through the two-pointer algorithm"""
+    print("=" * 60)
+    print("TWO-POINTER TRACE")
+    print("=" * 60)
+    
+    n = len(nums)
+    result = [0] * n
+    
+    def transform(x):
+        return a * x * x + b * x + c
+    
+    left, right = 0, n - 1
+    
+    print(f"Initial: left={left}, right={right}")
+    print()
+    
+    if a >= 0:
+        print("Strategy: Fill from END (largest values at ends)")
+        index = n - 1
+        step = 1
+        
+        while left <= right:
+            left_val = transform(nums[left])
+            right_val = transform(nums[right])
+            
+            print(f"Step {step}:")
+            print(f"  Compare: f({nums[left]}) = {left_val} vs f({nums[right]}) = {right_val}")
+            
+            if left_val >= right_val:
+                result[index] = left_val
+                print(f"  Choose left: result[{index}] = {left_val}")
+                left += 1
+            else:
+                result[index] = right_val
+                print(f"  Choose right: result[{index}] = {right_val}")
+                right -= 1
+            
+            index -= 1
+            print(f"  Current result: {result}")
+            print()
+            step += 1
+    else:
+        print("Strategy: Fill from START (smallest values at ends)")
+        index = 0
+        step = 1
+        
+        while left <= right:
+            left_val = transform(nums[left])
+            right_val = transform(nums[right])
+            
+            print(f"Step {step}:")
+            print(f"  Compare: f({nums[left]}) = {left_val} vs f({nums[right]}) = {right_val}")
+            
+            if left_val <= right_val:
+                result[index] = left_val
+                print(f"  Choose left: result[{index}] = {left_val}")
+                left += 1
+            else:
+                result[index] = right_val
+                print(f"  Choose right: result[{index}] = {right_val}")
+                right -= 1
+            
+            index += 1
+            print(f"  Current result: {result}")
+            print()
+            step += 1
+    
+    print(f"Final result: {result}")
+    print("=" * 60)
+    print()
+    return result
+
+
+# Test cases
+if __name__ == "__main__":
+    sol = Solution()
+    sol_brute = SolutionBruteForce()
+    
+    # Test case 1: Parabola opens upward
+    print("Test Case 1: Upward Parabola")
+    print("=" * 60)
+    nums1 = [-4, -2, 2, 4]
+    a1, b1, c1 = 1, 3, 5
+    visualize_parabola(nums1, a1, b1, c1)
+    result1 = trace_two_pointer(nums1, a1, b1, c1)
+    result1_brute = sol_brute.sortTransformedArray(nums1, a1, b1, c1)
+    print(f"Two-pointer result: {result1}")
+    print(f"Brute force result: {result1_brute}")
+    print(f"Expected: [3, 9, 15, 33]\n")
+    
+    # Test case 2: Parabola opens downward
+    print("Test Case 2: Downward Parabola")
+    print("=" * 60)
+    nums2 = [-4, -2, 2, 4]
+    a2, b2, c2 = -1, 3, 5
+    visualize_parabola(nums2, a2, b2, c2)
+    result2 = trace_two_pointer(nums2, a2, b2, c2)
+    result2_brute = sol_brute.sortTransformedArray(nums2, a2, b2, c2)
+    print(f"Two-pointer result: {result2}")
+    print(f"Brute force result: {result2_brute}")
+    print(f"Expected: [-23, -5, 1, 7]\n")
+    
+    # Test case 3: Linear function (a = 0)
+    print("Test Case 3: Linear Function")
+    print("=" * 60)
+    nums3 = [1, 2, 3, 4]
+    a3, b3, c3 = 0, 2, 1
+    visualize_parabola(nums3, a3, b3, c3)
+    result3 = sol.sortTransformedArray(nums3, a3, b3, c3)
+    result3_brute = sol_brute.sortTransformedArray(nums3, a3, b3, c3)
+    print(f"Two-pointer result: {result3}")
+    print(f"Brute force result: {result3_brute}")
+    print(f"Expected: [3, 5, 7, 9]\n")
+    
+    # Test case 4: Edge case
+    print("Test Case 4: Single Element")
+    print("=" * 60)
+    nums4 = [5]
+    a4, b4, c4 = 2, 1, 3
+    visualize_parabola(nums4, a4, b4, c4)
+    result4 = sol.sortTransformedArray(nums4, a4, b4, c4)
+    print(f"Result: {result4}")
+    print(f"Expected: [58]")
