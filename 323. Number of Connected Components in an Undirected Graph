@@ -1,0 +1,212 @@
+from typing import List
+from collections import defaultdict, deque
+
+class Solution:
+    def countComponents(self, n: int, edges: List[List[int]]) -> int:
+        """
+        Count connected components using DFS.
+        
+        Time Complexity: O(V + E) where V is number of vertices, E is edges
+        Space Complexity: O(V + E) for adjacency list and visited set
+        """
+        # Build adjacency list
+        graph = defaultdict(list)
+        for u, v in edges:
+            graph[u].append(v)
+            graph[v].append(u)
+        
+        visited = set()
+        components = 0
+        
+        def dfs(node):
+            """Mark all nodes in current component as visited"""
+            visited.add(node)
+            for neighbor in graph[node]:
+                if neighbor not in visited:
+                    dfs(neighbor)
+        
+        # Try to start DFS from each unvisited node
+        for node in range(n):
+            if node not in visited:
+                dfs(node)
+                components += 1
+        
+        return components
+
+
+class SolutionBFS:
+    def countComponents(self, n: int, edges: List[List[int]]) -> int:
+        """
+        Count connected components using BFS.
+        
+        Time Complexity: O(V + E)
+        Space Complexity: O(V + E)
+        """
+        # Build adjacency list
+        graph = defaultdict(list)
+        for u, v in edges:
+            graph[u].append(v)
+            graph[v].append(u)
+        
+        visited = set()
+        components = 0
+        
+        def bfs(start):
+            """BFS to visit all nodes in current component"""
+            queue = deque([start])
+            visited.add(start)
+            
+            while queue:
+                node = queue.popleft()
+                for neighbor in graph[node]:
+                    if neighbor not in visited:
+                        visited.add(neighbor)
+                        queue.append(neighbor)
+        
+        # Try to start BFS from each unvisited node
+        for node in range(n):
+            if node not in visited:
+                bfs(node)
+                components += 1
+        
+        return components
+
+
+class SolutionUnionFind:
+    def countComponents(self, n: int, edges: List[List[int]]) -> int:
+        """
+        Count connected components using Union-Find (Disjoint Set Union).
+        This is the most efficient approach for this problem.
+        
+        Time Complexity: O(E × α(n)) where α is inverse Ackermann (nearly constant)
+        Space Complexity: O(V)
+        """
+        parent = list(range(n))
+        rank = [0] * n
+        
+        def find(x):
+            """Find root of x with path compression"""
+            if parent[x] != x:
+                parent[x] = find(parent[x])  # Path compression
+            return parent[x]
+        
+        def union(x, y):
+            """Union two components by rank"""
+            root_x = find(x)
+            root_y = find(y)
+            
+            if root_x == root_y:
+                return False  # Already in same component
+            
+            # Union by rank
+            if rank[root_x] < rank[root_y]:
+                parent[root_x] = root_y
+            elif rank[root_x] > rank[root_y]:
+                parent[root_y] = root_x
+            else:
+                parent[root_y] = root_x
+                rank[root_x] += 1
+            
+            return True
+        
+        # Start with n components
+        components = n
+        
+        # Each successful union reduces component count by 1
+        for u, v in edges:
+            if union(u, v):
+                components -= 1
+        
+        return components
+
+
+def visualize_graph(n: int, edges: List[List[int]]):
+    """Visualize the graph structure"""
+    print(f"Graph with {n} nodes:")
+    print(f"Edges: {edges}\n")
+    
+    # Build adjacency list
+    graph = defaultdict(list)
+    for u, v in edges:
+        graph[u].append(v)
+        graph[v].append(u)
+    
+    print("Adjacency List:")
+    for node in range(n):
+        neighbors = sorted(graph[node]) if graph[node] else []
+        print(f"  Node {node}: {neighbors}")
+    print()
+
+
+def trace_dfs(n: int, edges: List[List[int]]):
+    """Trace through DFS to show how components are found"""
+    graph = defaultdict(list)
+    for u, v in edges:
+        graph[u].append(v)
+        graph[v].append(u)
+    
+    visited = set()
+    components = []
+    
+    def dfs(node, current_component):
+        visited.add(node)
+        current_component.append(node)
+        for neighbor in sorted(graph[node]):
+            if neighbor not in visited:
+                dfs(neighbor, current_component)
+    
+    for node in range(n):
+        if node not in visited:
+            current_component = []
+            dfs(node, current_component)
+            components.append(sorted(current_component))
+    
+    print("Components found:")
+    for i, comp in enumerate(components, 1):
+        print(f"  Component {i}: {comp}")
+    print(f"\nTotal components: {len(components)}\n")
+    
+    return len(components)
+
+
+# Test cases
+if __name__ == "__main__":
+    sol_dfs = Solution()
+    sol_bfs = SolutionBFS()
+    sol_uf = SolutionUnionFind()
+    
+    # Test case 1
+    print("=" * 60)
+    print("Test Case 1:")
+    print("=" * 60)
+    n1, edges1 = 5, [[0,1],[1,2],[3,4]]
+    visualize_graph(n1, edges1)
+    trace_dfs(n1, edges1)
+    print(f"DFS Result: {sol_dfs.countComponents(n1, edges1)}")
+    print(f"BFS Result: {sol_bfs.countComponents(n1, edges1)}")
+    print(f"Union-Find Result: {sol_uf.countComponents(n1, edges1)}")
+    print(f"Expected: 2\n")
+    
+    # Test case 2
+    print("=" * 60)
+    print("Test Case 2:")
+    print("=" * 60)
+    n2, edges2 = 5, [[0,1],[1,2],[2,3],[3,4]]
+    visualize_graph(n2, edges2)
+    trace_dfs(n2, edges2)
+    print(f"DFS Result: {sol_dfs.countComponents(n2, edges2)}")
+    print(f"BFS Result: {sol_bfs.countComponents(n2, edges2)}")
+    print(f"Union-Find Result: {sol_uf.countComponents(n2, edges2)}")
+    print(f"Expected: 1\n")
+    
+    # Test case 3
+    print("=" * 60)
+    print("Test Case 3:")
+    print("=" * 60)
+    n3, edges3 = 4, []
+    visualize_graph(n3, edges3)
+    trace_dfs(n3, edges3)
+    print(f"DFS Result: {sol_dfs.countComponents(n3, edges3)}")
+    print(f"BFS Result: {sol_bfs.countComponents(n3, edges3)}")
+    print(f"Union-Find Result: {sol_uf.countComponents(n3, edges3)}")
+    print(f"Expected: 4")
