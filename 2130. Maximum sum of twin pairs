@@ -1,0 +1,202 @@
+from typing import Optional, List
+
+# Definition for singly-linked list.
+class ListNode:
+    def __init__(self, val=0, next=None):
+        self.val = val
+        self.next = next
+
+class Solution:
+    def pairSum(self, head: Optional[ListNode]) -> int:
+        """
+        Find maximum twin sum where twins are nodes at positions i and (n-1-i).
+        
+        Approach: Find middle, reverse second half, compare both halves
+        
+        Time Complexity: O(n)
+        Space Complexity: O(1)
+        """
+        # Step 1: Find the middle of the linked list using slow/fast pointers
+        slow = fast = head
+        while fast and fast.next:
+            slow = slow.next
+            fast = fast.next.next
+        
+        # Step 2: Reverse the second half
+        prev = None
+        curr = slow
+        while curr:
+            next_temp = curr.next
+            curr.next = prev
+            prev = curr
+            curr = next_temp
+        
+        # Step 3: Compare first half with reversed second half
+        max_sum = 0
+        first_half = head
+        second_half = prev  # This is now the head of reversed second half
+        
+        while second_half:
+            twin_sum = first_half.val + second_half.val
+            max_sum = max(max_sum, twin_sum)
+            first_half = first_half.next
+            second_half = second_half.next
+        
+        return max_sum
+
+
+class SolutionWithArray:
+    def pairSum(self, head: Optional[ListNode]) -> int:
+        """
+        Alternative approach using array for easier understanding.
+        
+        Time Complexity: O(n)
+        Space Complexity: O(n)
+        """
+        # Convert linked list to array
+        values = []
+        curr = head
+        while curr:
+            values.append(curr.val)
+            curr = curr.next
+        
+        # Find maximum twin sum
+        n = len(values)
+        max_sum = 0
+        
+        for i in range(n // 2):
+            twin_sum = values[i] + values[n - 1 - i]
+            max_sum = max(max_sum, twin_sum)
+        
+        return max_sum
+
+
+# Helper functions for testing
+def create_linked_list(values: List[int]) -> Optional[ListNode]:
+    """Create a linked list from a list of values"""
+    if not values:
+        return None
+    
+    head = ListNode(values[0])
+    curr = head
+    for val in values[1:]:
+        curr.next = ListNode(val)
+        curr = curr.next
+    
+    return head
+
+
+def print_linked_list(head: Optional[ListNode]) -> str:
+    """Print linked list as string"""
+    values = []
+    curr = head
+    while curr:
+        values.append(str(curr.val))
+        curr = curr.next
+    return " -> ".join(values)
+
+
+def visualize_twins(values: List[int]):
+    """Visualize twin pairs"""
+    n = len(values)
+    print(f"List: {values}")
+    print(f"Length: {n}\n")
+    print("Twin pairs:")
+    
+    max_sum = 0
+    max_pair = None
+    
+    for i in range(n // 2):
+        twin_idx = n - 1 - i
+        twin_sum = values[i] + values[twin_idx]
+        print(f"  Position {i} (value={values[i]}) + Position {twin_idx} (value={values[twin_idx]}) = {twin_sum}")
+        
+        if twin_sum > max_sum:
+            max_sum = twin_sum
+            max_pair = (i, twin_idx, values[i], values[twin_idx])
+    
+    print(f"\nMaximum twin sum: {max_sum}")
+    if max_pair:
+        print(f"Best pair: Position {max_pair[0]} ({max_pair[2]}) + Position {max_pair[1]} ({max_pair[3]})")
+    print()
+
+
+def trace_solution(values: List[int]):
+    """Trace through the solution step by step"""
+    print("=" * 60)
+    print("STEP-BY-STEP TRACE")
+    print("=" * 60)
+    
+    n = len(values)
+    print(f"Original list: {values}")
+    print(f"List has {n} nodes\n")
+    
+    # Step 1: Find middle
+    mid = n // 2
+    print(f"Step 1: Find middle")
+    print(f"  First half: {values[:mid]}")
+    print(f"  Second half: {values[mid:]}\n")
+    
+    # Step 2: Reverse second half
+    second_half_reversed = values[mid:][::-1]
+    print(f"Step 2: Reverse second half")
+    print(f"  Reversed: {second_half_reversed}\n")
+    
+    # Step 3: Calculate twin sums
+    print(f"Step 3: Calculate twin sums")
+    first_half = values[:mid]
+    max_sum = 0
+    
+    for i in range(len(first_half)):
+        twin_sum = first_half[i] + second_half_reversed[i]
+        print(f"  {first_half[i]} + {second_half_reversed[i]} = {twin_sum}")
+        max_sum = max(max_sum, twin_sum)
+    
+    print(f"\nResult: {max_sum}")
+    print("=" * 60)
+    print()
+
+
+# Test cases
+if __name__ == "__main__":
+    sol = Solution()
+    sol_array = SolutionWithArray()
+    
+    # Test case 1
+    print("Test Case 1:")
+    values1 = [5, 4, 2, 1]
+    visualize_twins(values1)
+    head1 = create_linked_list(values1)
+    result1 = sol.pairSum(head1)
+    print(f"Result (O(1) space): {result1}")
+    head1 = create_linked_list(values1)  # Recreate as list is modified
+    result1_array = sol_array.pairSum(head1)
+    print(f"Result (O(n) space): {result1_array}")
+    print(f"Expected: 6\n")
+    
+    # Test case 2
+    print("Test Case 2:")
+    values2 = [4, 2, 2, 3]
+    visualize_twins(values2)
+    head2 = create_linked_list(values2)
+    result2 = sol.pairSum(head2)
+    print(f"Result (O(1) space): {result2}")
+    head2 = create_linked_list(values2)
+    result2_array = sol_array.pairSum(head2)
+    print(f"Result (O(n) space): {result2_array}")
+    print(f"Expected: 7\n")
+    
+    # Test case 3
+    print("Test Case 3:")
+    values3 = [1, 100000]
+    visualize_twins(values3)
+    head3 = create_linked_list(values3)
+    result3 = sol.pairSum(head3)
+    print(f"Result (O(1) space): {result3}")
+    head3 = create_linked_list(values3)
+    result3_array = sol_array.pairSum(head3)
+    print(f"Result (O(n) space): {result3_array}")
+    print(f"Expected: 100001\n")
+    
+    # Detailed trace for test case 1
+    trace_solution(values1)
