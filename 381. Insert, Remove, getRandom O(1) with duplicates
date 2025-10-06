@@ -1,0 +1,318 @@
+import random
+from collections import defaultdict
+
+class RandomizedCollection:
+    """
+    Data structure supporting insert, remove, and getRandom in O(1) average time.
+    ALLOWS DUPLICATES (unlike problem 380).
+    
+    Key insight: 
+    - Array stores values (can have duplicates)
+    - HashMap maps value → set of indices where value appears
+    
+    For deletion: swap with last element, update indices, then pop
+    """
+
+    def __init__(self):
+        """Initialize the data structure"""
+        self.values = []  # Array storing all values (with duplicates)
+        self.val_to_indices = defaultdict(set)  # value → set of indices
+
+    def insert(self, val: int) -> bool:
+        """
+        Insert a value. Returns True if the collection did not contain val.
+        
+        Time Complexity: O(1) average
+        """
+        # Check if value already exists
+        is_new = val not in self.val_to_indices or len(self.val_to_indices[val]) == 0
+        
+        # Add value to end of array
+        self.values.append(val)
+        # Add this index to the set of indices for this value
+        self.val_to_indices[val].add(len(self.values) - 1)
+        
+        return is_new
+
+    def remove(self, val: int) -> bool:
+        """
+        Remove one occurrence of val if present.
+        Returns True if val was removed, False if not present.
+        
+        Trick: Swap with last element, update indices, then pop
+        
+        Time Complexity: O(1) average
+        """
+        if val not in self.val_to_indices or len(self.val_to_indices[val]) == 0:
+            return False
+        
+        # Get an arbitrary index where val appears (use pop for efficiency)
+        val_index = self.val_to_indices[val].pop()
+        last_index = len(self.values) - 1
+        last_val = self.values[last_index]
+        
+        # Move last element to the position of element to remove
+        self.values[val_index] = last_val
+        
+        # Update indices for the last_val
+        self.val_to_indices[last_val].add(val_index)
+        self.val_to_indices[last_val].discard(last_index)
+        
+        # Remove last element
+        self.values.pop()
+        
+        # Clean up empty sets in the map
+        if len(self.val_to_indices[val]) == 0:
+            del self.val_to_indices[val]
+        
+        return True
+
+    def getRandom(self) -> int:
+        """
+        Get a random element with uniform probability.
+        Each element has equal probability regardless of duplicates.
+        
+        Time Complexity: O(1)
+        """
+        return random.choice(self.values)
+
+
+class RandomizedCollectionVerbose:
+    """
+    Same implementation with detailed print statements for learning
+    """
+
+    def __init__(self):
+        self.values = []
+        self.val_to_indices = defaultdict(set)
+        print("Initialized RandomizedCollection (duplicates allowed)")
+        print(f"  values: {self.values}")
+        print(f"  val_to_indices: {dict(self.val_to_indices)}\n")
+
+    def insert(self, val: int) -> bool:
+        print(f"INSERT {val}:")
+        
+        is_new = val not in self.val_to_indices or len(self.val_to_indices[val]) == 0
+        
+        self.values.append(val)
+        index = len(self.values) - 1
+        self.val_to_indices[val].add(index)
+        
+        print(f"  → Added at index {index}")
+        print(f"  → Is new value: {is_new}")
+        print(f"  values: {self.values}")
+        print(f"  val_to_indices: {dict(self.val_to_indices)}\n")
+        
+        return is_new
+
+    def remove(self, val: int) -> bool:
+        print(f"REMOVE {val}:")
+        
+        if val not in self.val_to_indices or len(self.val_to_indices[val]) == 0:
+            print(f"  → Not found, return False")
+            print(f"  values: {self.values}")
+            print(f"  val_to_indices: {dict(self.val_to_indices)}\n")
+            return False
+        
+        # Get an index where val appears
+        val_index = self.val_to_indices[val].pop()
+        last_index = len(self.values) - 1
+        last_val = self.values[last_index]
+        
+        print(f"  → Value {val} found at index {val_index}")
+        print(f"  → Last element is {last_val} at index {last_index}")
+        
+        if val_index != last_index:
+            print(f"  → Swapping {val} with {last_val}")
+            
+            # Swap
+            self.values[val_index] = last_val
+            self.val_to_indices[last_val].add(val_index)
+            self.val_to_indices[last_val].discard(last_index)
+        else:
+            print(f"  → Element is already at end, no swap needed")
+        
+        # Remove last element
+        self.values.pop()
+        
+        # Clean up
+        if len(self.val_to_indices[val]) == 0:
+            del self.val_to_indices[val]
+        
+        print(f"  → After removal:")
+        print(f"  values: {self.values}")
+        print(f"  val_to_indices: {dict(self.val_to_indices)}\n")
+        
+        return True
+
+    def getRandom(self) -> int:
+        result = random.choice(self.values)
+        print(f"GET_RANDOM: returned {result}")
+        print(f"  (randomly selected from {self.values})\n")
+        return result
+
+
+def test_basic_operations():
+    """Test basic insert, remove, getRandom operations with duplicates"""
+    print("=" * 60)
+    print("TEST: Basic Operations with Duplicates")
+    print("=" * 60)
+    
+    rc = RandomizedCollectionVerbose()
+    
+    # Insert operations
+    rc.insert(1)
+    rc.insert(1)  # Duplicate
+    rc.insert(2)
+    rc.insert(1)  # Another duplicate
+    rc.insert(2)  # Another duplicate
+    
+    # Random operations
+    rc.getRandom()
+    rc.getRandom()
+    
+    # Remove operations
+    rc.remove(1)  # Remove one occurrence
+    rc.remove(1)  # Remove another occurrence
+    rc.remove(2)  # Remove one occurrence of 2
+    rc.getRandom()
+
+
+def test_edge_cases():
+    """Test edge cases"""
+    print("=" * 60)
+    print("TEST: Edge Cases")
+    print("=" * 60)
+    
+    rc = RandomizedCollection()
+    
+    print("Test 1: Remove from empty collection")
+    print(f"  remove(1): {rc.remove(1)}")
+    print()
+    
+    print("Test 2: Insert and remove same value multiple times")
+    print(f"  insert(5): {rc.insert(5)}")  # True (new)
+    print(f"  insert(5): {rc.insert(5)}")  # False (duplicate)
+    print(f"  insert(5): {rc.insert(5)}")  # False (duplicate)
+    print(f"  Current: {rc.values}")
+    print(f"  remove(5): {rc.remove(5)}")  # True
+    print(f"  Current: {rc.values}")
+    print(f"  remove(5): {rc.remove(5)}")  # True
+    print(f"  Current: {rc.values}")
+    print(f"  remove(5): {rc.remove(5)}")  # True
+    print(f"  Current: {rc.values}")
+    print(f"  remove(5): {rc.remove(5)}")  # False (empty)
+    print()
+
+
+def test_distribution():
+    """Test randomness distribution with duplicates"""
+    print("=" * 60)
+    print("TEST: Random Distribution with Duplicates")
+    print("=" * 60)
+    
+    rc = RandomizedCollection()
+    
+    # Insert: 1 appears 3 times, 2 appears 2 times, 3 appears 1 time
+    rc.insert(1)
+    rc.insert(1)
+    rc.insert(1)
+    rc.insert(2)
+    rc.insert(2)
+    rc.insert(3)
+    
+    print(f"Collection: {rc.values}")
+    print(f"Value 1 appears 3 times (50%)")
+    print(f"Value 2 appears 2 times (33.3%)")
+    print(f"Value 3 appears 1 time (16.7%)")
+    print()
+    
+    # Call getRandom many times and count frequency
+    counts = {1: 0, 2: 0, 3: 0}
+    trials = 10000
+    
+    for _ in range(trials):
+        val = rc.getRandom()
+        counts[val] += 1
+    
+    print(f"Called getRandom() {trials} times:")
+    print("\nActual distribution:")
+    for val, count in sorted(counts.items()):
+        percentage = (count / trials) * 100
+        expected = len([x for x in rc.values if x == val]) / len(rc.values) * 100
+        print(f"  Value {val}: {count:5d} times ({percentage:5.2f}%) - Expected: {expected:.1f}%")
+
+
+def test_leetcode_example():
+    """Test the example from LeetCode"""
+    print("=" * 60)
+    print("TEST: LeetCode Example")
+    print("=" * 60)
+    
+    commands = ["RandomizedCollection", "insert", "insert", "insert", 
+                "getRandom", "remove", "getRandom"]
+    args = [[], [1], [1], [2], [], [1], []]
+    
+    rc = None
+    results = []
+    
+    for cmd, arg in zip(commands, args):
+        if cmd == "RandomizedCollection":
+            rc = RandomizedCollection()
+            results.append(None)
+            print(f"{cmd}()")
+        elif cmd == "insert":
+            result = rc.insert(arg[0])
+            results.append(result)
+            print(f"{cmd}({arg[0]}) → {result} (collection: {rc.values})")
+        elif cmd == "remove":
+            result = rc.remove(arg[0])
+            results.append(result)
+            print(f"{cmd}({arg[0]}) → {result} (collection: {rc.values})")
+        elif cmd == "getRandom":
+            result = rc.getRandom()
+            results.append(result)
+            print(f"{cmd}() → {result}")
+    
+    print(f"\nResults: {results}")
+    print(f"Expected: [null, true, false, true, 1 or 2, true, 1 or 2]")
+
+
+def compare_with_380():
+    """Compare behavior with problem 380 (no duplicates)"""
+    print("=" * 60)
+    print("COMPARISON: Problem 380 vs 381")
+    print("=" * 60)
+    
+    print("Key Differences:\n")
+    print("Problem 380 (No Duplicates):")
+    print("  - HashMap: value → single index")
+    print("  - insert(1), insert(1) → False (already exists)")
+    print("  - One index per value")
+    print()
+    
+    print("Problem 381 (Duplicates Allowed):")
+    print("  - HashMap: value → set of indices")
+    print("  - insert(1), insert(1) → True, False (first is new)")
+    print("  - Multiple indices per value")
+    print()
+    
+    print("Example:")
+    rc = RandomizedCollection()
+    print(f"  insert(1): {rc.insert(1)} → values: {rc.values}, map: {dict(rc.val_to_indices)}")
+    print(f"  insert(1): {rc.insert(1)} → values: {rc.values}, map: {dict(rc.val_to_indices)}")
+    print(f"  insert(2): {rc.insert(2)} → values: {rc.values}, map: {dict(rc.val_to_indices)}")
+    print()
+
+
+# Run all tests
+if __name__ == "__main__":
+    test_basic_operations()
+    print("\n")
+    test_edge_cases()
+    print("\n")
+    test_leetcode_example()
+    print("\n")
+    test_distribution()
+    print("\n")
+    compare_with_380()
