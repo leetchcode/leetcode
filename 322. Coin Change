@@ -1,0 +1,253 @@
+from typing import List
+import math
+
+class Solution:
+    def coinChange(self, coins: List[int], amount: int) -> int:
+        """
+        Find minimum number of coins needed to make up the amount.
+        Return -1 if impossible.
+        
+        Approach: Bottom-up Dynamic Programming
+        
+        dp[i] = minimum coins needed to make amount i
+        
+        Base case: dp[0] = 0 (0 coins needed for amount 0)
+        Recurrence: dp[i] = min(dp[i - coin] + 1) for each coin if i >= coin
+        
+        Time Complexity: O(amount * len(coins))
+        Space Complexity: O(amount)
+        """
+        # DP array: dp[i] = min coins to make amount i
+        dp = [float('inf')] * (amount + 1)
+        dp[0] = 0  # Base case: 0 coins for amount 0
+        
+        # For each amount from 1 to target
+        for i in range(1, amount + 1):
+            # Try each coin
+            for coin in coins:
+                if i >= coin:
+                    # Can use this coin
+                    dp[i] = min(dp[i], dp[i - coin] + 1)
+        
+        # Return result or -1 if impossible
+        return dp[amount] if dp[amount] != float('inf') else -1
+
+
+class SolutionTopDown:
+    def coinChange(self, coins: List[int], amount: int) -> int:
+        """
+        Top-down approach with memoization (recursion + cache)
+        
+        Time Complexity: O(amount * len(coins))
+        Space Complexity: O(amount) for memo + recursion stack
+        """
+        memo = {}
+        
+        def dp(remaining):
+            """Returns minimum coins needed for remaining amount"""
+            # Base cases
+            if remaining == 0:
+                return 0
+            if remaining < 0:
+                return float('inf')
+            
+            # Check memo
+            if remaining in memo:
+                return memo[remaining]
+            
+            # Try each coin
+            min_coins = float('inf')
+            for coin in coins:
+                result = dp(remaining - coin)
+                if result != float('inf'):
+                    min_coins = min(min_coins, result + 1)
+            
+            memo[remaining] = min_coins
+            return min_coins
+        
+        result = dp(amount)
+        return result if result != float('inf') else -1
+
+
+class SolutionBFS:
+    def coinChange(self, coins: List[int], amount: int) -> int:
+        """
+        BFS approach: treat as shortest path problem
+        Each state is an amount, edges are coin denominations
+        
+        Time Complexity: O(amount * len(coins))
+        Space Complexity: O(amount)
+        """
+        if amount == 0:
+            return 0
+        
+        from collections import deque
+        
+        queue = deque([(0, 0)])  # (current_amount, num_coins)
+        visited = {0}
+        
+        while queue:
+            current, coins_used = queue.popleft()
+            
+            for coin in coins:
+                next_amount = current + coin
+                
+                if next_amount == amount:
+                    return coins_used + 1
+                
+                if next_amount < amount and next_amount not in visited:
+                    visited.add(next_amount)
+                    queue.append((next_amount, coins_used + 1))
+        
+        return -1
+
+
+def visualize_dp_table(coins: List[int], amount: int):
+    """Visualize the DP table construction"""
+    print(f"Coins: {coins}, Target Amount: {amount}\n")
+    
+    dp = [float('inf')] * (amount + 1)
+    dp[0] = 0
+    
+    print("DP Table Construction:")
+    print(f"dp[0] = 0 (base case)\n")
+    
+    for i in range(1, amount + 1):
+        print(f"Computing dp[{i}]:")
+        options = []
+        
+        for coin in coins:
+            if i >= coin:
+                prev = dp[i - coin]
+                if prev != float('inf'):
+                    cost = prev + 1
+                    options.append(f"  Use coin {coin}: dp[{i-coin}] + 1 = {prev} + 1 = {cost}")
+                    dp[i] = min(dp[i], cost)
+        
+        if options:
+            for opt in options:
+                print(opt)
+            print(f"  → dp[{i}] = {dp[i]}")
+        else:
+            print(f"  No valid coins")
+            print(f"  → dp[{i}] = ∞ (impossible)")
+        print()
+    
+    print(f"Final DP Array: {[x if x != float('inf') else '∞' for x in dp]}")
+    print(f"Answer: {dp[amount] if dp[amount] != float('inf') else -1}\n")
+    
+    return dp
+
+
+def trace_solution(coins: List[int], amount: int, dp: List[int]):
+    """Trace back the actual coins used"""
+    if dp[amount] == float('inf'):
+        print("No solution exists!\n")
+        return
+    
+    print(f"Tracing solution for amount {amount}:")
+    result = []
+    current = amount
+    
+    while current > 0:
+        for coin in coins:
+            if current >= coin and dp[current - coin] == dp[current] - 1:
+                result.append(coin)
+                print(f"  Used coin {coin}: {current} → {current - coin}")
+                current -= coin
+                break
+    
+    print(f"\nCoins used: {result}")
+    print(f"Total coins: {len(result)}\n")
+
+
+def compare_approaches(coins: List[int], amount: int):
+    """Compare different solution approaches"""
+    print("=" * 60)
+    print(f"COMPARING APPROACHES")
+    print("=" * 60)
+    
+    sol_bottom_up = Solution()
+    sol_top_down = SolutionTopDown()
+    sol_bfs = SolutionBFS()
+    
+    import time
+    
+    # Bottom-up DP
+    start = time.perf_counter()
+    result1 = sol_bottom_up.coinChange(coins, amount)
+    time1 = time.perf_counter() - start
+    
+    # Top-down DP
+    start = time.perf_counter()
+    result2 = sol_top_down.coinChange(coins, amount)
+    time2 = time.perf_counter() - start
+    
+    # BFS
+    start = time.perf_counter()
+    result3 = sol_bfs.coinChange(coins, amount)
+    time3 = time.perf_counter() - start
+    
+    print(f"Coins: {coins}, Amount: {amount}\n")
+    print(f"Bottom-up DP: {result1} ({time1*1000:.4f} ms)")
+    print(f"Top-down DP:  {result2} ({time2*1000:.4f} ms)")
+    print(f"BFS:          {result3} ({time3*1000:.4f} ms)")
+    print()
+
+
+# Test cases
+if __name__ == "__main__":
+    sol = Solution()
+    
+    # Test case 1: Standard case
+    print("=" * 60)
+    print("Test Case 1: coins=[1,2,5], amount=11")
+    print("=" * 60)
+    coins1 = [1, 2, 5]
+    amount1 = 11
+    dp1 = visualize_dp_table(coins1, amount1)
+    trace_solution(coins1, amount1, dp1)
+    result1 = sol.coinChange(coins1, amount1)
+    print(f"Final Result: {result1}")
+    print(f"Expected: 3 (5+5+1)\n")
+    
+    # Test case 2: Impossible case
+    print("=" * 60)
+    print("Test Case 2: coins=[2], amount=3")
+    print("=" * 60)
+    coins2 = [2]
+    amount2 = 3
+    dp2 = visualize_dp_table(coins2, amount2)
+    result2 = sol.coinChange(coins2, amount2)
+    print(f"Final Result: {result2}")
+    print(f"Expected: -1 (impossible with only even coins)\n")
+    
+    # Test case 3: Zero amount
+    print("=" * 60)
+    print("Test Case 3: coins=[1], amount=0")
+    print("=" * 60)
+    coins3 = [1]
+    amount3 = 0
+    result3 = sol.coinChange(coins3, amount3)
+    print(f"Result: {result3}")
+    print(f"Expected: 0 (no coins needed)\n")
+    
+    # Test case 4: Greedy doesn't work
+    print("=" * 60)
+    print("Test Case 4: coins=[1,3,4], amount=6")
+    print("=" * 60)
+    print("(Greedy would pick 4+1+1=3 coins, but optimal is 3+3=2 coins)\n")
+    coins4 = [1, 3, 4]
+    amount4 = 6
+    dp4 = visualize_dp_table(coins4, amount4)
+    trace_solution(coins4, amount4, dp4)
+    result4 = sol.coinChange(coins4, amount4)
+    print(f"Final Result: {result4}")
+    print(f"Expected: 2 (3+3)\n")
+    
+    # Compare approaches
+    print("=" * 60)
+    print("Performance Comparison")
+    print("=" * 60)
+    compare_approaches([1, 2, 5], 11)
+    compare_approaches([1, 5, 10, 25], 63)
