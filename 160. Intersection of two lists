@@ -1,0 +1,392 @@
+from typing import Optional
+
+# Definition for singly-linked list.
+class ListNode:
+    def __init__(self, x):
+        self.val = x
+        self.next = None
+
+class Solution:
+    def getIntersectionNode(self, headA: ListNode, headB: ListNode) -> Optional[ListNode]:
+        """
+        Find the intersection node of two linked lists.
+        
+        KEY INSIGHT: Two-pointer technique with pointer swapping
+        - When pointer reaches end, redirect to other list's head
+        - Both pointers will meet at intersection (or None)
+        - They traverse same total distance
+        
+        Why it works:
+        Let lenA = a + c (a = unique part of A, c = common part)
+        Let lenB = b + c (b = unique part of B)
+        
+        Pointer A: travels a + c + b
+        Pointer B: travels b + c + a
+        Both travel same distance and meet at intersection!
+        
+        Time Complexity: O(m + n)
+        Space Complexity: O(1)
+        """
+        if not headA or not headB:
+            return None
+        
+        pA, pB = headA, headB
+        
+        # Continue until both pointers meet
+        while pA != pB:
+            # When reaching end, redirect to other list
+            pA = pA.next if pA else headB
+            pB = pB.next if pB else headA
+        
+        # Either intersection node or None (no intersection)
+        return pA
+
+
+class SolutionHashSet:
+    def getIntersectionNode(self, headA: ListNode, headB: ListNode) -> Optional[ListNode]:
+        """
+        Alternative: Use hash set to track visited nodes.
+        
+        Time Complexity: O(m + n)
+        Space Complexity: O(m) or O(n)
+        """
+        visited = set()
+        
+        # Add all nodes from list A to set
+        current = headA
+        while current:
+            visited.add(current)
+            current = current.next
+        
+        # Check list B for first node in set
+        current = headB
+        while current:
+            if current in visited:
+                return current
+            current = current.next
+        
+        return None
+
+
+class SolutionLengthDifference:
+    def getIntersectionNode(self, headA: ListNode, headB: ListNode) -> Optional[ListNode]:
+        """
+        Alternative: Calculate length difference and align starting points.
+        
+        Time Complexity: O(m + n)
+        Space Complexity: O(1)
+        """
+        # Calculate lengths
+        lenA = self.get_length(headA)
+        lenB = self.get_length(headB)
+        
+        # Align starting points
+        while lenA > lenB:
+            headA = headA.next
+            lenA -= 1
+        
+        while lenB > lenA:
+            headB = headB.next
+            lenB -= 1
+        
+        # Move both pointers until they meet
+        while headA != headB:
+            headA = headA.next
+            headB = headB.next
+        
+        return headA
+    
+    def get_length(self, head: ListNode) -> int:
+        length = 0
+        while head:
+            length += 1
+            head = head.next
+        return length
+
+
+def create_intersecting_lists(listA_vals, listB_vals, common_vals, skipA, skipB):
+    """
+    Create two intersecting linked lists for testing.
+    skipA: nodes before intersection in list A
+    skipB: nodes before intersection in list B
+    """
+    # Create common part (intersection)
+    intersection = None
+    common_tail = None
+    for val in common_vals:
+        node = ListNode(val)
+        if not intersection:
+            intersection = node
+            common_tail = node
+        else:
+            common_tail.next = node
+            common_tail = node
+    
+    # Create list A
+    headA = None
+    tailA = None
+    for i, val in enumerate(listA_vals):
+        node = ListNode(val)
+        if not headA:
+            headA = node
+            tailA = node
+        else:
+            tailA.next = node
+            tailA = node
+        
+        if i == skipA - 1 and intersection:
+            tailA.next = intersection
+            break
+    
+    # Create list B
+    headB = None
+    tailB = None
+    for i, val in enumerate(listB_vals):
+        node = ListNode(val)
+        if not headB:
+            headB = node
+            tailB = node
+        else:
+            tailB.next = node
+            tailB = node
+        
+        if i == skipB - 1 and intersection:
+            tailB.next = intersection
+            break
+    
+    return headA, headB, intersection
+
+
+def print_list(head: ListNode, limit=20):
+    """Print linked list"""
+    values = []
+    current = head
+    count = 0
+    while current and count < limit:
+        values.append(str(current.val))
+        current = current.next
+        count += 1
+    if current:
+        values.append("...")
+    return " -> ".join(values)
+
+
+def visualize_intersection(headA, headB, intersection):
+    """Visualize the intersection of two lists"""
+    print("List A:")
+    print(f"  {print_list(headA)}")
+    print()
+    print("List B:")
+    print(f"  {print_list(headB)}")
+    print()
+    
+    if intersection:
+        print(f"Intersection at node with value: {intersection.val}")
+    else:
+        print("No intersection")
+    print()
+
+
+def trace_two_pointer(headA, headB):
+    """Trace the two-pointer algorithm step by step"""
+    print("=" * 60)
+    print("TWO-POINTER ALGORITHM TRACE")
+    print("=" * 60)
+    
+    if not headA or not headB:
+        print("One or both lists are empty - no intersection")
+        return None
+    
+    pA, pB = headA, headB
+    step = 0
+    
+    print("Starting positions:")
+    print(f"  pA at node: {pA.val}")
+    print(f"  pB at node: {pB.val}")
+    print()
+    
+    while pA != pB and step < 30:  # Limit steps for display
+        step += 1
+        
+        prev_pA = pA
+        prev_pB = pB
+        
+        # Move pointers
+        pA = pA.next if pA else headB
+        pB = pB.next if pB else headA
+        
+        print(f"Step {step}:")
+        
+        # Show pA movement
+        if prev_pA.next:
+            print(f"  pA: {prev_pA.val} → {pA.val}")
+        else:
+            print(f"  pA: {prev_pA.val} → END, redirect to B's head → {pA.val}")
+        
+        # Show pB movement
+        if prev_pB.next:
+            print(f"  pB: {prev_pB.val} → {pB.val}")
+        else:
+            print(f"  pB: {prev_pB.val} → END, redirect to A's head → {pB.val}")
+        
+        if pA == pB:
+            if pA:
+                print(f"\n✓ Pointers meet at node: {pA.val}")
+            else:
+                print(f"\n✓ Both pointers are None (no intersection)")
+            break
+        print()
+    
+    if step >= 30:
+        print("(Truncated for display)")
+    
+    print("=" * 60)
+    print()
+    return pA
+
+
+def explain_algorithm():
+    """Explain why the two-pointer algorithm works"""
+    print("=" * 60)
+    print("WHY TWO-POINTER ALGORITHM WORKS")
+    print("=" * 60)
+    print()
+    print("Concept: Make both pointers travel the SAME total distance")
+    print()
+    print("Example:")
+    print("  List A: a1 → a2 → c1 → c2 → c3")
+    print("  List B: b1 → b2 → b3 → c1 → c2 → c3")
+    print("            ↑")
+    print("      (unique parts)")
+    print()
+    print("Let:")
+    print("  a = length of unique part of A = 2")
+    print("  b = length of unique part of B = 3")
+    print("  c = length of common part = 3")
+    print()
+    print("Pointer A's journey:")
+    print("  1. Traverse list A: a1 → a2 → c1 → c2 → c3 (5 nodes)")
+    print("  2. Reach end, redirect to B's head")
+    print("  3. Traverse B's unique part: b1 → b2 → b3 (3 nodes)")
+    print("  4. Total before reaching intersection: 5 + 3 = 8 nodes")
+    print()
+    print("Pointer B's journey:")
+    print("  1. Traverse list B: b1 → b2 → b3 → c1 → c2 → c3 (6 nodes)")
+    print("  2. Reach end, redirect to A's head")
+    print("  3. Traverse A's unique part: a1 → a2 (2 nodes)")
+    print("  4. Total before reaching intersection: 6 + 2 = 8 nodes")
+    print()
+    print("✓ Both pointers travel (a + c + b) = (b + c + a) distance")
+    print("✓ They meet at the intersection point c1")
+    print()
+    print("If no intersection:")
+    print("  Both will reach None after traveling (lenA + lenB)")
+    print()
+
+
+def test_example_1():
+    """Test example with intersection"""
+    print("=" * 60)
+    print("TEST 1: Lists with Intersection")
+    print("=" * 60)
+    print()
+    print("Setup:")
+    print("  List A: 4 → 1 → 8 → 4 → 5")
+    print("  List B: 5 → 6 → 1 → 8 → 4 → 5")
+    print("              ↑")
+    print("         (intersection at node 8)")
+    print()
+    
+    # Create lists
+    headA, headB, intersection = create_intersecting_lists(
+        [4, 1], [5, 6, 1], [8, 4, 5], 2, 3
+    )
+    
+    visualize_intersection(headA, headB, intersection)
+    
+    sol = Solution()
+    result = sol.getIntersectionNode(headA, headB)
+    
+    print(f"Result: Node with value {result.val if result else 'None'}")
+    print(f"Expected: Node with value 8")
+    print()
+
+
+def test_example_2():
+    """Test example without intersection"""
+    print("=" * 60)
+    print("TEST 2: Lists without Intersection")
+    print("=" * 60)
+    print()
+    print("Setup:")
+    print("  List A: 2 → 6 → 4")
+    print("  List B: 1 → 5")
+    print("  (No intersection)")
+    print()
+    
+    # Create non-intersecting lists
+    headA = ListNode(2)
+    headA.next = ListNode(6)
+    headA.next.next = ListNode(4)
+    
+    headB = ListNode(1)
+    headB.next = ListNode(5)
+    
+    sol = Solution()
+    result = sol.getIntersectionNode(headA, headB)
+    
+    print(f"Result: {result}")
+    print(f"Expected: None")
+    print()
+
+
+def test_with_trace():
+    """Test with detailed trace"""
+    print("=" * 60)
+    print("TEST 3: Detailed Trace")
+    print("=" * 60)
+    print()
+    
+    headA, headB, intersection = create_intersecting_lists(
+        [1, 2], [3], [4, 5], 2, 1
+    )
+    
+    print("Lists created:")
+    visualize_intersection(headA, headB, intersection)
+    
+    trace_two_pointer(headA, headB)
+
+
+def compare_approaches():
+    """Compare different solution approaches"""
+    print("=" * 60)
+    print("APPROACH COMPARISON")
+    print("=" * 60)
+    print()
+    
+    print("1. Two-Pointer (Optimal):")
+    print("   Time: O(m + n), Space: O(1)")
+    print("   ✓ Most elegant solution")
+    print("   ✓ No extra space needed")
+    print()
+    
+    print("2. Hash Set:")
+    print("   Time: O(m + n), Space: O(m) or O(n)")
+    print("   ✓ Straightforward")
+    print("   ✗ Uses extra space")
+    print()
+    
+    print("3. Length Difference:")
+    print("   Time: O(m + n), Space: O(1)")
+    print("   ✓ No extra space")
+    print("   ✗ Requires two passes to calculate lengths")
+    print()
+
+
+# Run all tests
+if __name__ == "__main__":
+    explain_algorithm()
+    test_example_1()
+    test_example_2()
+    test_with_trace()
+    compare_approaches()
