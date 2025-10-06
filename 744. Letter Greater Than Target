@@ -1,0 +1,312 @@
+from typing import List
+
+class Solution:
+    def nextGreatestLetter(self, letters: List[str], target: str) -> str:
+        """
+        Find smallest letter in sorted array that is greater than target.
+        Letters wrap around (circular), so if no letter greater than target,
+        return the first letter.
+        
+        Approach: Binary search for the insertion point
+        
+        Time Complexity: O(log n)
+        Space Complexity: O(1)
+        """
+        left, right = 0, len(letters) - 1
+        
+        # If target is >= last letter, wrap around to first
+        if target >= letters[-1]:
+            return letters[0]
+        
+        # Binary search for smallest letter > target
+        while left < right:
+            mid = left + (right - left) // 2
+            
+            if letters[mid] <= target:
+                # Need something greater, search right
+                left = mid + 1
+            else:
+                # letters[mid] > target, but might not be smallest
+                # Keep searching left
+                right = mid
+        
+        return letters[left]
+
+
+class SolutionLinear:
+    def nextGreatestLetter(self, letters: List[str], target: str) -> str:
+        """
+        Linear scan approach - simple but slower.
+        
+        Time Complexity: O(n)
+        Space Complexity: O(1)
+        """
+        for letter in letters:
+            if letter > target:
+                return letter
+        
+        # Wrap around
+        return letters[0]
+
+
+class SolutionBuiltin:
+    def nextGreatestLetter(self, letters: List[str], target: str) -> str:
+        """
+        Using Python's bisect module.
+        
+        Time Complexity: O(log n)
+        Space Complexity: O(1)
+        """
+        import bisect
+        
+        # Find insertion point for target
+        index = bisect.bisect_right(letters, target)
+        
+        # Wrap around if needed
+        return letters[index % len(letters)]
+
+
+def visualize_binary_search(letters: List[str], target: str):
+    """Visualize the binary search process"""
+    print(f"Array: {letters}")
+    print(f"Target: '{target}'")
+    print(f"Goal: Find smallest letter > '{target}'")
+    print()
+    
+    left, right = 0, len(letters) - 1
+    step = 1
+    
+    # Check wrap-around case
+    if target >= letters[-1]:
+        print("Special case: target >= last letter")
+        print(f"  '{target}' >= '{letters[-1]}'")
+        print(f"  → Wrap around to first letter: '{letters[0]}'")
+        return letters[0]
+    
+    print("Binary Search Process:")
+    while left < right:
+        mid = left + (right - left) // 2
+        
+        # Visual representation
+        visual = []
+        for i in range(len(letters)):
+            if i == left and i == right:
+                visual.append(f"[{letters[i]}]L=R")
+            elif i == left:
+                visual.append(f"[{letters[i]}]L")
+            elif i == right:
+                visual.append(f"[{letters[i]}]R")
+            elif i == mid:
+                visual.append(f"({letters[i]})M")
+            else:
+                visual.append(f" {letters[i]} ")
+        
+        print(f"\nStep {step}:")
+        print(f"  Pointers: left={left}, mid={mid}, right={right}")
+        print(f"  Array: {' '.join(visual)}")
+        print(f"  Compare: letters[{mid}]='{letters[mid]}' vs target='{target}'")
+        
+        if letters[mid] <= target:
+            print(f"  '{letters[mid]}' <= '{target}' → search right half")
+            left = mid + 1
+        else:
+            print(f"  '{letters[mid]}' > '{target}' → search left half (but keep mid)")
+            right = mid
+        
+        step += 1
+    
+    print(f"\nConverged at index {left}")
+    print(f"Answer: '{letters[left]}'")
+    print()
+    return letters[left]
+
+
+def explain_algorithm():
+    """Explain the algorithm and edge cases"""
+    print("=" * 60)
+    print("ALGORITHM EXPLANATION")
+    print("=" * 60)
+    print()
+    print("Problem: Find smallest letter strictly greater than target")
+    print()
+    print("Key Points:")
+    print("  1. Array is sorted in ascending order")
+    print("  2. May contain duplicates")
+    print("  3. Wrap around (circular) if no letter > target")
+    print("  4. Must be STRICTLY greater (not equal)")
+    print()
+    print("Binary Search Strategy:")
+    print("  - Find the leftmost position where letter > target")
+    print("  - If letters[mid] <= target: search right (left = mid + 1)")
+    print("  - If letters[mid] > target: could be answer, search left (right = mid)")
+    print()
+    print("Edge Cases:")
+    print("  - Target >= last letter → return first letter (wrap)")
+    print("  - Target < first letter → return first letter")
+    print("  - Duplicates → find first occurrence > target")
+    print()
+
+
+def test_examples():
+    """Test with various examples"""
+    sol = Solution()
+    
+    # Example 1: Standard case
+    print("=" * 60)
+    print("Example 1: Standard Case")
+    print("=" * 60)
+    letters1 = ["c", "f", "j"]
+    target1 = "a"
+    result1 = visualize_binary_search(letters1, target1)
+    expected1 = "c"
+    print(f"Result: '{result1}'")
+    print(f"Expected: '{expected1}'")
+    print(f"Match: {result1 == expected1} ✓\n" if result1 == expected1 else f"Match: False ✗\n")
+    
+    # Example 2: Target in middle
+    print("=" * 60)
+    print("Example 2: Target in Middle")
+    print("=" * 60)
+    letters2 = ["c", "f", "j"]
+    target2 = "c"
+    result2 = visualize_binary_search(letters2, target2)
+    expected2 = "f"
+    print(f"Result: '{result2}'")
+    print(f"Expected: '{expected2}'")
+    print(f"Match: {result2 == expected2} ✓\n" if result2 == expected2 else f"Match: False ✗\n")
+    
+    # Example 3: Wrap around
+    print("=" * 60)
+    print("Example 3: Wrap Around")
+    print("=" * 60)
+    letters3 = ["c", "f", "j"]
+    target3 = "k"
+    result3 = visualize_binary_search(letters3, target3)
+    expected3 = "c"
+    print(f"Result: '{result3}'")
+    print(f"Expected: '{expected3}'")
+    print(f"Match: {result3 == expected3} ✓\n" if result3 == expected3 else f"Match: False ✗\n")
+    
+    # Example 4: With duplicates
+    print("=" * 60)
+    print("Example 4: With Duplicates")
+    print("=" * 60)
+    letters4 = ["a", "b", "b", "b", "c", "d"]
+    target4 = "b"
+    result4 = visualize_binary_search(letters4, target4)
+    expected4 = "c"
+    print(f"Result: '{result4}'")
+    print(f"Expected: '{expected4}'")
+    print(f"Match: {result4 == expected4} ✓\n" if result4 == expected4 else f"Match: False ✗\n")
+
+
+def test_edge_cases():
+    """Test edge cases"""
+    print("=" * 60)
+    print("EDGE CASES")
+    print("=" * 60)
+    
+    sol = Solution()
+    
+    # Case 1: Single element
+    print("\nCase 1: Single element")
+    letters = ["x"]
+    print(f"  letters = {letters}, target = 'a'")
+    result = sol.nextGreatestLetter(letters, "a")
+    print(f"  Result: '{result}' (expected: 'x')")
+    print(f"  letters = {letters}, target = 'z'")
+    result = sol.nextGreatestLetter(letters, "z")
+    print(f"  Result: '{result}' (expected: 'x', wrap around)")
+    
+    # Case 2: All same letters
+    print("\nCase 2: All same letters")
+    letters = ["a", "a", "a", "a"]
+    print(f"  letters = {letters}, target = 'a'")
+    result = sol.nextGreatestLetter(letters, "a")
+    print(f"  Result: '{result}' (expected: 'a', wrap around)")
+    
+    # Case 3: Target equals last
+    print("\nCase 3: Target equals last")
+    letters = ["a", "b", "c"]
+    print(f"  letters = {letters}, target = 'c'")
+    result = sol.nextGreatestLetter(letters, "c")
+    print(f"  Result: '{result}' (expected: 'a', wrap around)")
+    
+    # Case 4: Target before first
+    print("\nCase 4: Target before first")
+    letters = ["c", "f", "j"]
+    print(f"  letters = {letters}, target = 'a'")
+    result = sol.nextGreatestLetter(letters, "a")
+    print(f"  Result: '{result}' (expected: 'c')")
+
+
+def compare_approaches():
+    """Compare different solution approaches"""
+    print("=" * 60)
+    print("APPROACH COMPARISON")
+    print("=" * 60)
+    
+    letters = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j"] * 1000
+    target = "e"
+    
+    import time
+    
+    sol_binary = Solution()
+    sol_linear = SolutionLinear()
+    sol_builtin = SolutionBuiltin()
+    
+    # Binary search
+    start = time.perf_counter()
+    result1 = sol_binary.nextGreatestLetter(letters, target)
+    time1 = time.perf_counter() - start
+    
+    # Linear search
+    start = time.perf_counter()
+    result2 = sol_linear.nextGreatestLetter(letters, target)
+    time2 = time.perf_counter() - start
+    
+    # Built-in bisect
+    start = time.perf_counter()
+    result3 = sol_builtin.nextGreatestLetter(letters, target)
+    time3 = time.perf_counter() - start
+    
+    print(f"Array size: {len(letters)}")
+    print(f"Target: '{target}'")
+    print()
+    print(f"Binary Search (O(log n)): '{result1}' in {time1*1000:.4f} ms")
+    print(f"Linear Search (O(n)):     '{result2}' in {time2*1000:.4f} ms")
+    print(f"Bisect Module (O(log n)): '{result3}' in {time3*1000:.4f} ms")
+    print()
+    print(f"Binary vs Linear speedup: {time2/time1:.2f}x")
+    print()
+
+
+def trace_boundary_search():
+    """Trace how binary search finds the boundary"""
+    print("=" * 60)
+    print("FINDING THE BOUNDARY")
+    print("=" * 60)
+    print()
+    print("Concept: Find leftmost position where letter > target")
+    print()
+    print("Example: letters = ['a','b','c','e','e','f'], target = 'd'")
+    print()
+    print("Visual representation:")
+    print("  Index:  0   1   2   3   4   5")
+    print("  Letter: a   b   c   e   e   f")
+    print("  <= 'd': ✓   ✓   ✓   ✗   ✗   ✗")
+    print("                      ^")
+    print("                   boundary")
+    print()
+    print("We want the FIRST position where letter > 'd'")
+    print("Answer: index 3, letter 'e'")
+    print()
+
+
+# Run all tests
+if __name__ == "__main__":
+    explain_algorithm()
+    trace_boundary_search()
+    test_examples()
+    test_edge_cases()
+    compare_approaches()
