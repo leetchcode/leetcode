@@ -1,0 +1,329 @@
+from typing import List
+from collections import defaultdict
+
+class WordDistance:
+    """
+    Design a data structure for efficient shortest word distance queries.
+    
+    Key insight: Preprocess the word list to store indices for each word.
+    Then use two-pointer technique to find minimum distance between two sorted lists.
+    
+    Time Complexity:
+    - Constructor: O(n) where n is length of wordsDict
+    - shortest(): O(p + q) where p, q are occurrences of word1, word2
+    
+    Space Complexity: O(n) for storing all indices
+    """
+
+    def __init__(self, wordsDict: List[str]):
+        """
+        Initialize with a list of words.
+        Build a map: word → list of indices where it appears.
+        """
+        self.word_to_indices = defaultdict(list)
+        
+        for i, word in enumerate(wordsDict):
+            self.word_to_indices[word].append(i)
+
+    def shortest(self, word1: str, word2: str) -> int:
+        """
+        Find shortest distance between word1 and word2.
+        
+        Uses two-pointer technique on two sorted lists of indices.
+        """
+        indices1 = self.word_to_indices[word1]
+        indices2 = self.word_to_indices[word2]
+        
+        i, j = 0, 0
+        min_distance = float('inf')
+        
+        # Two-pointer approach
+        while i < len(indices1) and j < len(indices2):
+            idx1, idx2 = indices1[i], indices2[j]
+            min_distance = min(min_distance, abs(idx1 - idx2))
+            
+            # Move pointer for smaller index forward
+            if idx1 < idx2:
+                i += 1
+            else:
+                j += 1
+        
+        return min_distance
+
+
+class WordDistanceBruteForce:
+    """
+    Brute force approach for comparison.
+    Try all pairs of indices - works but slower.
+    """
+
+    def __init__(self, wordsDict: List[str]):
+        self.word_to_indices = defaultdict(list)
+        for i, word in enumerate(wordsDict):
+            self.word_to_indices[word].append(i)
+
+    def shortest(self, word1: str, word2: str) -> int:
+        """
+        Check all pairs of indices.
+        Time: O(p * q) where p, q are occurrences
+        """
+        indices1 = self.word_to_indices[word1]
+        indices2 = self.word_to_indices[word2]
+        
+        min_distance = float('inf')
+        
+        for idx1 in indices1:
+            for idx2 in indices2:
+                min_distance = min(min_distance, abs(idx1 - idx2))
+        
+        return min_distance
+
+
+class WordDistanceVerbose:
+    """
+    Same solution with detailed tracing for educational purposes
+    """
+
+    def __init__(self, wordsDict: List[str]):
+        print("Initializing WordDistance...")
+        print(f"Input: {wordsDict}\n")
+        
+        self.word_to_indices = defaultdict(list)
+        
+        for i, word in enumerate(wordsDict):
+            self.word_to_indices[word].append(i)
+        
+        print("Index Map:")
+        for word, indices in sorted(self.word_to_indices.items()):
+            print(f"  '{word}': {indices}")
+        print()
+
+    def shortest(self, word1: str, word2: str) -> int:
+        print(f"Finding shortest distance between '{word1}' and '{word2}'")
+        
+        indices1 = self.word_to_indices[word1]
+        indices2 = self.word_to_indices[word2]
+        
+        print(f"  Indices of '{word1}': {indices1}")
+        print(f"  Indices of '{word2}': {indices2}")
+        print()
+        
+        i, j = 0, 0
+        min_distance = float('inf')
+        step = 1
+        
+        print("Two-pointer traversal:")
+        while i < len(indices1) and j < len(indices2):
+            idx1, idx2 = indices1[i], indices2[j]
+            distance = abs(idx1 - idx2)
+            
+            print(f"  Step {step}: i={i}, j={j}")
+            print(f"    Compare indices {idx1} and {idx2}")
+            print(f"    Distance: |{idx1} - {idx2}| = {distance}")
+            
+            if distance < min_distance:
+                min_distance = distance
+                print(f"    New minimum: {min_distance}")
+            
+            if idx1 < idx2:
+                print(f"    Move i forward (idx1 < idx2)")
+                i += 1
+            else:
+                print(f"    Move j forward (idx1 >= idx2)")
+                j += 1
+            
+            step += 1
+        
+        print(f"\nFinal answer: {min_distance}\n")
+        return min_distance
+
+
+def visualize_two_pointer(indices1: List[int], indices2: List[int]):
+    """Visualize the two-pointer algorithm"""
+    print("=" * 60)
+    print("TWO-POINTER VISUALIZATION")
+    print("=" * 60)
+    
+    print(f"List 1: {indices1}")
+    print(f"List 2: {indices2}")
+    print()
+    
+    i, j = 0, 0
+    min_distance = float('inf')
+    
+    print("Process:")
+    while i < len(indices1) and j < len(indices2):
+        idx1, idx2 = indices1[i], indices2[j]
+        distance = abs(idx1 - idx2)
+        
+        # Visual representation
+        pointer1 = " " * i + "^" + " " * (len(indices1) - i - 1)
+        pointer2 = " " * j + "^" + " " * (len(indices2) - j - 1)
+        
+        print(f"i={i}, j={j}")
+        print(f"  List 1: {indices1}")
+        print(f"          {pointer1}")
+        print(f"  List 2: {indices2}")
+        print(f"          {pointer2}")
+        print(f"  Distance: |{idx1} - {idx2}| = {distance}")
+        
+        min_distance = min(min_distance, distance)
+        
+        if idx1 < idx2:
+            print(f"  → Move pointer in List 1 (smaller index)\n")
+            i += 1
+        else:
+            print(f"  → Move pointer in List 2 (smaller/equal index)\n")
+            j += 1
+    
+    print(f"Minimum distance: {min_distance}")
+    print("=" * 60)
+    print()
+
+
+def explain_algorithm():
+    """Explain why two-pointer works"""
+    print("=" * 60)
+    print("WHY TWO-POINTER ALGORITHM WORKS")
+    print("=" * 60)
+    print()
+    print("Key Insight: Indices are already sorted!")
+    print()
+    print("Example:")
+    print("  word1 at indices: [1, 5, 10]")
+    print("  word2 at indices: [3, 7, 12]")
+    print()
+    print("Strategy:")
+    print("  1. Start with smallest indices from both lists (1 and 3)")
+    print("  2. Calculate distance: |1 - 3| = 2")
+    print("  3. Move pointer with smaller index forward")
+    print("     (no point checking larger indices against 1)")
+    print("  4. Continue until one list exhausted")
+    print()
+    print("Why it works:")
+    print("  - If idx1 < idx2, any future idx2 will be even farther from idx1")
+    print("  - So we move to next idx1 to potentially get closer")
+    print("  - This ensures we check all promising pairs without redundancy")
+    print()
+    print("Time Complexity: O(p + q)")
+    print("  - Each pointer moves forward at most p or q times")
+    print("  - Much better than brute force O(p * q)")
+    print()
+
+
+def test_basic():
+    """Test basic functionality"""
+    print("=" * 60)
+    print("TEST: Basic Functionality")
+    print("=" * 60)
+    
+    wordsDict = ["practice", "makes", "perfect", "coding", "makes"]
+    wd = WordDistanceVerbose(wordsDict)
+    
+    # Query 1
+    result1 = wd.shortest("coding", "practice")
+    print(f"Expected: 3\n")
+    
+    # Query 2
+    result2 = wd.shortest("makes", "coding")
+    print(f"Expected: 1\n")
+
+
+def test_multiple_occurrences():
+    """Test with multiple occurrences"""
+    print("=" * 60)
+    print("TEST: Multiple Occurrences")
+    print("=" * 60)
+    
+    wordsDict = ["a", "b", "a", "c", "a", "b"]
+    #             0    1    2    3    4    5
+    
+    print(f"Words: {wordsDict}")
+    print("Indices: 0    1    2    3    4    5\n")
+    
+    wd = WordDistance(wordsDict)
+    
+    print("Query 1: shortest('a', 'b')")
+    indices_a = [0, 2, 4]
+    indices_b = [1, 5]
+    visualize_two_pointer(indices_a, indices_b)
+    result1 = wd.shortest("a", "b")
+    print(f"Result: {result1}")
+    print(f"Expected: 1 (between indices 0 and 1, or 4 and 5)\n")
+    
+    print("Query 2: shortest('a', 'c')")
+    result2 = wd.shortest("a", "c")
+    print(f"Result: {result2}")
+    print(f"Expected: 1 (between indices 2 and 3 or 4 and 3)\n")
+
+
+def compare_approaches():
+    """Compare optimal vs brute force"""
+    print("=" * 60)
+    print("PERFORMANCE COMPARISON")
+    print("=" * 60)
+    
+    wordsDict = ["a", "b"] * 500 + ["a", "c"]  # Many occurrences
+    
+    import time
+    
+    # Optimal solution
+    wd_optimal = WordDistance(wordsDict)
+    start = time.perf_counter()
+    result1 = wd_optimal.shortest("a", "b")
+    time1 = time.perf_counter() - start
+    
+    # Brute force
+    wd_brute = WordDistanceBruteForce(wordsDict)
+    start = time.perf_counter()
+    result2 = wd_brute.shortest("a", "b")
+    time2 = time.perf_counter() - start
+    
+    print(f"Word list size: {len(wordsDict)}")
+    print(f"'a' appears {len(wd_optimal.word_to_indices['a'])} times")
+    print(f"'b' appears {len(wd_optimal.word_to_indices['b'])} times")
+    print()
+    print(f"Two-pointer (O(p+q)): {result1} in {time1*1000:.4f} ms")
+    print(f"Brute force (O(p*q)):  {result2} in {time2*1000:.4f} ms")
+    print(f"Speedup: {time2/time1:.2f}x faster")
+    print()
+
+
+def test_edge_cases():
+    """Test edge cases"""
+    print("=" * 60)
+    print("TEST: Edge Cases")
+    print("=" * 60)
+    
+    # Single occurrence each
+    print("Case 1: Single occurrence of each word")
+    wordsDict1 = ["a", "b", "c"]
+    wd1 = WordDistance(wordsDict1)
+    print(f"  Words: {wordsDict1}")
+    print(f"  shortest('a', 'c'): {wd1.shortest('a', 'c')}")
+    print(f"  Expected: 2\n")
+    
+    # Adjacent words
+    print("Case 2: Adjacent words")
+    wordsDict2 = ["hello", "world", "hello"]
+    wd2 = WordDistance(wordsDict2)
+    print(f"  Words: {wordsDict2}")
+    print(f"  shortest('hello', 'world'): {wd2.shortest('hello', 'world')}")
+    print(f"  Expected: 1\n")
+    
+    # Far apart
+    print("Case 3: Words far apart")
+    wordsDict3 = ["a"] + ["x"] * 100 + ["b"]
+    wd3 = WordDistance(wordsDict3)
+    print(f"  Word 'a' at index 0, word 'b' at index 101")
+    print(f"  shortest('a', 'b'): {wd3.shortest('a', 'b')}")
+    print(f"  Expected: 101\n")
+
+
+# Run all tests
+if __name__ == "__main__":
+    explain_algorithm()
+    test_basic()
+    test_multiple_occurrences()
+    compare_approaches()
+    test_edge_cases()
