@@ -1,0 +1,308 @@
+from typing import Optional
+from collections import deque
+
+# Definition for a binary tree node.
+class TreeNode:
+    def __init__(self, val=0, left=None, right=None):
+        self.val = val
+        self.left = left
+        self.right = right
+
+class Codec:
+    """
+    Serialize and deserialize binary tree using preorder traversal.
+    
+    Key insight: Preorder traversal with null markers allows unique reconstruction
+    Format: "val,val,null,null,val,null,null"
+    
+    Time Complexity: O(n) for both serialize and deserialize
+    Space Complexity: O(n) for storing the tree structure
+    """
+
+    def serialize(self, root: Optional[TreeNode]) -> str:
+        """
+        Encodes a tree to a single string using preorder traversal.
+        Uses 'null' to mark empty nodes.
+        """
+        result = []
+        
+        def preorder(node):
+            if not node:
+                result.append('null')
+                return
+            
+            result.append(str(node.val))
+            preorder(node.left)
+            preorder(node.right)
+        
+        preorder(root)
+        return ','.join(result)
+
+    def deserialize(self, data: str) -> Optional[TreeNode]:
+        """
+        Decodes your encoded data to tree.
+        Reconstructs tree using preorder traversal.
+        """
+        values = data.split(',')
+        self.index = 0
+        
+        def build():
+            if self.index >= len(values) or values[self.index] == 'null':
+                self.index += 1
+                return None
+            
+            # Create node with current value
+            node = TreeNode(int(values[self.index]))
+            self.index += 1
+            
+            # Recursively build left and right subtrees
+            node.left = build()
+            node.right = build()
+            
+            return node
+        
+        return build()
+
+
+class CodecLevelOrder:
+    """
+    Alternative approach using level-order (BFS) traversal.
+    More intuitive for some, similar to LeetCode's tree representation.
+    """
+
+    def serialize(self, root: Optional[TreeNode]) -> str:
+        """Serialize using level-order traversal"""
+        if not root:
+            return "null"
+        
+        result = []
+        queue = deque([root])
+        
+        while queue:
+            node = queue.popleft()
+            
+            if node:
+                result.append(str(node.val))
+                queue.append(node.left)
+                queue.append(node.right)
+            else:
+                result.append('null')
+        
+        # Remove trailing nulls
+        while result and result[-1] == 'null':
+            result.pop()
+        
+        return ','.join(result)
+
+    def deserialize(self, data: str) -> Optional[TreeNode]:
+        """Deserialize using level-order traversal"""
+        if data == "null":
+            return None
+        
+        values = data.split(',')
+        root = TreeNode(int(values[0]))
+        queue = deque([root])
+        i = 1
+        
+        while queue and i < len(values):
+            node = queue.popleft()
+            
+            # Process left child
+            if i < len(values) and values[i] != 'null':
+                node.left = TreeNode(int(values[i]))
+                queue.append(node.left)
+            i += 1
+            
+            # Process right child
+            if i < len(values) and values[i] != 'null':
+                node.right = TreeNode(int(values[i]))
+                queue.append(node.right)
+            i += 1
+        
+        return root
+
+
+def build_tree_from_list(values):
+    """Helper: build tree from list representation"""
+    if not values or values[0] is None:
+        return None
+    
+    root = TreeNode(values[0])
+    queue = deque([root])
+    i = 1
+    
+    while queue and i < len(values):
+        node = queue.popleft()
+        
+        if i < len(values) and values[i] is not None:
+            node.left = TreeNode(values[i])
+            queue.append(node.left)
+        i += 1
+        
+        if i < len(values) and values[i] is not None:
+            node.right = TreeNode(values[i])
+            queue.append(node.right)
+        i += 1
+    
+    return root
+
+
+def print_tree(root: Optional[TreeNode], level=0, prefix="Root: "):
+    """Print tree structure"""
+    if root:
+        print(" " * (level * 4) + prefix + str(root.val))
+        if root.left or root.right:
+            if root.left:
+                print_tree(root.left, level + 1, "L--- ")
+            else:
+                print(" " * ((level + 1) * 4) + "L--- null")
+            if root.right:
+                print_tree(root.right, level + 1, "R--- ")
+            else:
+                print(" " * ((level + 1) * 4) + "R--- null")
+
+
+def visualize_serialization(root: Optional[TreeNode]):
+    """Visualize the serialization process"""
+    print("Original Tree:")
+    print_tree(root)
+    print()
+    
+    # Preorder serialization
+    codec_preorder = Codec()
+    serialized_pre = codec_preorder.serialize(root)
+    print("Preorder Serialization:")
+    print(f"  {serialized_pre}")
+    
+    # Show preorder traversal steps
+    print("\nPreorder Traversal Steps (Root → Left → Right):")
+    values = []
+    def trace_preorder(node, depth=0):
+        indent = "  " * depth
+        if not node:
+            values.append("null")
+            print(f"{indent}→ null")
+            return
+        values.append(str(node.val))
+        print(f"{indent}→ {node.val}")
+        trace_preorder(node.left, depth + 1)
+        trace_preorder(node.right, depth + 1)
+    
+    trace_preorder(root)
+    print(f"\nResult: {','.join(values)}")
+    print()
+    
+    # Level-order serialization
+    codec_level = CodecLevelOrder()
+    serialized_level = codec_level.serialize(root)
+    print("Level-Order Serialization:")
+    print(f"  {serialized_level}")
+    print()
+
+
+def visualize_deserialization(data: str):
+    """Visualize the deserialization process"""
+    print(f"Deserializing: {data}\n")
+    
+    values = data.split(',')
+    print("Values to process:", values)
+    print("\nDeserialization Steps (Preorder):")
+    
+    index = [0]
+    
+    def trace_build(depth=0):
+        indent = "  " * depth
+        if index[0] >= len(values) or values[index[0]] == 'null':
+            print(f"{indent}[{index[0]}] 'null' → return None")
+            index[0] += 1
+            return None
+        
+        val = int(values[index[0]])
+        print(f"{indent}[{index[0]}] Create node {val}")
+        index[0] += 1
+        
+        print(f"{indent}  Building left subtree of {val}:")
+        left = trace_build(depth + 1)
+        
+        print(f"{indent}  Building right subtree of {val}:")
+        right = trace_build(depth + 1)
+        
+        return val
+    
+    trace_build()
+    print()
+
+
+def test_codec(tree_values, name=""):
+    """Test serialization and deserialization"""
+    print("=" * 60)
+    print(f"Test: {name}")
+    print("=" * 60)
+    
+    # Build original tree
+    root = build_tree_from_list(tree_values)
+    
+    # Visualize serialization
+    visualize_serialization(root)
+    
+    # Test preorder codec
+    codec1 = Codec()
+    serialized1 = codec1.serialize(root)
+    deserialized1 = codec1.deserialize(serialized1)
+    reserialized1 = codec1.serialize(deserialized1)
+    
+    print("Preorder Codec Test:")
+    print(f"  Original:      {serialized1}")
+    print(f"  After roundtrip: {reserialized1}")
+    print(f"  Match: {serialized1 == reserialized1} ✓" if serialized1 == reserialized1 else "  Match: False ✗")
+    print()
+    
+    # Test level-order codec
+    codec2 = CodecLevelOrder()
+    serialized2 = codec2.serialize(root)
+    deserialized2 = codec2.deserialize(serialized2)
+    reserialized2 = codec2.serialize(deserialized2)
+    
+    print("Level-Order Codec Test:")
+    print(f"  Original:      {serialized2}")
+    print(f"  After roundtrip: {reserialized2}")
+    print(f"  Match: {serialized2 == reserialized2} ✓" if serialized2 == reserialized2 else "  Match: False ✗")
+    print()
+    
+    print("Deserialized Tree (from preorder):")
+    print_tree(deserialized1)
+    print()
+
+
+def trace_deserialization_example():
+    """Detailed trace of deserialization"""
+    print("=" * 60)
+    print("DETAILED DESERIALIZATION TRACE")
+    print("=" * 60)
+    
+    data = "1,2,null,null,3,4,null,null,5,null,null"
+    visualize_deserialization(data)
+    
+    codec = Codec()
+    root = codec.deserialize(data)
+    print("Reconstructed Tree:")
+    print_tree(root)
+    print()
+
+
+# Run tests
+if __name__ == "__main__":
+    # Test case 1: Standard tree
+    test_codec([1, 2, 3, None, None, 4, 5], "Standard Tree")
+    
+    # Test case 2: Single node
+    test_codec([1], "Single Node")
+    
+    # Test case 3: Empty tree
+    test_codec([], "Empty Tree")
+    
+    # Test case 4: Left-skewed tree
+    test_codec([1, 2, None, 3, None, 4], "Left-Skewed Tree")
+    
+    # Detailed trace
+    trace_deserialization_example()
