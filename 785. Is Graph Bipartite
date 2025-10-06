@@ -1,0 +1,377 @@
+from typing import List
+from collections import deque
+
+class Solution:
+    def isBipartite(self, graph: List[List[int]]) -> bool:
+        """
+        Determine if graph is bipartite using BFS coloring.
+        
+        A graph is bipartite if nodes can be divided into two sets where
+        no two nodes in the same set are adjacent.
+        
+        Approach: Try to color graph with 2 colors using BFS
+        - Color each node alternately as we traverse
+        - If we find an edge between same-colored nodes → not bipartite
+        
+        Time Complexity: O(V + E)
+        Space Complexity: O(V)
+        """
+        n = len(graph)
+        colors = [0] * n  # 0 = uncolored, 1 = color A, -1 = color B
+        
+        # Handle disconnected components
+        for start in range(n):
+            if colors[start] != 0:
+                continue  # Already colored
+            
+            # BFS from this component
+            queue = deque([start])
+            colors[start] = 1  # Start with color 1
+            
+            while queue:
+                node = queue.popleft()
+                current_color = colors[node]
+                next_color = -current_color  # Alternate color
+                
+                for neighbor in graph[node]:
+                    if colors[neighbor] == 0:
+                        # Uncolored, assign opposite color
+                        colors[neighbor] = next_color
+                        queue.append(neighbor)
+                    elif colors[neighbor] == current_color:
+                        # Same color as current node → conflict!
+                        return False
+        
+        return True
+
+
+class SolutionDFS:
+    def isBipartite(self, graph: List[List[int]]) -> bool:
+        """
+        DFS approach for graph coloring.
+        
+        Time Complexity: O(V + E)
+        Space Complexity: O(V)
+        """
+        n = len(graph)
+        colors = [0] * n
+        
+        def dfs(node, color):
+            """Try to color node with given color"""
+            colors[node] = color
+            
+            for neighbor in graph[node]:
+                if colors[neighbor] == 0:
+                    # Uncolored, try opposite color
+                    if not dfs(neighbor, -color):
+                        return False
+                elif colors[neighbor] == color:
+                    # Same color → conflict
+                    return False
+            
+            return True
+        
+        # Handle disconnected components
+        for start in range(n):
+            if colors[start] == 0:
+                if not dfs(start, 1):
+                    return False
+        
+        return True
+
+
+class SolutionVerbose:
+    """Verbose solution with detailed tracing"""
+    
+    def isBipartite(self, graph: List[List[int]]) -> bool:
+        print("Checking if graph is bipartite...\n")
+        print(f"Graph adjacency list:")
+        for i, neighbors in enumerate(graph):
+            print(f"  Node {i}: {neighbors}")
+        print()
+        
+        n = len(graph)
+        colors = [0] * n  # 0 = uncolored, 1 = RED, -1 = BLUE
+        
+        for start in range(n):
+            if colors[start] != 0:
+                continue
+            
+            print(f"Starting BFS from node {start}")
+            queue = deque([start])
+            colors[start] = 1
+            print(f"  Colored node {start} as RED")
+            
+            while queue:
+                node = queue.popleft()
+                current_color = colors[node]
+                color_name = "RED" if current_color == 1 else "BLUE"
+                next_color = -current_color
+                next_color_name = "BLUE" if next_color == -1 else "RED"
+                
+                print(f"\n  Processing node {node} (color: {color_name})")
+                print(f"    Neighbors: {graph[node]}")
+                
+                for neighbor in graph[node]:
+                    if colors[neighbor] == 0:
+                        colors[neighbor] = next_color
+                        queue.append(neighbor)
+                        print(f"    → Colored node {neighbor} as {next_color_name}")
+                    elif colors[neighbor] == current_color:
+                        print(f"    ✗ CONFLICT: Node {neighbor} already {color_name}!")
+                        print(f"    Cannot have edge between same-colored nodes")
+                        return False
+                    else:
+                        print(f"    ✓ Node {neighbor} already has opposite color")
+            
+            print(f"\nComponent starting from {start} is bipartite")
+            print(f"Current coloring: {['RED' if c == 1 else 'BLUE' if c == -1 else 'NONE' for c in colors]}\n")
+        
+        print("✓ Graph is BIPARTITE!\n")
+        return True
+
+
+def visualize_graph(graph: List[List[int]]):
+    """Visualize the graph structure"""
+    print("Graph Visualization:")
+    print()
+    
+    # Show edges
+    edges = set()
+    for node, neighbors in enumerate(graph):
+        for neighbor in neighbors:
+            edge = tuple(sorted([node, neighbor]))
+            edges.add(edge)
+    
+    print("Edges:")
+    for u, v in sorted(edges):
+        print(f"  {u} — {v}")
+    print()
+
+
+def explain_bipartite():
+    """Explain what bipartite means"""
+    print("=" * 60)
+    print("WHAT IS A BIPARTITE GRAPH?")
+    print("=" * 60)
+    print()
+    print("Definition:")
+    print("  A graph whose vertices can be divided into two disjoint sets")
+    print("  such that every edge connects a vertex from one set to another.")
+    print()
+    print("Equivalent definitions:")
+    print("  1. Can be colored with 2 colors (no adjacent same color)")
+    print("  2. Contains no odd-length cycles")
+    print("  3. Vertices can be split into two independent sets")
+    print()
+    print("Examples:")
+    print()
+    print("BIPARTITE:")
+    print("  0 — 1        Set A: {0, 2}")
+    print("  |   |        Set B: {1, 3}")
+    print("  3 — 2        No edges within sets ✓")
+    print()
+    print("NOT BIPARTITE:")
+    print("  0 — 1        Has triangle (odd cycle)")
+    print("  | ⟋         Cannot 2-color ✗")
+    print("  2")
+    print()
+
+
+def test_bipartite_graph():
+    """Test with a bipartite graph"""
+    print("=" * 60)
+    print("TEST 1: Bipartite Graph")
+    print("=" * 60)
+    print()
+    
+    graph = [[1,2,3],[0,2],[0,1,3],[0,2]]
+    print("Graph (square):")
+    print("  0 — 1")
+    print("  |   |")
+    print("  3 — 2")
+    print()
+    
+    visualize_graph(graph)
+    
+    sol = SolutionVerbose()
+    result = sol.isBipartite(graph)
+    
+    print(f"Result: {result}")
+    print(f"Expected: True")
+    print(f"Sets: {{0, 2}} and {{1, 3}}")
+    print()
+
+
+def test_not_bipartite():
+    """Test with non-bipartite graph"""
+    print("=" * 60)
+    print("TEST 2: Non-Bipartite Graph (Triangle)")
+    print("=" * 60)
+    print()
+    
+    graph = [[1,2],[0,2],[0,1]]
+    print("Graph (triangle):")
+    print("    0")
+    print("   / \\")
+    print("  1—2")
+    print()
+    
+    visualize_graph(graph)
+    
+    sol = SolutionVerbose()
+    result = sol.isBipartite(graph)
+    
+    print(f"Result: {result}")
+    print(f"Expected: False")
+    print(f"Reason: Triangle is odd cycle (length 3)")
+    print()
+
+
+def test_disconnected():
+    """Test with disconnected components"""
+    print("=" * 60)
+    print("TEST 3: Disconnected Graph")
+    print("=" * 60)
+    print()
+    
+    graph = [[1],[0],[3],[2]]
+    print("Graph (two separate edges):")
+    print("  0 — 1    2 — 3")
+    print()
+    
+    visualize_graph(graph)
+    
+    sol = Solution()
+    result = sol.isBipartite(graph)
+    
+    print(f"Result: {result}")
+    print(f"Expected: True")
+    print(f"Component 1: {{0}} and {{1}}")
+    print(f"Component 2: {{2}} and {{3}}")
+    print()
+
+
+def test_complex_bipartite():
+    """Test more complex bipartite graph"""
+    print("=" * 60)
+    print("TEST 4: Complex Bipartite (Complete Bipartite K_{2,3})")
+    print("=" * 60)
+    print()
+    
+    # K_{2,3}: 2 nodes on left, 3 on right, all connected
+    graph = [
+        [2, 3, 4],  # 0 connects to all right nodes
+        [2, 3, 4],  # 1 connects to all right nodes
+        [0, 1],     # 2 connects to all left nodes
+        [0, 1],     # 3 connects to all left nodes
+        [0, 1]      # 4 connects to all left nodes
+    ]
+    
+    print("Complete bipartite graph K_{2,3}:")
+    print("  Left set: {0, 1}")
+    print("  Right set: {2, 3, 4}")
+    print("  Every left node connects to every right node")
+    print()
+    
+    visualize_graph(graph)
+    
+    sol = Solution()
+    result = sol.isBipartite(graph)
+    
+    print(f"Result: {result}")
+    print(f"Expected: True")
+    print()
+
+
+def test_odd_cycle():
+    """Test with odd cycle (not bipartite)"""
+    print("=" * 60)
+    print("TEST 5: Pentagon (5-cycle)")
+    print("=" * 60)
+    print()
+    
+    graph = [[1, 4], [0, 2], [1, 3], [2, 4], [3, 0]]
+    print("Graph (pentagon):")
+    print("      0")
+    print("     / \\")
+    print("    4   1")
+    print("     \\ /")
+    print("    3—2")
+    print()
+    
+    visualize_graph(graph)
+    
+    sol = Solution()
+    result = sol.isBipartite(graph)
+    
+    print(f"Result: {result}")
+    print(f"Expected: False")
+    print(f"Reason: 5-cycle is odd length")
+    print()
+
+
+def compare_approaches():
+    """Compare BFS vs DFS approaches"""
+    print("=" * 60)
+    print("BFS vs DFS COMPARISON")
+    print("=" * 60)
+    print()
+    
+    print("BFS Approach:")
+    print("  ✓ Level-by-level traversal")
+    print("  ✓ Uses queue")
+    print("  ✓ Iterative (no recursion stack)")
+    print("  - Colors nodes by distance from start")
+    print()
+    
+    print("DFS Approach:")
+    print("  ✓ Depth-first traversal")
+    print("  ✓ Uses recursion")
+    print("  ✓ More concise code")
+    print("  - Colors nodes as we go deep")
+    print()
+    
+    print("Both have same complexity: O(V + E) time, O(V) space")
+    print("Choice is mostly stylistic preference")
+    print()
+
+
+def explain_algorithm():
+    """Explain the coloring algorithm"""
+    print("=" * 60)
+    print("ALGORITHM EXPLANATION")
+    print("=" * 60)
+    print()
+    print("Key Idea: Try to 2-color the graph")
+    print()
+    print("Steps:")
+    print("  1. Initialize all nodes as uncolored")
+    print("  2. For each uncolored node (handles disconnected components):")
+    print("     a. Color it with color 1 (RED)")
+    print("     b. Use BFS/DFS to color neighbors")
+    print("     c. Neighbors must have opposite color")
+    print("  3. If we find adjacent nodes with same color → NOT bipartite")
+    print("  4. If we successfully color all nodes → IS bipartite")
+    print()
+    print("Why it works:")
+    print("  - Bipartite ⟺ Can 2-color without conflicts")
+    print("  - Adjacent nodes must be in different sets")
+    print("  - Alternating colors ensures this")
+    print()
+    print("Odd cycles:")
+    print("  In odd cycle, you'll eventually try to color a node")
+    print("  the same as a node 2 steps away → conflict!")
+    print()
+
+
+# Run all tests
+if __name__ == "__main__":
+    explain_bipartite()
+    explain_algorithm()
+    test_bipartite_graph()
+    test_not_bipartite()
+    test_disconnected()
+    test_complex_bipartite()
+    test_odd_cycle()
+    compare_approaches()
