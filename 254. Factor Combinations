@@ -1,0 +1,228 @@
+"""
+LeetCode 254: Factor Combinations
+
+Problem:
+Numbers can be regarded as the product of their factors.
+- For example, 8 = 2 x 2 x 2 = 2 x 4.
+
+Given an integer n, return all possible combinations of its factors.
+You may return the answer in any order.
+
+Note that the factors should be in the range [2, n - 1].
+
+Examples:
+Input: n = 1
+Output: []
+
+Input: n = 12
+Output: [[2,6],[3,4],[2,2,3]]
+
+Input: n = 37
+Output: []
+
+Input: n = 32
+Output: [[2,16],[4,8],[2,2,8],[2,4,4],[2,2,2,4],[2,2,2,2,2]]
+"""
+
+from typing import List
+
+class Solution:
+    """
+    Approach 1: Backtracking with pruning
+    Time: O(n log n) average case, Space: O(log n) for recursion
+    """
+    def getFactors(self, n: int) -> List[List[int]]:
+        result = []
+        
+        def backtrack(num, start, path):
+            # Base case: if num becomes 1, we have a valid factorization
+            if num == 1:
+                # Only add if we have at least 2 factors (not just [n])
+                if len(path) > 1:
+                    result.append(path[:])
+                return
+            
+            # Try all possible factors from start to sqrt(num)
+            i = start
+            while i * i <= num:
+                if num % i == 0:
+                    # i is a factor, add it and recurse
+                    path.append(i)
+                    backtrack(num // i, i, path)
+                    path.pop()
+                i += 1
+            
+            # Also consider num itself as the last factor
+            # This ensures we get combinations like [2, 6] for 12
+            if num >= start:
+                path.append(num)
+                backtrack(1, num, path)
+                path.pop()
+        
+        backtrack(n, 2, [])
+        return result
+    
+    """
+    Approach 2: Cleaner backtracking
+    Time: O(n log n), Space: O(log n)
+    """
+    def getFactors2(self, n: int) -> List[List[int]]:
+        result = []
+        
+        def backtrack(num, start, path):
+            # Try factors from start up to sqrt(num)
+            i = start
+            while i * i <= num:
+                if num % i == 0:
+                    complement = num // i
+                    # Add this factorization
+                    result.append(path + [i, complement])
+                    # Continue factorizing the complement
+                    backtrack(complement, i, path + [i])
+                i += 1
+        
+        backtrack(n, 2, [])
+        return result
+    
+    """
+    Approach 3: Iterative with explicit stack
+    Time: O(n log n), Space: O(log n)
+    """
+    def getFactors3(self, n: int) -> List[List[int]]:
+        result = []
+        stack = [(n, 2, [])]  # (remaining, start_factor, current_path)
+        
+        while stack:
+            num, start, path = stack.pop()
+            
+            i = start
+            while i * i <= num:
+                if num % i == 0:
+                    complement = num // i
+                    # Add this factorization
+                    result.append(path + [i, complement])
+                    # Push state for further factorization
+                    stack.append((complement, i, path + [i]))
+                i += 1
+        
+        return result
+    
+    """
+    Approach 4: With memoization for optimization
+    Time: O(n log n), Space: O(n)
+    """
+    def getFactors4(self, n: int) -> List[List[int]]:
+        memo = {}
+        
+        def get_factors_from(num, start):
+            if (num, start) in memo:
+                return memo[(num, start)]
+            
+            result = []
+            i = start
+            while i * i <= num:
+                if num % i == 0:
+                    complement = num // i
+                    # Direct factorization
+                    result.append([i, complement])
+                    # Recursive factorizations
+                    for sub_factors in get_factors_from(complement, i):
+                        result.append([i] + sub_factors)
+                i += 1
+            
+            memo[(num, start)] = result
+            return result
+        
+        return get_factors_from(n, 2)
+
+
+# Test cases
+def test_solution():
+    sol = Solution()
+    
+    print("=== Test Case 1: n = 1 ===")
+    print(f"Result: {sol.getFactors(1)}")
+    print(f"Expected: []")
+    print()
+    
+    print("=== Test Case 2: n = 12 ===")
+    result = sol.getFactors(12)
+    print(f"Result: {sorted([sorted(x) for x in result])}")
+    print(f"Expected: [[2, 2, 3], [2, 6], [3, 4]]")
+    print()
+    
+    print("=== Test Case 3: n = 37 ===")
+    print(f"Result: {sol.getFactors(37)}")
+    print(f"Expected: [] (37 is prime)")
+    print()
+    
+    print("=== Test Case 4: n = 32 ===")
+    result = sol.getFactors(32)
+    print(f"Result: {sorted([sorted(x) for x in result])}")
+    print(f"Expected: [[2,2,2,2,2], [2,2,2,4], [2,2,8], [2,4,4], [2,16], [4,8]]")
+    print()
+    
+    print("=== Test Case 5: n = 8 ===")
+    result = sol.getFactors(8)
+    print(f"Result: {sorted([sorted(x) for x in result])}")
+    print(f"Expected: [[2, 2, 2], [2, 4]]")
+    print()
+    
+    print("=== Testing all approaches for n = 12 ===")
+    print(f"Approach 1: {sorted([sorted(x) for x in sol.getFactors(12)])}")
+    print(f"Approach 2: {sorted([sorted(x) for x in sol.getFactors2(12)])}")
+    print(f"Approach 3: {sorted([sorted(x) for x in sol.getFactors3(12)])}")
+    print(f"Approach 4: {sorted([sorted(x) for x in sol.getFactors4(12)])}")
+    print()
+    
+    # Edge cases
+    print("=== Edge Cases ===")
+    print(f"n = 2: {sol.getFactors(2)}")  # Expected: []
+    print(f"n = 4: {sol.getFactors(4)}")  # Expected: [[2, 2]]
+    print(f"n = 6: {sol.getFactors(6)}")  # Expected: [[2, 3]]
+
+
+if __name__ == "__main__":
+    test_solution()
+
+
+"""
+Key Insights:
+
+1. This is a backtracking problem where we need to find all ways to factorize n
+
+2. Important constraints:
+   - Factors must be in range [2, n-1]
+   - We don't include [n] as a valid factorization
+   - Need at least 2 factors in result
+
+3. Optimization: Only check factors up to sqrt(n)
+   - If i is a factor, then n/i is also a factor
+   - This drastically reduces search space
+
+4. Avoid duplicates by always using factors >= previous factor
+   - For 12, we get [2,6] and [2,2,3], not [6,2] or [3,2,2]
+   - Use 'start' parameter to enforce this ordering
+
+5. Pruning strategies:
+   - Start from smallest factor (2)
+   - Only iterate while i*i <= num
+   - Use start parameter to avoid duplicates
+
+Example walkthrough for n = 12:
+- Start with factor 2: 12/2 = 6
+  - Can factor 6: [2,2,3] or [2,6]
+- Start with factor 3: 12/3 = 4
+  - Can factor 4: [3,2,2] but we skip (2 < 3, violates ordering)
+  - Use [3,4] directly
+- Start with factor 4: 4*4 = 16 > 12, stop
+
+Time Complexity: O(n log n) - for each number, we check up to sqrt(n) factors
+Space Complexity: O(log n) - recursion depth is at most log n (binary factorization)
+
+Approach Comparison:
+- Approach 1: Most explicit with path management
+- Approach 2: Cleaner, more concise
+- Approach 3: Iterative version using stack (no recursion)
+- Approach 4: With memoization for repeated subproblems
+"""
