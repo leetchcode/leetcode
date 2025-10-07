@@ -1,0 +1,413 @@
+import threading
+from collections import deque
+import time
+
+class BoundedBlockingQueue:
+    """
+    Thread-safe bounded blocking queue with capacity limit.
+    
+    Operations:
+    - enqueue(element): Add element, blocks if queue is full
+    - dequeue(): Remove and return element, blocks if queue is empty
+    - size(): Return current number of elements
+    
+    Key concepts:
+    - Mutex lock for thread safety
+    - Condition variables for blocking/waking threads
+    - Producer-consumer pattern
+    """
+
+    def __init__(self, capacity: int):
+        """Initialize queue with given capacity"""
+        self.capacity = capacity
+        self.queue = deque()
+        
+        # Lock for thread-safe access
+        self.lock = threading.Lock()
+        
+        # Condition variables for blocking
+        self.not_full = threading.Condition(self.lock)   # Signals when queue has space
+        self.not_empty = threading.Condition(self.lock)  # Signals when queue has items
+
+    def enqueue(self, element: int) -> None:
+        """
+        Add element to queue. Blocks if queue is full.
+        
+        Thread safety: Uses lock and condition variable
+        """
+        with self.not_full:  # Acquire lock
+            # Wait while queue is full
+            while len(self.queue) >= self.capacity:
+                self.not_full.wait()  # Release lock and wait
+            
+            # Queue has space, add element
+            self.queue.append(element)
+            
+            # Notify waiting consumers that queue is not empty
+            self.not_empty.notify()
+
+    def dequeue(self) -> int:
+        """
+        Remove and return element from queue. Blocks if queue is empty.
+        
+        Thread safety: Uses lock and condition variable
+        """
+        with self.not_empty:  # Acquire lock
+            # Wait while queue is empty
+            while len(self.queue) == 0:
+                self.not_empty.wait()  # Release lock and wait
+            
+            # Queue has items, remove one
+            element = self.queue.popleft()
+            
+            # Notify waiting producers that queue is not full
+            self.not_full.notify()
+            
+            return element
+
+    def size(self) -> int:
+        """
+        Return current number of elements in queue.
+        
+        Thread safety: Uses lock for consistent read
+        """
+        with self.lock:
+            return len(self.queue)
+
+
+class BoundedBlockingQueueSemaphore:
+    """
+    Alternative implementation using semaphores.
+    
+    Semaphores naturally represent available resources:
+    - empty_slots: number of empty slots (initially = capacity)
+    - filled_slots: number of filled slots (initially = 0)
+    """
+
+    def __init__(self, capacity: int):
+        self.capacity = capacity
+        self.queue = deque()
+        
+        self.lock = threading.Lock()
+        
+        # Semaphores for resource counting
+        self.empty_slots = threading.Semaphore(capacity)  # Initially can add 'capacity' items
+        self.filled_slots = threading.Semaphore(0)        # Initially no items to remove
+
+    def enqueue(self, element: int) -> None:
+        """Add element using semaphore approach"""
+        self.empty_slots.acquire()  # Wait for empty slot, decrement count
+        
+        with self.lock:
+            self.queue.append(element)
+        
+        self.filled_slots.release()  # Signal that we have one more item
+
+    def dequeue(self) -> int:
+        """Remove element using semaphore approach"""
+        self.filled_slots.acquire()  # Wait for filled slot, decrement count
+        
+        with self.lock:
+            element = self.queue.popleft()
+        
+        self.empty_slots.release()  # Signal that we have one more empty slot
+        
+        return element
+
+    def size(self) -> int:
+        """Return current size"""
+        with self.lock:
+            return len(self.queue)
+
+
+class BoundedBlockingQueueVerbose:
+    """Verbose version with detailed logging for educational purposes"""
+
+    def __init__(self, capacity: int):
+        self.capacity = capacity
+        self.queue = deque()
+        self.lock = threading.Lock()
+        self.not_full = threading.Condition(self.lock)
+        self.not_empty = threading.Condition(self.lock)
+        self.log_lock = threading.Lock()
+
+    def log(self, message: str):
+        """Thread-safe logging"""
+        with self.log_lock:
+            thread_name = threading.current_thread().name
+            print(f"[{thread_name}] {message}")
+
+    def enqueue(self, element: int) -> None:
+        self.log(f"Attempting to enqueue {element}")
+        
+        with self.not_full:
+            # Check if full
+            while len(self.queue) >= self.capacity:
+                self.log(f"Queue is FULL (size={len(self.queue)}), BLOCKING...")
+                self.not_full.wait()
+                self.log(f"Woke up from blocking (queue size now {len(self.queue)})")
+            
+            # Add element
+            self.queue.append(element)
+            self.log(f"✓ Enqueued {element}, queue: {list(self.queue)}")
+            
+            # Wake up consumers
+            self.not_empty.notify()
+
+    def dequeue(self) -> int:
+        self.log(f"Attempting to dequeue")
+        
+        with self.not_empty:
+            # Check if empty
+            while len(self.queue) == 0:
+                self.log(f"Queue is EMPTY, BLOCKING...")
+                self.not_empty.wait()
+                self.log(f"Woke up from blocking (queue size now {len(self.queue)})")
+            
+            # Remove element
+            element = self.queue.popleft()
+            self.log(f"✓ Dequeued {element}, queue: {list(self.queue)}")
+            
+            # Wake up producers
+            self.not_full.notify()
+            
+            return element
+
+    def size(self) -> int:
+        with self.lock:
+            size = len(self.queue)
+            self.log(f"Size query: {size}")
+            return size
+
+
+def test_basic_operations():
+    """Test basic enqueue/dequeue operations"""
+    print("=" * 60)
+    print("TEST 1: Basic Operations (Single Thread)")
+    print("=" * 60)
+    
+    queue = BoundedBlockingQueue(2)
+    
+    print("Enqueue 1")
+    queue.enqueue(1)
+    print(f"  Size: {queue.size()}")
+    
+    print("Enqueue 2")
+    queue.enqueue(2)
+    print(f"  Size: {queue.size()}")
+    
+    print("Dequeue")
+    val = queue.dequeue()
+    print(f"  Got: {val}, Size: {queue.size()}")
+    
+    print("Enqueue 3")
+    queue.enqueue(3)
+    print(f"  Size: {queue.size()}")
+    
+    print("Dequeue")
+    val = queue.dequeue()
+    print(f"  Got: {val}, Size: {queue.size()}")
+    
+    print("Dequeue")
+    val = queue.dequeue()
+    print(f"  Got: {val}, Size: {queue.size()}")
+    
+    print()
+
+
+def test_blocking_behavior():
+    """Test blocking when queue is full or empty"""
+    print("=" * 60)
+    print("TEST 2: Blocking Behavior")
+    print("=" * 60)
+    
+    queue = BoundedBlockingQueueVerbose(2)
+    
+    def producer():
+        """Producer thread: adds 4 items"""
+        for i in range(1, 5):
+            queue.enqueue(i)
+            time.sleep(0.1)
+    
+    def consumer():
+        """Consumer thread: removes 4 items"""
+        time.sleep(0.3)  # Let producer fill queue first
+        for _ in range(4):
+            val = queue.dequeue()
+            time.sleep(0.2)
+    
+    # Start threads
+    prod_thread = threading.Thread(target=producer, name="Producer")
+    cons_thread = threading.Thread(target=consumer, name="Consumer")
+    
+    prod_thread.start()
+    cons_thread.start()
+    
+    prod_thread.join()
+    cons_thread.join()
+    
+    print("\nTest completed successfully!")
+    print()
+
+
+def test_multiple_producers_consumers():
+    """Test with multiple producers and consumers"""
+    print("=" * 60)
+    print("TEST 3: Multiple Producers & Consumers")
+    print("=" * 60)
+    
+    queue = BoundedBlockingQueue(5)
+    produced = []
+    consumed = []
+    lock = threading.Lock()
+    
+    def producer(id: int, count: int):
+        """Producer thread"""
+        for i in range(count):
+            value = id * 100 + i
+            queue.enqueue(value)
+            with lock:
+                produced.append(value)
+            time.sleep(0.05)
+    
+    def consumer(id: int, count: int):
+        """Consumer thread"""
+        for _ in range(count):
+            value = queue.dequeue()
+            with lock:
+                consumed.append(value)
+            time.sleep(0.05)
+    
+    # Create threads
+    threads = []
+    
+    # 2 producers, each producing 5 items
+    for i in range(2):
+        t = threading.Thread(target=producer, args=(i, 5), name=f"Producer-{i}")
+        threads.append(t)
+        t.start()
+    
+    # 2 consumers, each consuming 5 items
+    for i in range(2):
+        t = threading.Thread(target=consumer, args=(i, 5), name=f"Consumer-{i}")
+        threads.append(t)
+        t.start()
+    
+    # Wait for all threads
+    for t in threads:
+        t.join()
+    
+    print(f"Produced {len(produced)} items: {sorted(produced)}")
+    print(f"Consumed {len(consumed)} items: {sorted(consumed)}")
+    print(f"Final queue size: {queue.size()}")
+    print(f"Match: {sorted(produced) == sorted(consumed)}")
+    print()
+
+
+def test_semaphore_implementation():
+    """Test semaphore-based implementation"""
+    print("=" * 60)
+    print("TEST 4: Semaphore Implementation")
+    print("=" * 60)
+    
+    queue = BoundedBlockingQueueSemaphore(3)
+    
+    def producer():
+        for i in range(5):
+            queue.enqueue(i)
+            print(f"Produced: {i}, Size: {queue.size()}")
+            time.sleep(0.1)
+    
+    def consumer():
+        time.sleep(0.2)
+        for _ in range(5):
+            val = queue.dequeue()
+            print(f"Consumed: {val}, Size: {queue.size()}")
+            time.sleep(0.15)
+    
+    prod = threading.Thread(target=producer, name="Producer")
+    cons = threading.Thread(target=consumer, name="Consumer")
+    
+    prod.start()
+    cons.start()
+    
+    prod.join()
+    cons.join()
+    
+    print("Semaphore test completed!")
+    print()
+
+
+def explain_concepts():
+    """Explain key concurrency concepts"""
+    print("=" * 60)
+    print("KEY CONCEPTS")
+    print("=" * 60)
+    print()
+    
+    print("1. BOUNDED BLOCKING QUEUE")
+    print("   - Fixed capacity limit")
+    print("   - Enqueue blocks when full")
+    print("   - Dequeue blocks when empty")
+    print("   - Classic producer-consumer pattern")
+    print()
+    
+    print("2. THREAD SAFETY")
+    print("   - Multiple threads can access concurrently")
+    print("   - Must prevent race conditions")
+    print("   - Use locks to protect shared data")
+    print()
+    
+    print("3. CONDITION VARIABLES")
+    print("   - Allow threads to wait for specific conditions")
+    print("   - wait(): Release lock and sleep until notified")
+    print("   - notify(): Wake up one waiting thread")
+    print("   - Two conditions: not_full and not_empty")
+    print()
+    
+    print("4. SEMAPHORES (Alternative)")
+    print("   - Count available resources")
+    print("   - acquire(): Wait if count is 0, then decrement")
+    print("   - release(): Increment count, wake waiting thread")
+    print("   - Natural fit for counting slots")
+    print()
+    
+    print("5. PRODUCER-CONSUMER PATTERN")
+    print("   - Producers add items to queue")
+    print("   - Consumers remove items from queue")
+    print("   - Queue decouples producers from consumers")
+    print("   - Bounded queue prevents resource exhaustion")
+    print()
+
+
+def visualize_blocking():
+    """Visualize blocking behavior"""
+    print("=" * 60)
+    print("BLOCKING BEHAVIOR VISUALIZATION")
+    print("=" * 60)
+    print()
+    
+    print("Scenario: Queue capacity = 2")
+    print()
+    print("Timeline:")
+    print("  T1: Producer enqueues 1 → Queue: [1]")
+    print("  T2: Producer enqueues 2 → Queue: [1, 2] (FULL)")
+    print("  T3: Producer tries to enqueue 3 → BLOCKS (queue full)")
+    print("  T4: Consumer dequeues → Gets 1, Queue: [2]")
+    print("  T5: Producer wakes up, enqueues 3 → Queue: [2, 3]")
+    print()
+    print("Key points:")
+    print("  - Producer blocked at T3 (queue full)")
+    print("  - Consumer's dequeue at T4 freed space")
+    print("  - Producer automatically woke up and continued")
+    print()
+
+
+# Run all tests
+if __name__ == "__main__":
+    explain_concepts()
+    visualize_blocking()
+    test_basic_operations()
+    test_blocking_behavior()
+    test_multiple_producers_consumers()
+    test_semaphore_implementation()
