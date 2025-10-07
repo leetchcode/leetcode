@@ -1,0 +1,442 @@
+from typing import Optional
+
+# Definition for a binary tree node.
+class TreeNode:
+    def __init__(self, val=0, left=None, right=None):
+        self.val = val
+        self.left = left
+        self.right = right
+
+class Solution:
+    def deleteNode(self, root: Optional[TreeNode], key: int) -> Optional[TreeNode]:
+        """
+        Delete node with given key from BST.
+        
+        Cases:
+        1. Node not found → return root unchanged
+        2. Node is leaf → return None
+        3. Node has one child → return that child
+        4. Node has two children → replace with successor/predecessor
+        
+        Time Complexity: O(h) where h is height
+        Space Complexity: O(h) for recursion stack
+        """
+        if not root:
+            return None
+        
+        # Search for the node
+        if key < root.val:
+            root.left = self.deleteNode(root.left, key)
+        elif key > root.val:
+            root.right = self.deleteNode(root.right, key)
+        else:
+            # Found the node to delete
+            
+            # Case 1: Leaf node (no children)
+            if not root.left and not root.right:
+                return None
+            
+            # Case 2: One child
+            if not root.left:
+                return root.right
+            if not root.right:
+                return root.left
+            
+            # Case 3: Two children
+            # Replace with successor (smallest in right subtree)
+            successor = self.find_min(root.right)
+            root.val = successor.val
+            root.right = self.deleteNode(root.right, successor.val)
+        
+        return root
+    
+    def find_min(self, node: TreeNode) -> TreeNode:
+        """Find minimum node (leftmost) in subtree"""
+        while node.left:
+            node = node.left
+        return node
+
+
+class SolutionPredecessor:
+    """Alternative: Use predecessor instead of successor"""
+    
+    def deleteNode(self, root: Optional[TreeNode], key: int) -> Optional[TreeNode]:
+        if not root:
+            return None
+        
+        if key < root.val:
+            root.left = self.deleteNode(root.left, key)
+        elif key > root.val:
+            root.right = self.deleteNode(root.right, key)
+        else:
+            # Found node to delete
+            if not root.left and not root.right:
+                return None
+            if not root.left:
+                return root.right
+            if not root.right:
+                return root.left
+            
+            # Two children: use predecessor (largest in left subtree)
+            predecessor = self.find_max(root.left)
+            root.val = predecessor.val
+            root.left = self.deleteNode(root.left, predecessor.val)
+        
+        return root
+    
+    def find_max(self, node: TreeNode) -> TreeNode:
+        """Find maximum node (rightmost) in subtree"""
+        while node.right:
+            node = node.right
+        return node
+
+
+class SolutionIterative:
+    """Iterative solution without recursion"""
+    
+    def deleteNode(self, root: Optional[TreeNode], key: int) -> Optional[TreeNode]:
+        # Find node and its parent
+        parent = None
+        node = root
+        
+        while node and node.val != key:
+            parent = node
+            if key < node.val:
+                node = node.left
+            else:
+                node = node.right
+        
+        if not node:
+            return root  # Key not found
+        
+        # Delete node
+        if not node.left or not node.right:
+            # 0 or 1 child
+            new_node = node.left if node.left else node.right
+            
+            if not parent:
+                return new_node  # Deleted root
+            if parent.left == node:
+                parent.left = new_node
+            else:
+                parent.right = new_node
+        else:
+            # 2 children
+            # Find successor and its parent
+            succ_parent = node
+            succ = node.right
+            
+            while succ.left:
+                succ_parent = succ
+                succ = succ.left
+            
+            # Replace node's value with successor's value
+            node.val = succ.val
+            
+            # Delete successor
+            if succ_parent.left == succ:
+                succ_parent.left = succ.right
+            else:
+                succ_parent.right = succ.right
+        
+        return root
+
+
+def build_tree_from_list(values):
+    """Build BST from list (level-order with None for missing nodes)"""
+    if not values or values[0] is None:
+        return None
+    
+    from collections import deque
+    root = TreeNode(values[0])
+    queue = deque([root])
+    i = 1
+    
+    while queue and i < len(values):
+        node = queue.popleft()
+        
+        if i < len(values) and values[i] is not None:
+            node.left = TreeNode(values[i])
+            queue.append(node.left)
+        i += 1
+        
+        if i < len(values) and values[i] is not None:
+            node.right = TreeNode(values[i])
+            queue.append(node.right)
+        i += 1
+    
+    return root
+
+
+def tree_to_list(root):
+    """Convert tree to level-order list for display"""
+    if not root:
+        return []
+    
+    from collections import deque
+    result = []
+    queue = deque([root])
+    
+    while queue:
+        node = queue.popleft()
+        if node:
+            result.append(node.val)
+            queue.append(node.left)
+            queue.append(node.right)
+        else:
+            result.append(None)
+    
+    # Remove trailing Nones
+    while result and result[-1] is None:
+        result.pop()
+    
+    return result
+
+
+def print_tree(root, level=0, prefix="Root: "):
+    """Print tree structure"""
+    if root:
+        print(" " * (level * 4) + prefix + str(root.val))
+        if root.left or root.right:
+            if root.left:
+                print_tree(root.left, level + 1, "L--- ")
+            else:
+                print(" " * ((level + 1) * 4) + "L--- None")
+            if root.right:
+                print_tree(root.right, level + 1, "R--- ")
+            else:
+                print(" " * ((level + 1) * 4) + "R--- None")
+
+
+def explain_deletion_cases():
+    """Explain the three deletion cases"""
+    print("=" * 60)
+    print("BST DELETION CASES")
+    print("=" * 60)
+    print()
+    
+    print("Case 1: Node is a LEAF (no children)")
+    print("  Solution: Simply remove it (return None)")
+    print("  Example:")
+    print("      5")
+    print("     / \\")
+    print("    3   7")
+    print("   /")
+    print("  1  ← Delete 1")
+    print()
+    print("  Result:")
+    print("      5")
+    print("     / \\")
+    print("    3   7")
+    print()
+    
+    print("Case 2: Node has ONE child")
+    print("  Solution: Replace node with its child")
+    print("  Example:")
+    print("      5")
+    print("     / \\")
+    print("    3   7")
+    print("       /")
+    print("      6  ← Delete 7 (has left child only)")
+    print()
+    print("  Result:")
+    print("      5")
+    print("     / \\")
+    print("    3   6")
+    print()
+    
+    print("Case 3: Node has TWO children (COMPLEX)")
+    print("  Solution: Replace with successor OR predecessor")
+    print()
+    print("  Option A - Successor (smallest in right subtree):")
+    print("      5  ← Delete 5")
+    print("     / \\")
+    print("    3   8")
+    print("       / \\")
+    print("      6   9")
+    print("       \\")
+    print("        7")
+    print()
+    print("  Successor of 5 is 6 (leftmost in right subtree)")
+    print("  1. Copy 6's value to node 5")
+    print("  2. Delete original 6")
+    print()
+    print("  Result:")
+    print("      6")
+    print("     / \\")
+    print("    3   8")
+    print("       / \\")
+    print("      7   9")
+    print()
+    print("  Option B - Predecessor (largest in left subtree):")
+    print("    Could use 3 instead (rightmost in left subtree)")
+    print()
+
+
+def visualize_deletion(root, key):
+    """Visualize deletion step by step"""
+    print(f"Deleting key {key} from BST:")
+    print("\nBefore deletion:")
+    print_tree(root)
+    print()
+    
+    # Find the node
+    node = root
+    path = []
+    while node and node.val != key:
+        path.append(node.val)
+        if key < node.val:
+            node = node.left
+        else:
+            node = node.right
+    
+    if not node:
+        print(f"Key {key} not found in tree")
+        return root
+    
+    print(f"Path to node: {' → '.join(map(str, path + [key]))}")
+    print()
+    
+    # Determine case
+    if not node.left and not node.right:
+        print(f"Case: LEAF node")
+    elif not node.left or not node.right:
+        print(f"Case: ONE child")
+        child = "left" if node.left else "right"
+        print(f"  Has {child} child only")
+    else:
+        print(f"Case: TWO children")
+        # Find successor
+        succ = node.right
+        while succ.left:
+            succ = succ.left
+        print(f"  Successor: {succ.val} (smallest in right subtree)")
+        print(f"  Will replace {key} with {succ.val}, then delete {succ.val}")
+    
+    print()
+    
+    # Perform deletion
+    sol = Solution()
+    result = sol.deleteNode(root, key)
+    
+    print("After deletion:")
+    print_tree(result)
+    print()
+    
+    return result
+
+
+def test_case_1():
+    """Test Case 1: Delete leaf node"""
+    print("=" * 60)
+    print("TEST 1: Delete Leaf Node")
+    print("=" * 60)
+    print()
+    
+    # Tree: [5,3,7,2,4,6,8]
+    root = build_tree_from_list([5, 3, 7, 2, 4, 6, 8])
+    key = 2
+    
+    visualize_deletion(root, key)
+
+
+def test_case_2():
+    """Test Case 2: Delete node with one child"""
+    print("=" * 60)
+    print("TEST 2: Delete Node with One Child")
+    print("=" * 60)
+    print()
+    
+    # Tree: [5,3,7,None,4,6,8]
+    root = build_tree_from_list([5, 3, 7, None, 4, 6, 8])
+    key = 3
+    
+    visualize_deletion(root, key)
+
+
+def test_case_3():
+    """Test Case 3: Delete node with two children"""
+    print("=" * 60)
+    print("TEST 3: Delete Node with Two Children")
+    print("=" * 60)
+    print()
+    
+    # Tree: [5,3,7,2,4,6,8]
+    root = build_tree_from_list([5, 3, 7, 2, 4, 6, 8])
+    key = 5
+    
+    visualize_deletion(root, key)
+
+
+def test_delete_root():
+    """Test deleting root node"""
+    print("=" * 60)
+    print("TEST 4: Delete Root Node")
+    print("=" * 60)
+    print()
+    
+    root = build_tree_from_list([5, 3, 7, 2, 4, 6, 8])
+    key = 5
+    
+    visualize_deletion(root, key)
+
+
+def test_complex_case():
+    """Test more complex deletion"""
+    print("=" * 60)
+    print("TEST 5: Complex Case")
+    print("=" * 60)
+    print()
+    
+    # Build tree: [8,5,12,3,7,10,15,1,4,6,None,9,11]
+    root = build_tree_from_list([8, 5, 12, 3, 7, 10, 15, 1, 4, 6, None, 9, 11])
+    key = 5
+    
+    visualize_deletion(root, key)
+
+
+def compare_approaches():
+    """Compare successor vs predecessor"""
+    print("=" * 60)
+    print("SUCCESSOR vs PREDECESSOR")
+    print("=" * 60)
+    print()
+    
+    print("When node has two children, we can use either:")
+    print()
+    print("1. SUCCESSOR (recommended):")
+    print("   - Smallest value in right subtree")
+    print("   - Go right once, then left as far as possible")
+    print("   - Guaranteed to have at most one child (right)")
+    print()
+    print("2. PREDECESSOR:")
+    print("   - Largest value in left subtree")
+    print("   - Go left once, then right as far as possible")
+    print("   - Guaranteed to have at most one child (left)")
+    print()
+    print("Both maintain BST property!")
+    print()
+    
+    print("Example: Delete 5")
+    print("      5")
+    print("     / \\")
+    print("    3   8")
+    print("   /   / \\")
+    print("  1   6   9")
+    print()
+    print("Successor approach: Replace 5 with 6")
+    print("Predecessor approach: Replace 5 with 3")
+    print()
+    print("Both are valid BSTs after deletion!")
+    print()
+
+
+# Run all tests
+if __name__ == "__main__":
+    explain_deletion_cases()
+    compare_approaches()
+    test_case_1()
+    test_case_2()
+    test_case_3()
+    test_delete_root()
+    test_complex_case()
