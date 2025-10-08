@@ -1,0 +1,301 @@
+"""
+LeetCode 2386: Find the K-Sum of an Array
+
+Problem:
+You are given an integer array nums and a positive integer k. You can choose any 
+subsequence of the array and sum all of its elements together.
+
+We define the K-Sum of the array as the kth largest subsequence sum that can be 
+obtained (not necessarily distinct).
+
+Return the K-Sum of the array.
+
+A subsequence is an array that can be derived from another array by deleting some 
+or no elements without changing the order of the remaining elements.
+
+Note: the empty subsequence is considered to have a sum equal to 0.
+
+Examples:
+Input: nums = [2,4,-2], k = 5
+Output: 2
+Explanation: All possible subsequence sums are: 0, 2, 4, 6, -2, 0, 2, 4
+The 5 largest sums (in descending order) are: 6, 4, 4, 2, 2
+So the K-Sum is 2.
+
+Input: nums = [1,-2,3,4,-10,12], k = 16
+Output: 10
+"""
+
+from typing import List
+import heapq
+
+class Solution:
+    """
+    Approach 1: Max Heap with state exploration
+    Time: O(n log n + k log k), Space: O(k)
+    
+    Key Insight:
+    1. Maximum sum = sum of all positive numbers
+    2. To get smaller sums, we can either:
+       - Remove a positive number from max sum
+       - Add a negative number (converted to positive for uniform handling)
+    3. Use heap to explore states in order of largest sums
+    """
+    def kSum(self, nums: List[int], k: int) -> int:
+        # Separate positive and negative numbers
+        # For negatives, we'll work with their absolute values
+        positives = [x for x in nums if x > 0]
+        negatives = [abs(x) for x in nums if x < 0]
+        
+        # Maximum sum is sum of all positives
+        max_sum = sum(positives)
+        
+        if k == 1:
+            return max_sum
+        
+        # Combine and sort all absolute values
+        # We'll think of "decreasing sum" as "adding costs"
+        arr = sorted(positives + negatives)
+        n = len(arr)
+        
+        # Max heap: (sum, index)
+        # sum = max_sum - sum of elements we've "removed"
+        # Start with max_sum (no elements removed)
+        heap = [(-max_sum, 0)]
+        
+        for _ in range(k - 1):
+            curr_sum, idx = heapq.heappop(heap)
+            curr_sum = -curr_sum
+            
+            if idx < n:
+                # Option 1: Add current element to removal set
+                heapq.heappush(heap, (-(curr_sum - arr[idx]), idx + 1))
+                
+                # Option 2: Replace previous element with current
+                # (remove previous, add current)
+                if idx > 0:
+                    heapq.heappush(heap, (-(curr_sum - arr[idx] + arr[idx - 1]), idx + 1))
+        
+        return -heap[0][0]
+    
+    """
+    Approach 2: Optimized with better state management
+    Time: O(n log n + k log k), Space: O(k)
+    """
+    def kSum2(self, nums: List[int], k: int) -> int:
+        # Calculate sum of all positive numbers (maximum possible sum)
+        total = sum(x for x in nums if x > 0)
+        
+        if k == 1:
+            return total
+        
+        # Convert all numbers to positive and sort
+        # We'll track how much we "subtract" from the maximum
+        arr = sorted([abs(x) for x in nums])
+        n = len(arr)
+        
+        # Max heap: stores (current_sum, next_index)
+        # We start from maximum sum and explore smaller sums
+        heap = [(-total, 0)]
+        
+        for _ in range(k - 1):
+            curr_sum, idx = heapq.heappop(heap)
+            curr_sum = -curr_sum
+            
+            if idx < n:
+                # Choice 1: Include arr[idx] in our "subtraction set"
+                # This gives us a smaller sum
+                heapq.heappush(heap, (-(curr_sum - arr[idx]), idx + 1))
+                
+                # Choice 2: Replace arr[idx-1] with arr[idx]
+                # This means: undo previous subtraction, apply current one
+                if idx > 0:
+                    new_sum = curr_sum + arr[idx - 1] - arr[idx]
+                    heapq.heappush(heap, (-new_sum, idx + 1))
+        
+        return -heap[0][0]
+    
+    """
+    Approach 3: Brute force with memoization (for small inputs)
+    Time: O(2^n * log(2^n)), Space: O(2^n)
+    
+    This approach generates all possible subsequence sums.
+    Only practical for small n (n <= 20).
+    """
+    def kSum3(self, nums: List[int], k: int) -> int:
+        n = len(nums)
+        all_sums = []
+        
+        # Generate all 2^n subsequence sums
+        for mask in range(1 << n):
+            curr_sum = 0
+            for i in range(n):
+                if mask & (1 << i):
+                    curr_sum += nums[i]
+            all_sums.append(curr_sum)
+        
+        # Sort in descending order and return kth largest
+        all_sums.sort(reverse=True)
+        return all_sums[k - 1]
+    
+    """
+    Approach 4: Detailed explanation with comments
+    Time: O(n log n + k log k), Space: O(k)
+    """
+    def kSum4(self, nums: List[int], k: int) -> int:
+        """
+        Think of it this way:
+        1. Start with maximum possible sum (all positives)
+        2. To get next smaller sum, we can:
+           - Remove a positive number, OR
+           - Add a negative number (same as removing its absolute value)
+        3. We explore sums in decreasing order using a max heap
+        """
+        
+        # Step 1: Calculate the maximum sum
+        max_sum = sum(x for x in nums if x > 0)
+        
+        if k == 1:
+            return max_sum
+        
+        # Step 2: Convert to "cost" array
+        # Each element represents how much we "lose" by including it
+        costs = sorted([abs(x) for x in nums])
+        n = len(costs)
+        
+        # Step 3: Use heap to explore sums
+        # State: (sum_value, next_cost_index)
+        # sum_value = max_sum - sum_of_selected_costs
+        heap = [(-max_sum, 0)]
+        visited = set()
+        
+        for _ in range(k - 1):
+            curr_sum, idx = heapq.heappop(heap)
+            curr_sum = -curr_sum
+            
+            # Two choices at each step:
+            if idx < n:
+                # Choice 1: Take current cost (decrease sum)
+                state1 = (curr_sum - costs[idx], idx + 1)
+                if state1 not in visited:
+                    heapq.heappush(heap, (-state1[0], state1[1]))
+                    visited.add(state1)
+                
+                # Choice 2: Skip previous, take current
+                # (only if we had a previous choice)
+                if idx > 0:
+                    state2 = (curr_sum - costs[idx] + costs[idx - 1], idx + 1)
+                    if state2 not in visited:
+                        heapq.heappush(heap, (-state2[0], state2[1]))
+                        visited.add(state2)
+        
+        return -heap[0][0]
+
+
+# Test cases
+def test_solution():
+    sol = Solution()
+    
+    print("=== Test Case 1 ===")
+    nums1 = [2, 4, -2]
+    k1 = 5
+    print(f"Input: nums = {nums1}, k = {k1}")
+    print(f"Approach 1: {sol.kSum(nums1, k1)}")
+    print(f"Approach 2: {sol.kSum2(nums1, k1)}")
+    print(f"Approach 3: {sol.kSum3(nums1, k1)}")
+    print(f"Expected: 2")
+    print(f"Explanation: Subsequence sums (sorted): [6, 4, 4, 2, 2, 0, 0, -2]")
+    print()
+    
+    print("=== Test Case 2 ===")
+    nums2 = [1, -2, 3, 4, -10, 12]
+    k2 = 16
+    print(f"Input: nums = {nums2}, k = {k2}")
+    print(f"Result: {sol.kSum(nums2, k2)}")
+    print(f"Expected: 10")
+    print()
+    
+    print("=== Test Case 3: All positives ===")
+    nums3 = [1, 2, 3, 4, 5]
+    k3 = 3
+    print(f"Input: nums = {nums3}, k = {k3}")
+    print(f"Result: {sol.kSum(nums3, k3)}")
+    print(f"Expected: 14 (sums: 15, 14, 14)")
+    print()
+    
+    print("=== Test Case 4: All negatives ===")
+    nums4 = [-1, -2, -3]
+    k4 = 2
+    print(f"Input: nums = {nums4}, k = {k4}")
+    print(f"Result: {sol.kSum(nums4, k4)}")
+    print(f"Expected: -1")
+    print()
+    
+    print("=== Test Case 5: k = 1 (maximum sum) ===")
+    nums5 = [1, -2, 3, 4, -10, 12]
+    k5 = 1
+    print(f"Input: nums = {nums5}, k = {k5}")
+    print(f"Result: {sol.kSum(nums5, k5)}")
+    print(f"Expected: 20 (1+3+4+12)")
+    print()
+    
+    print("=== Test Case 6: Single element ===")
+    nums6 = [5]
+    k6 = 2
+    print(f"Input: nums = {nums6}, k = {k6}")
+    print(f"Result: {sol.kSum(nums6, k6)}")
+    print(f"Expected: 0 (empty subsequence)")
+    print()
+
+
+if __name__ == "__main__":
+    test_solution()
+
+
+"""
+Key Insights:
+
+1. The maximum sum is the sum of all positive numbers
+
+2. To get smaller sums, we reduce from the maximum by either:
+   - Removing positive numbers
+   - Adding negative numbers (equivalent to removing their absolute value)
+
+3. We can model this as a "cost reduction" problem:
+   - Start with max_sum
+   - Each element has a "cost" (its absolute value)
+   - We explore which costs to apply to reduce the sum
+
+4. State space exploration:
+   - State = (current_sum, next_index_to_consider)
+   - From each state, we have 2 choices:
+     a) Apply current cost (include this element)
+     b) Replace previous cost with current (swap elements)
+
+5. Why the "replace" operation?
+   - Prevents duplicate states
+   - If we took element at idx-1, we can "swap" it with element at idx
+   - This generates unique subsequences efficiently
+
+Example walkthrough for nums = [2,4,-2], k = 5:
+- All positives: [2, 4], negatives: [2] (absolute)
+- Max sum = 6
+- Sorted costs: [2, 2, 4]
+- 
+- Top sums in order:
+  1. 6 (all positives: 2+4)
+  2. 4 (remove first 2: just 4, or add negative: 2+4-2)
+  3. 4 (remove second 2: just 2+2)
+  4. 2 (remove 4: just 2, or 4-2)
+  5. 2 (remove both 2s, or other combinations)
+
+Time Complexity: O(n log n + k log k)
+- O(n log n) for sorting
+- O(k log k) for k heap operations, each O(log k)
+
+Space Complexity: O(k) for the heap
+
+This is much better than brute force O(2^n)!
+
+Note: Approach 3 (brute force) is only practical for n <= 20
+"""
