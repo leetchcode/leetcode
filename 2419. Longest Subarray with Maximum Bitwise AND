@@ -1,0 +1,88 @@
+from typing import List
+
+class Solution:
+    def longestSubarray(self, nums: List[int]) -> int:
+        # The maximum bitwise AND is the maximum element itself
+        max_val = max(nums)
+        
+        max_length = 0
+        current_length = 0
+        
+        for num in nums:
+            if num == max_val:
+                current_length += 1
+                max_length = max(max_length, current_length)
+            else:
+                current_length = 0
+        
+        return max_length
+
+
+# Alternative one-pass solution
+class SolutionOnePass:
+    def longestSubarray(self, nums: List[int]) -> int:
+        max_val = 0
+        max_length = 0
+        current_length = 0
+        
+        for num in nums:
+            if num > max_val:
+                # Found new maximum, reset everything
+                max_val = num
+                max_length = 1
+                current_length = 1
+            elif num == max_val:
+                # Continue current streak
+                current_length += 1
+                max_length = max(max_length, current_length)
+            else:
+                # Break streak
+                current_length = 0
+        
+        return max_length
+
+
+# Test cases
+def test():
+    sol = Solution()
+    sol2 = SolutionOnePass()
+    
+    # Test case 1
+    nums1 = [1,2,3,3,2,2]
+    print(f"Test 1: {sol.longestSubarray(nums1)}")  # Expected: 2
+    print(f"Test 1 (one-pass): {sol2.longestSubarray(nums1)}")
+    
+    # Test case 2
+    nums2 = [1,2,3,4]
+    print(f"\nTest 2: {sol.longestSubarray(nums2)}")  # Expected: 1
+    print(f"Test 2 (one-pass): {sol2.longestSubarray(nums2)}")
+    
+    # Test case 3
+    nums3 = [96317,96317,96317,96317,96317,96317,96317,96317,96317,279979]
+    print(f"\nTest 3: {sol.longestSubarray(nums3)}")  # Expected: 1
+    print(f"Test 3 (one-pass): {sol2.longestSubarray(nums3)}")
+    
+    # Test case 4 - all same elements
+    nums4 = [5,5,5,5,5]
+    print(f"\nTest 4: {sol.longestSubarray(nums4)}")  # Expected: 5
+    print(f"Test 4 (one-pass): {sol2.longestSubarray(nums4)}")
+    
+    # Test case 5 - multiple sequences
+    nums5 = [1,2,3,3,2,3,3,3,1]
+    print(f"\nTest 5: {sol.longestSubarray(nums5)}")  # Expected: 3
+    print(f"Test 5 (one-pass): {sol2.longestSubarray(nums5)}")
+
+test()
+
+# Explanation of why max element is the answer:
+print("\n" + "="*50)
+print("Why the maximum element gives maximum AND:")
+print("="*50)
+print("Example: [1, 2, 3, 3, 2, 2]")
+print("Binary:  [001, 010, 011, 011, 010, 010]")
+print("\nBitwise AND examples:")
+print("3 & 3 = 011 & 011 = 011 = 3 ✓ (Maximum!)")
+print("3 & 2 = 011 & 010 = 010 = 2")
+print("2 & 2 = 010 & 010 = 010 = 2")
+print("\nAND can only turn bits OFF, never ON.")
+print("So the max AND value is always the max element itself!")
