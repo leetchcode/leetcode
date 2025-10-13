@@ -1,0 +1,126 @@
+from typing import List
+import heapq
+
+class Solution:
+    def thirdMax(self, nums: List[int]) -> int:
+        """
+        Optimal solution using three variables
+        Time: O(n), Space: O(1)
+        """
+        # Use None to represent uninitialized maximums
+        first = second = third = None
+        
+        for num in nums:
+            # Skip duplicates
+            if num == first or num == second or num == third:
+                continue
+            
+            # Update the three maximums
+            if first is None or num > first:
+                third = second
+                second = first
+                first = num
+            elif second is None or num > second:
+                third = second
+                second = num
+            elif third is None or num > third:
+                third = num
+        
+        # If third max exists, return it; otherwise return first max
+        return third if third is not None else first
+
+
+class SolutionSet:
+    def thirdMax(self, nums: List[int]) -> int:
+        """
+        Solution using set and sorting
+        Time: O(n log n), Space: O(n)
+        """
+        # Remove duplicates
+        distinct = list(set(nums))
+        distinct.sort(reverse=True)
+        
+        # Return third max if exists, else max
+        return distinct[2] if len(distinct) >= 3 else distinct[0]
+
+
+class SolutionHeap:
+    def thirdMax(self, nums: List[int]) -> int:
+        """
+        Solution using min heap of size 3
+        Time: O(n log 3) = O(n), Space: O(1)
+        """
+        heap = []
+        seen = set()
+        
+        for num in nums:
+            if num in seen:
+                continue
+            seen.add(num)
+            
+            if len(heap) < 3:
+                heapq.heappush(heap, num)
+            elif num > heap[0]:
+                heapq.heapreplace(heap, num)
+        
+        # If we have 3 distinct elements, return the smallest (third max)
+        # Otherwise, return the largest
+        if len(heap) == 3:
+            return heap[0]
+        return max(heap)
+
+
+# Test cases
+def test():
+    sol = Solution()
+    sol_set = SolutionSet()
+    sol_heap = SolutionHeap()
+    
+    test_cases = [
+        ([3, 2, 1], 1),
+        ([1, 2], 2),
+        ([2, 2, 3, 1], 1),
+        ([1, 2, 2, 5, 3, 5], 2),
+        ([1], 1),
+        ([1, 1, 1], 1),
+        ([5, 2, 4, 1, 3, 6, 0], 4),
+        ([-2147483648, 1, 1], -2147483648),
+    ]
+    
+    print("Testing all solutions:\n")
+    for i, (nums, expected) in enumerate(test_cases, 1):
+        result1 = sol.thirdMax(nums.copy())
+        result2 = sol_set.thirdMax(nums.copy())
+        result3 = sol_heap.thirdMax(nums.copy())
+        
+        status = "✓" if result1 == expected else "✗"
+        print(f"Test {i}: {nums}")
+        print(f"  Expected: {expected}")
+        print(f"  Three Vars: {result1} {status}")
+        print(f"  Set/Sort:   {result2} {status}")
+        print(f"  Min Heap:   {result3} {status}")
+        print()
+
+
+test()
+
+# Explanation
+print("="*60)
+print("SOLUTION COMPARISON")
+print("="*60)
+print("\n1. Three Variables (Optimal):")
+print("   - Time: O(n), Space: O(1)")
+print("   - Track top 3 maximums in single pass")
+print("   - Most efficient for this problem")
+print("\n2. Set + Sort:")
+print("   - Time: O(n log n), Space: O(n)")
+print("   - Simple and readable")
+print("   - Good for small arrays")
+print("\n3. Min Heap of Size 3:")
+print("   - Time: O(n), Space: O(n) for seen set")
+print("   - Maintains top 3 elements")
+print("   - Elegant and scalable to 'kth maximum'")
+print("\nKey Edge Cases:")
+print("   - Duplicates: Must be ignored")
+print("   - < 3 distinct elements: Return maximum")
+print("   - Negative numbers: Handle correctly")
