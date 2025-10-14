@@ -1,0 +1,98 @@
+class Solution:
+    def appendCharacters(self, s: str, t: str) -> int:
+        """
+        Two pointer approach to find how many characters need to be appended
+        Time: O(n + m) where n = len(s), m = len(t)
+        Space: O(1)
+        """
+        i = 0  # pointer for s
+        j = 0  # pointer for t
+        
+        # Try to match as many characters of t as possible in s
+        while i < len(s) and j < len(t):
+            if s[i] == t[j]:
+                j += 1  # Found a match, move t pointer
+            i += 1  # Always move s pointer
+        
+        # The number of unmatched characters in t
+        return len(t) - j
+
+
+class SolutionVerbose:
+    def appendCharacters(self, s: str, t: str) -> int:
+        """
+        More verbose version with detailed explanation
+        """
+        t_index = 0
+        
+        # Try to find each character of t in s (in order)
+        for char in s:
+            if t_index < len(t) and char == t[char_index]:
+                t_index += 1
+        
+        # Return how many characters from t we couldn't match
+        return len(t) - t_index
+
+
+# Test cases
+def test():
+    sol = Solution()
+    
+    test_cases = [
+        ("coaching", "coding", 4),  # Need to append "ding"
+        ("abcde", "a", 0),          # "a" is already a subsequence
+        ("z", "abcde", 5),          # Need to append "abcde"
+        ("abc", "abcd", 1),         # Need to append "d"
+        ("abc", "xyz", 3),          # Need to append "xyz"
+        ("", "abc", 3),             # Empty s, append all of t
+        ("abc", "", 0),             # Empty t, nothing to append
+        ("vrykt", "rkge", 2),       # Match "rk", append "ge"
+    ]
+    
+    print("Testing Append Characters to Make Subsequence:\n")
+    for i, (s, t, expected) in enumerate(test_cases, 1):
+        result = sol.appendCharacters(s, t)
+        status = "✓" if result == expected else "✗"
+        
+        print(f"Test {i}: {status}")
+        print(f"  s = \"{s}\"")
+        print(f"  t = \"{t}\"")
+        print(f"  Expected: {expected}, Got: {result}")
+        
+        # Show what needs to be appended
+        matched = 0
+        j = 0
+        for c in s:
+            if j < len(t) and c == t[j]:
+                j += 1
+                matched += 1
+        
+        if matched < len(t):
+            to_append = t[matched:]
+            print(f"  Matched: \"{t[:matched]}\", Need to append: \"{to_append}\"")
+        else:
+            print(f"  Already a subsequence!")
+        print()
+
+
+test()
+
+# Detailed explanation
+print("="*70)
+print("ALGORITHM EXPLANATION")
+print("="*70)
+print("\nExample: s = 'coaching', t = 'coding'")
+print("\nStep-by-step matching:")
+print("  s[0]='c' == t[0]='c' ✓ Match! j=1")
+print("  s[1]='o' == t[1]='o' ✓ Match! j=2")
+print("  s[2]='a' != t[2]='d' ✗")
+print("  s[3]='c' != t[2]='d' ✗")
+print("  s[4]='h' != t[2]='d' ✗")
+print("  s[5]='i' != t[2]='d' ✗")
+print("  s[6]='n' != t[2]='d' ✗")
+print("  s[7]='g' != t[2]='d' ✗")
+print("\nMatched: 2 characters ('co')")
+print("Remaining in t: 'ding' (4 characters)")
+print("Answer: 4")
+print("\nTime Complexity: O(n) where n = len(s)")
+print("Space Complexity: O(1)")
