@@ -1,0 +1,169 @@
+"""
+
+Bus Schedule problem - You are in point 0 of the road and need to get to point N. Current time is 0 mins. Each route is represented by start point, end point, departure interval (in mins) and travel time (in mins). How long will it take to get to N ?
+Example Schedule:
+route 1: from 0 to 1, every 4 min, takes 9 min
+route 2: from 5 to 10, every 2 min, takes 4 min
+route 3: from 10 to 20, every 1 min, takes 5 min
+route 4: from 0 to 5, every 1 min, takes 3 min
+Destination Point: 20
+Result:  13 min
+
+Solution:
+take route 4 (3 min)
+wait for 1 min
+take route 2 (4 min)
+take route 3 (5 min)
+total 13 min
+
+"""
+
+
+import heapq
+from typing import List, Tuple, Optional
+
+class Route:
+    def __init__(self, start: int, end: int, interval: int, travel_time: int):
+        self.start = start
+        self.end = end
+        self.interval = interval  # bus departs every 'interval' minutes
+        self.travel_time = travel_time
+    
+    def next_departure(self, current_time: int) -> int:
+        """Calculate the next bus departure time from current_time"""
+        # First bus departs at time 0, then every 'interval' minutes
+        if current_time <= 0:
+            return 0
+        # Find the next departure: ceil(current_time / interval) * interval
+        return ((current_time + self.interval - 1) // self.interval) * self.interval
+    
+    def arrival_time(self, current_time: int) -> int:
+        """Calculate arrival time if we take this bus from current_time"""
+        departure = self.next_departure(current_time)
+        return departure + self.travel_time
+    
+    def __repr__(self):
+        return f"Route({self.start}->{self.end}, every {self.interval}min, takes {self.travel_time}min)"
+
+
+def find_shortest_time(routes: List[Route], destination: int) -> Tuple[Optional[int], List[Tuple[Route, int, int]]]:
+    """
+    Find the shortest time to reach destination starting from point 0 at time 0.
+    
+    Args:
+        routes: List of Route objects
+        destination: Target point to reach
+    
+    Returns:
+        Tuple of (total_time, path) where path is list of (route, departure_time, arrival_time)
+        Returns (None, []) if destination is unreachable
+    """
+    # Build adjacency list: point -> list of routes starting from that point
+    graph = {}
+    for route in routes:
+        if route.start not in graph:
+            graph[route.start] = []
+        graph[route.start].append(route)
+    
+    # Priority queue: (time, point, path)
+    # path is list of (route, departure_time, arrival_time)
+    pq = [(0, 0, [])]
+    
+    # Track minimum time to reach each point
+    min_time = {0: 0}
+    
+    while pq:
+        current_time, current_point, path = heapq.heappop(pq)
+        
+        # If we've reached destination
+        if current_point == destination:
+            return current_time, path
+        
+        # Skip if we've found a better path to this point
+        if current_time > min_time.get(current_point, float('inf')):
+            continue
+        
+        # Try all routes from current point
+        if current_point in graph:
+            for route in graph[current_point]:
+                next_point = route.end
+                arrival = route.arrival_time(current_time)
+                
+                # If this is a better way to reach next_point
+                if arrival < min_time.get(next_point, float('inf')):
+                    min_time[next_point] = arrival
+                    departure = route.next_departure(current_time)
+                    new_path = path + [(route, departure, arrival)]
+                    heapq.heappush(pq, (arrival, next_point, new_path))
+    
+    return None, []
+
+
+def print_solution(total_time: Optional[int], path: List[Tuple[Route, int, int]]):
+    """Pretty print the solution"""
+    if total_time is None:
+        print("No route found to destination!")
+        return
+    
+    print(f"Total time: {total_time} minutes\n")
+    print("Journey details:")
+    print("-" * 70)
+    
+    current_time = 0
+    for i, (route, departure, arrival) in enumerate(path, 1):
+        wait_time = departure - current_time
+        
+        if wait_time > 0:
+            print(f"Wait at point {route.start} for {wait_time} min (until time {departure})")
+        
+        print(f"{i}. Take route from {route.start} to {route.end}")
+        print(f"   Depart: {departure} min, Arrive: {arrival} min, Travel: {route.travel_time} min")
+        
+        current_time = arrival
+    
+    print("-" * 70)
+
+
+# Example usage
+if __name__ == "__main__":
+    # Example from the problem
+    routes = [
+        Route(start=0, end=1, interval=4, travel_time=9),
+        Route(start=5, end=10, interval=2, travel_time=4),
+        Route(start=10, end=20, interval=1, travel_time=5),
+        Route(start=0, end=5, interval=1, travel_time=3),
+    ]
+    
+    destination = 20
+    
+    print("Bus Routes:")
+    for i, route in enumerate(routes, 1):
+        print(f"{i}. {route}")
+    
+    print(f"\nDestination: Point {destination}")
+    print(f"Start: Point 0, Time 0\n")
+    print("=" * 70)
+    
+    total_time, path = find_shortest_time(routes, destination)
+    print_solution(total_time, path)
+    
+    print("\n" + "=" * 70)
+    print("\nTesting another example:")
+    print("=" * 70)
+    
+    # Another test case
+    routes2 = [
+        Route(start=0, end=10, interval=5, travel_time=10),
+        Route(start=0, end=5, interval=2, travel_time=3),
+        Route(start=5, end=10, interval=3, travel_time=4),
+        Route(start=10, end=15, interval=1, travel_time=2),
+    ]
+    
+    destination2 = 15
+    print("\nBus Routes:")
+    for i, route in enumerate(routes2, 1):
+        print(f"{i}. {route}")
+    
+    print(f"\nDestination: Point {destination2}")
+    total_time2, path2 = find_shortest_time(routes2, destination2)
+    print_solution(total_time2, path2)
