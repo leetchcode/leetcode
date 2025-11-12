@@ -1,0 +1,99 @@
+class TreeNode:
+    def __init__(self, val=0, left=None, right=None):
+        self.val = val
+        self.left = left
+        self.right = right
+
+
+def construct_complete_bst(arr):
+    """
+    Constructs a complete BST from an array of integers.
+    A complete BST maintains BST property AND is filled level by level, left to right.
+
+    Args:
+        arr: List of integers
+
+    Returns:
+        Root node of the complete BST
+    """
+    if not arr:
+        return None
+
+    # Sort the array to maintain BST property
+    sorted_arr = sorted(arr)
+    n = len(sorted_arr)
+
+    # Helper function to build complete BST recursively
+    def build_complete_bst(index):
+        if index >= n:
+            return None
+
+        # Create node with current index value
+        node = TreeNode(sorted_arr[index])
+
+        # Left child at 2*i + 1, right child at 2*i + 2 (complete tree property)
+        node.left = build_complete_bst(2 * index + 1)
+        node.right = build_complete_bst(2 * index + 2)
+
+        return node
+
+    return build_complete_bst(0)
+
+
+def level_order_traversal(root):
+    """Helper function to visualize the tree level by level"""
+    if not root:
+        return []
+
+    result = []
+    queue = [root]
+
+    while queue:
+        level = []
+        level_size = len(queue)
+
+        for _ in range(level_size):
+            node = queue.pop(0)
+            if node:
+                level.append(node.val)
+                queue.append(node.left)
+                queue.append(node.right)
+            else:
+                level.append(None)
+
+        result.append(level)
+
+    # Remove trailing None levels
+    while result and all(x is None for x in result[-1]):
+        result.pop()
+
+    return result
+
+
+def inorder_traversal(root):
+    """Helper function to verify BST property (should be sorted)"""
+    if not root:
+        return []
+    return inorder_traversal(root.left) + [root.val] + inorder_traversal(root.right)
+
+
+# Example usage
+if __name__ == "__main__":
+    #arr = [7, 3, 9, 1, 5, 8, 10]
+    arr = [7, 3, 9, 1, 5, 8, 10, 11, 12]
+
+    print(f"Input array: {arr}")
+    print(f"Sorted array: {sorted(arr)}")
+    print()
+
+    root = construct_complete_bst(arr)
+
+    print("Level-order traversal (complete tree structure):")
+    levels = level_order_traversal(root)
+    for i, level in enumerate(levels):
+        print(f"Level {i}: {level}")
+
+    print("\nInorder traversal (verifies BST property):")
+    print(inorder_traversal(root))
+
+    
