@@ -1,0 +1,363 @@
+"""
+LINKEDIN CONNECTION DISTANCE PROBLEM
+====================================
+
+Problem Statement:
+------------------
+Given a social network (like LinkedIn), find the shortest connection distance 
+between two members. This represents the "degrees of separation" between users.
+
+LinkedIn Connection Degrees:
+- 1st degree: Direct connections
+- 2nd degree: Friends of friends
+- 3rd degree: Friends of friends of friends
+- 3rd+: Beyond 3 degrees (LinkedIn shows "3rd+" for anything beyond 3)
+
+Approach:
+- BFS (Breadth-First Search) for unweighted graphs
+- Bidirectional BFS for optimization
+- All-pairs shortest path for multiple queries
+"""
+
+from collections import deque, defaultdict
+import time
+
+class LinkedInNetwork:
+    def __init__(self):
+        self.graph = defaultdict(set)
+        self.users = set()
+    
+    def add_connection(self, user1, user2):
+        """Add bidirectional connection between two users"""
+        self.graph[user1].add(user2)
+        self.graph[user2].add(user1)
+        self.users.add(user1)
+        self.users.add(user2)
+    
+    def get_connections(self, user):
+        """Get all direct connections of a user"""
+        return self.graph.get(user, set())
+    
+    def connection_degree(self, distance):
+        """Convert distance to LinkedIn degree format"""
+        if distance == 0:
+            return "You"
+        elif distance == 1:
+            return "1st"
+        elif distance == 2:
+            return "2nd"
+        elif distance == 3:
+            return "3rd"
+        else:
+            return "3rd+"
+
+
+def find_shortest_path_bfs(graph, start, target):
+    """
+    Find shortest path using standard BFS.
+    
+    Time Complexity: O(V + E)
+    Space Complexity: O(V)
+    
+    Args:
+        graph: dict of adjacency lists
+        start: starting user
+        target: target user
+    
+    Returns:
+        (distance, path) or (None, None) if no path exists
+    """
+    if start == target:
+        return 0, [start]
+    
+    if start not in graph:
+        return None, None
+    
+    queue = deque([(start, [start])])
+    visited = {start}
+    
+    while queue:
+        current, path = queue.popleft()
+        
+        for neighbor in graph[current]:
+            if neighbor in visited:
+                continue
+            
+            if neighbor == target:
+                return len(path), path + [neighbor]
+            
+            visited.add(neighbor)
+            queue.append((neighbor, path + [neighbor]))
+    
+    return None, None  # No path exists
+
+
+def find_shortest_distance_bfs(graph, start, target):
+    """
+    Find shortest distance (optimized - no path tracking).
+    
+    Time Complexity: O(V + E)
+    Space Complexity: O(V)
+    """
+    if start == target:
+        return 0
+    
+    if start not in graph:
+        return None
+    
+    queue = deque([start])
+    visited = {start: 0}
+    
+    while queue:
+        current = queue.popleft()
+        current_dist = visited[current]
+        
+        for neighbor in graph[current]:
+            if neighbor in visited:
+                continue
+            
+            if neighbor == target:
+                return current_dist + 1
+            
+            visited[neighbor] = current_dist + 1
+            queue.append(neighbor)
+    
+    return None
+
+
+def find_shortest_path_bidirectional(graph, start, target):
+    """
+    Bidirectional BFS - search from both ends simultaneously.
+    More efficient for large graphs.
+    
+    Time Complexity: O(V + E) but faster in practice
+    Space Complexity: O(V)
+    
+    Returns:
+        (distance, path) or (None, None)
+    """
+    if start == target:
+        return 0, [start]
+    
+    if start not in graph or target not in graph:
+        return None, None
+    
+    # Forward search from start
+    queue_forward = deque([start])
+    visited_forward = {start: [start]}
+    
+    # Backward search from target
+    queue_backward = deque([target])
+    visited_backward = {target: [target]}
+    
+    while queue_forward or queue_backward:
+        # Expand from start side
+        if queue_forward:
+            current = queue_forward.popleft()
+            for neighbor in graph[current]:
+                if neighbor in visited_backward:
+                    # Connection found!
+                    path = visited_forward[current] + visited_backward[neighbor][::-1]
+                    return len(path) - 1, path
+                
+                if neighbor not in visited_forward:
+                    visited_forward[neighbor] = visited_forward[current] + [neighbor]
+                    queue_forward.append(neighbor)
+        
+        # Expand from target side
+        if queue_backward:
+            current = queue_backward.popleft()
+            for neighbor in graph[current]:
+                if neighbor in visited_forward:
+                    # Connection found!
+                    path = visited_forward[neighbor] + visited_backward[current][::-1]
+                    return len(path) - 1, path
+                
+                if neighbor not in visited_backward:
+                    visited_backward[neighbor] = visited_backward[current] + [neighbor]
+                    queue_backward.append(neighbor)
+    
+    return None, None
+
+
+def find_all_distances_from_user(graph, start):
+    """
+    Find distances from one user to all other users (single-source shortest path).
+    Useful for "People You May Know" features.
+    
+    Returns:
+        dict: {user: distance}
+    """
+    distances = {start: 0}
+    queue = deque([start])
+    
+    while queue:
+        current = queue.popleft()
+        current_dist = distances[current]
+        
+        for neighbor in graph[current]:
+            if neighbor not in distances:
+                distances[neighbor] = current_dist + 1
+                queue.append(neighbor)
+    
+    return distances
+
+
+def suggest_connections(graph, user, max_degree=2):
+    """
+    Suggest potential connections (2nd degree connections not yet connected).
+    
+    Args:
+        user: target user
+        max_degree: maximum degree to search (default: 2 for friends-of-friends)
+    
+    Returns:
+        list of (suggested_user, mutual_connections_count)
+    """
+    if user not in graph:
+        return []
+    
+    direct_connections = graph[user]
+    suggestions = defaultdict(set)  # {potential_connection: {mutual_friends}}
+    
+    # Look at friends of friends
+    for friend in direct_connections:
+        for friend_of_friend in graph[friend]:
+            # Skip if already connected or self
+            if friend_of_friend == user or friend_of_friend in direct_connections:
+                continue
+            suggestions[friend_of_friend].add(friend)
+    
+    # Sort by number of mutual connections
+    result = [(user, len(mutual)) for user, mutual in suggestions.items()]
+    result.sort(key=lambda x: x[1], reverse=True)
+    
+    return result
+
+
+# ============================================================================
+# EXAMPLES AND TESTING
+# ============================================================================
+
+print("=" * 70)
+print("LINKEDIN CONNECTION DISTANCE FINDER")
+print("=" * 70)
+
+# Build a sample LinkedIn network
+network = LinkedInNetwork()
+
+# Add connections (simulating a professional network)
+connections = [
+    ("Alice", "Bob"),
+    ("Alice", "Charlie"),
+    ("Bob", "David"),
+    ("Bob", "Eve"),
+    ("Charlie", "Frank"),
+    ("David", "Grace"),
+    ("Eve", "Grace"),
+    ("Frank", "Henry"),
+    ("Grace", "Ivan"),
+    ("Henry", "Ivan"),
+    ("Ivan", "Jack"),
+]
+
+print("\nBuilding network...")
+for u, v in connections:
+    network.add_connection(u, v)
+
+print(f"Network has {len(network.users)} users")
+print(f"Total connections: {sum(len(v) for v in network.graph.values()) // 2}")
+
+# Test case 1: Find path between two users
+print("\n" + "=" * 70)
+print("TEST 1: Finding Connection Path")
+print("=" * 70)
+
+test_pairs = [
+    ("Alice", "Grace"),
+    ("Alice", "Ivan"),
+    ("Alice", "Jack"),
+    ("Frank", "Eve"),
+    ("Alice", "Alice"),
+]
+
+for start, target in test_pairs:
+    dist, path = find_shortest_path_bfs(network.graph, start, target)
+    
+    if dist is not None:
+        degree = network.connection_degree(dist)
+        print(f"\n{start} → {target}")
+        print(f"  Distance: {dist} ({degree} degree connection)")
+        print(f"  Path: {' → '.join(path)}")
+    else:
+        print(f"\n{start} → {target}")
+        print(f"  No connection exists")
+
+# Test case 2: Compare standard vs bidirectional BFS
+print("\n" + "=" * 70)
+print("TEST 2: Performance Comparison")
+print("=" * 70)
+
+start, target = "Alice", "Jack"
+
+# Standard BFS
+start_time = time.perf_counter()
+dist1, path1 = find_shortest_path_bfs(network.graph, start, target)
+time1 = time.perf_counter() - start_time
+
+# Bidirectional BFS
+start_time = time.perf_counter()
+dist2, path2 = find_shortest_path_bidirectional(network.graph, start, target)
+time2 = time.perf_counter() - start_time
+
+print(f"\n{start} → {target}")
+print(f"Standard BFS:      {dist1} hops, {time1*1000:.4f}ms")
+print(f"Bidirectional BFS: {dist2} hops, {time2*1000:.4f}ms")
+print(f"Path: {' → '.join(path2)}")
+
+# Test case 3: Find all distances from a user
+print("\n" + "=" * 70)
+print("TEST 3: All Distances from User (Network View)")
+print("=" * 70)
+
+user = "Alice"
+distances = find_all_distances_from_user(network.graph, user)
+
+print(f"\nDistances from {user}:")
+for degree in range(max(distances.values()) + 1):
+    users_at_degree = [u for u, d in distances.items() if d == degree]
+    if users_at_degree:
+        degree_label = network.connection_degree(degree)
+        print(f"  {degree_label} degree: {', '.join(sorted(users_at_degree))}")
+
+# Test case 4: Connection suggestions
+print("\n" + "=" * 70)
+print("TEST 4: Connection Suggestions (People You May Know)")
+print("=" * 70)
+
+user = "Alice"
+suggestions = suggest_connections(network.graph, user)
+
+print(f"\nSuggested connections for {user}:")
+for suggested_user, mutual_count in suggestions[:5]:
+    print(f"  {suggested_user} ({mutual_count} mutual connection{'s' if mutual_count > 1 else ''})")
+
+# Complexity summary
+print("\n" + "=" * 70)
+print("ALGORITHM COMPLEXITY SUMMARY")
+print("=" * 70)
+print("""
+Single Path Query:
+  - Standard BFS: O(V + E) time, O(V) space
+  - Bidirectional BFS: O(V + E) time, ~2x faster in practice
+  - Distance only: O(V + E) time, O(V) space (no path tracking)
+
+All Distances from User:
+  - Single-source BFS: O(V + E) time, O(V) space
+
+Connection Suggestions:
+  - O(V + E) time for 2nd degree connections
+  - Can be precomputed and cached for better UX
+
+Where V = number of users, E = number of connections
+""")
