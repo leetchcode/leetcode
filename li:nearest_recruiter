@@ -1,0 +1,251 @@
+"""
+NEAREST RECRUITER PROBLEM
+=========================
+
+Problem Statement:
+------------------
+Given a social network graph containing students and recruiters, find the 
+nearest recruiter for every student. The "nearest" is defined as the shortest 
+path distance in the graph (minimum number of connections).
+
+Input:
+- Graph: Adjacency list representing connections
+- Students: List of student nodes
+- Recruiters: List of recruiter nodes
+
+Output:
+- For each student, return the nearest recruiter and the distance
+
+Approach:
+- Multi-source BFS from all recruiters simultaneously
+- This is more efficient than running single-source BFS for each student
+"""
+
+from collections import deque, defaultdict
+
+def find_nearest_recruiters_bfs(graph, students, recruiters):
+    """
+    Find nearest recruiter for each student using multi-source BFS.
+    
+    Time Complexity: O(V + E) where V = vertices, E = edges
+    Space Complexity: O(V)
+    
+    Args:
+        graph: dict with adjacency list {node: [neighbors]}
+        students: list of student node IDs
+        recruiters: list of recruiter node IDs
+    
+    Returns:
+        dict: {student: (nearest_recruiter, distance)}
+    """
+    # Initialize BFS queue with all recruiters at distance 0
+    queue = deque()
+    distance = {}
+    nearest_recruiter = {}
+    
+    # Start BFS from all recruiters simultaneously
+    for recruiter in recruiters:
+        queue.append(recruiter)
+        distance[recruiter] = 0
+        nearest_recruiter[recruiter] = recruiter
+    
+    # BFS traversal
+    while queue:
+        current = queue.popleft()
+        current_dist = distance[current]
+        
+        # Visit all neighbors
+        for neighbor in graph.get(current, []):
+            if neighbor not in distance:
+                distance[neighbor] = current_dist + 1
+                nearest_recruiter[neighbor] = nearest_recruiter[current]
+                queue.append(neighbor)
+    
+    # Extract results for students only
+    result = {}
+    for student in students:
+        if student in nearest_recruiter:
+            result[student] = (nearest_recruiter[student], distance[student])
+        else:
+            result[student] = (None, float('inf'))  # No recruiter reachable
+    
+    return result
+
+
+def find_nearest_recruiters_dijkstra(graph, students, recruiters, weights=None):
+    """
+    Find nearest recruiter using Dijkstra's algorithm (for weighted graphs).
+    
+    Args:
+        graph: dict with adjacency list
+        students: list of student nodes
+        recruiters: list of recruiter nodes
+        weights: dict of edge weights {(u, v): weight}
+    
+    Returns:
+        dict: {student: (nearest_recruiter, distance)}
+    """
+    import heapq
+    
+    if weights is None:
+        weights = {}  # Default weight = 1
+    
+    # Priority queue: (distance, node, source_recruiter)
+    pq = []
+    distance = {}
+    nearest_recruiter = {}
+    
+    # Initialize with all recruiters
+    for recruiter in recruiters:
+        heapq.heappush(pq, (0, recruiter, recruiter))
+        distance[recruiter] = 0
+        nearest_recruiter[recruiter] = recruiter
+    
+    # Dijkstra's algorithm
+    while pq:
+        curr_dist, current, source = heapq.heappop(pq)
+        
+        # Skip if we've found a better path
+        if current in distance and distance[current] < curr_dist:
+            continue
+        
+        # Visit neighbors
+        for neighbor in graph.get(current, []):
+            edge_weight = weights.get((current, neighbor), 1)
+            new_dist = curr_dist + edge_weight
+            
+            if neighbor not in distance or new_dist < distance[neighbor]:
+                distance[neighbor] = new_dist
+                nearest_recruiter[neighbor] = source
+                heapq.heappush(pq, (new_dist, neighbor, source))
+    
+    # Extract results for students
+    result = {}
+    for student in students:
+        if student in nearest_recruiter:
+            result[student] = (nearest_recruiter[student], distance[student])
+        else:
+            result[student] = (None, float('inf'))
+    
+    return result
+
+
+# Example 1: Simple social network
+print("=" * 60)
+print("EXAMPLE 1: Unweighted Social Network")
+print("=" * 60)
+
+graph1 = {
+    'S1': ['S2', 'S3'],
+    'S2': ['S1', 'R1', 'S4'],
+    'S3': ['S1', 'S5'],
+    'S4': ['S2', 'R2'],
+    'S5': ['S3', 'S6'],
+    'S6': ['S5', 'R2'],
+    'R1': ['S2'],
+    'R2': ['S4', 'S6']
+}
+
+students1 = ['S1', 'S2', 'S3', 'S4', 'S5', 'S6']
+recruiters1 = ['R1', 'R2']
+
+print("\nGraph connections:")
+for node, neighbors in sorted(graph1.items()):
+    print(f"  {node}: {neighbors}")
+
+print(f"\nStudents: {students1}")
+print(f"Recruiters: {recruiters1}")
+
+result1 = find_nearest_recruiters_bfs(graph1, students1, recruiters1)
+
+print("\nResults (Student → Nearest Recruiter, Distance):")
+for student in sorted(result1.keys()):
+    recruiter, dist = result1[student]
+    print(f"  {student} → {recruiter} (distance: {dist})")
+
+
+# Example 2: Larger network with disconnected components
+print("\n" + "=" * 60)
+print("EXAMPLE 2: Network with Disconnected Component")
+print("=" * 60)
+
+graph2 = {
+    'S1': ['S2', 'R1'],
+    'S2': ['S1', 'S3'],
+    'S3': ['S2'],
+    'R1': ['S1'],
+    # Disconnected component
+    'S4': ['S5'],
+    'S5': ['S4'],
+}
+
+students2 = ['S1', 'S2', 'S3', 'S4', 'S5']
+recruiters2 = ['R1']
+
+print("\nGraph connections:")
+for node, neighbors in sorted(graph2.items()):
+    print(f"  {node}: {neighbors}")
+
+result2 = find_nearest_recruiters_bfs(graph2, students2, recruiters2)
+
+print("\nResults:")
+for student in sorted(result2.keys()):
+    recruiter, dist = result2[student]
+    if recruiter:
+        print(f"  {student} → {recruiter} (distance: {dist})")
+    else:
+        print(f"  {student} → No recruiter reachable")
+
+
+# Example 3: Weighted network (connection strength)
+print("\n" + "=" * 60)
+print("EXAMPLE 3: Weighted Network (Connection Strength)")
+print("=" * 60)
+
+graph3 = {
+    'S1': ['S2', 'S3'],
+    'S2': ['S1', 'R1'],
+    'S3': ['S1', 'R1'],
+    'R1': ['S2', 'S3']
+}
+
+weights3 = {
+    ('S1', 'S2'): 1,
+    ('S2', 'S1'): 1,
+    ('S1', 'S3'): 5,  # Weak connection
+    ('S3', 'S1'): 5,
+    ('S2', 'R1'): 1,
+    ('R1', 'S2'): 1,
+    ('S3', 'R1'): 2,
+    ('R1', 'S3'): 2,
+}
+
+students3 = ['S1', 'S2', 'S3']
+recruiters3 = ['R1']
+
+print("\nWeighted edges:")
+for (u, v), w in sorted(weights3.items()):
+    if u < v:  # Print each edge once
+        print(f"  {u} ←→ {v}: weight {w}")
+
+result3 = find_nearest_recruiters_dijkstra(graph3, students3, recruiters3, weights3)
+
+print("\nResults:")
+for student in sorted(result3.keys()):
+    recruiter, dist = result3[student]
+    print(f"  {student} → {recruiter} (distance: {dist})")
+
+print("\n" + "=" * 60)
+print("COMPLEXITY ANALYSIS")
+print("=" * 60)
+print("""
+BFS Approach (Unweighted):
+- Time: O(V + E) - single BFS from all recruiters
+- Space: O(V) - distance and nearest_recruiter dicts
+
+Dijkstra Approach (Weighted):
+- Time: O((V + E) log V) - priority queue operations
+- Space: O(V) - distance dict and priority queue
+
+Multi-source BFS is optimal for unweighted graphs!
+""")
