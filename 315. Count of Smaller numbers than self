@@ -1,0 +1,91 @@
+class Solution:
+    def countSmaller(self, nums: list[int]) -> list[int]:
+        """
+        Count smaller numbers after self using modified merge sort.
+        Time: O(n log n), Space: O(n)
+        """
+        n = len(nums)
+        result = [0] * n
+        # Transform input to list of (value, original_index) pairs
+        pairs = [(val, idx) for idx, val in enumerate(nums)]
+        
+        def merge_sort(start, end):
+            if end - start <= 1:
+                return
+            
+            mid = (start + end) // 2
+            merge_sort(start, mid)
+            merge_sort(mid, end)
+            merge(start, mid, end)
+        
+        def merge(start, mid, end):
+            # Merge and count inversions
+            temp = []
+            left = start
+            right = mid
+            right_count = 0  # Count of elements from right half that are smaller
+            
+            while left < mid and right < end:
+                left_val, left_idx = pairs[left]
+                right_val, right_idx = pairs[right]
+                
+                if right_val < left_val:
+                    # Element from right is smaller
+                    right_count += 1
+                    temp.append(pairs[right])
+                    right += 1
+                else:
+                    # Element from left goes in, add count of smaller rights seen
+                    result[left_idx] += right_count
+                    temp.append(pairs[left])
+                    left += 1
+            
+            # Process remaining left elements
+            while left < mid:
+                _, left_idx = pairs[left]
+                result[left_idx] += right_count
+                temp.append(pairs[left])
+                left += 1
+            
+            # Process remaining right elements
+            while right < end:
+                temp.append(pairs[right])
+                right += 1
+            
+            # Copy back
+            for i, pair in enumerate(temp):
+                pairs[start + i] = pair
+        
+        merge_sort(0, n)
+        return result
+
+
+# Test cases
+def test_solution():
+    sol = Solution()
+    
+    # Test case 1
+    nums1 = [5, 2, 6, 1]
+    print(f"Input: {nums1}")
+    print(f"Output: {sol.countSmaller(nums1)}")
+    print(f"Expected: [2, 1, 1, 0]\n")
+    
+    # Test case 2
+    nums2 = [-1]
+    print(f"Input: {nums2}")
+    print(f"Output: {sol.countSmaller(nums2)}")
+    print(f"Expected: [0]\n")
+    
+    # Test case 3
+    nums3 = [-1, -1]
+    print(f"Input: {nums3}")
+    print(f"Output: {sol.countSmaller(nums3)}")
+    print(f"Expected: [0, 0]\n")
+    
+    # Test case 4
+    nums4 = [5, 2, 3, 6, 1]
+    print(f"Input: {nums4}")
+    print(f"Output: {sol.countSmaller(nums4)}")
+    print(f"Expected: [3, 1, 1, 1, 0]\n")
+
+test_solution()
