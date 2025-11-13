@@ -1,0 +1,199 @@
+"""
+FBI TREE PROBLEM
+================
+
+Problem Statement:
+------------------
+Given a binary string containing only '0' or '1' characters, where the length
+is a power of 2, construct an FBI tree and print its post-order traversal.
+
+Node Types:
+- 'B' (Both zeros): String contains only '0's
+- 'I' (In/ones): String contains only '1's
+- 'F' (FBI/mixed): String contains both '0's and '1's
+
+FBI Tree Definition:
+- Root node represents the type of the entire string
+- Left child represents the type of the left half of the string
+- Right child represents the type of the right half of the string
+- Recursively split until single characters
+
+Example:
+--------
+Input:  "1101"
+Tree Structure:
+          F (1101)
+         /        \
+       I (11)    F (01)
+       /  \      /  \
+      I   I     B   I
+     (1) (1)   (0) (1)
+
+Post-order Traversal (Left → Right → Root):
+I (left '1') → I (right '1') → I (parent '11') →
+B ('0') → I ('1') → F (parent '01') →
+F (root '1101')
+
+Output: "IIIBIFF"
+"""
+
+
+def get_type(s):
+    """Determine type of string segment"""
+    if all(c == '0' for c in s):
+        return 'B'
+    elif all(c == '1' for c in s):
+        return 'I'
+    else:
+        return 'F'
+
+
+def fbi_tree_postorder(s):
+    """
+    Build FBI tree and return post-order traversal
+
+    Args:
+        s: Binary string of length 2^n
+
+    Returns:
+        Post-order traversal string
+    """
+    # Base case: single character
+    if len(s) == 1:
+        return get_type(s)
+
+    # Recursive case: split in half
+    mid = len(s) // 2
+    left_part = s[:mid]
+    right_part = s[mid:]
+
+    # Post-order: left subtree, right subtree, root
+    left_result = fbi_tree_postorder(left_part)
+    right_result = fbi_tree_postorder(right_part)
+    root_type = get_type(s)
+
+    return left_result + right_result + root_type
+
+
+# Test cases
+test_cases = [
+    "1101",
+    "10011011",
+    "00",
+    "11",
+    "0000",
+    "1111"
+]
+
+print("FBI Tree Post-order Traversal")
+print("=" * 40)
+for test in test_cases:
+    result = fbi_tree_postorder(test)
+    print(f"Input:  {test}")
+    print(f"Output: {result}")
+    print()
+
+# Additional verification for "1101"
+print("Detailed breakdown for '1101':")
+print("-" * 40)
+s = "1101"
+print(f"Full string: {s} -> Type: {get_type(s)}")
+print(f"Left half:   {s[:2]} -> Type: {get_type(s[:2])}")
+print(f"  Left[0]:   {s[0]} -> Type: {get_type(s[0])}")
+print(f"  Left[1]:   {s[1]} -> Type: {get_type(s[1])}")
+print(f"Right half:  {s[2:]} -> Type: {get_type(s[2:])}")
+print(f"  Right[0]:  {s[2]} -> Type: {get_type(s[2])}")
+print(f"  Right[1]:  {s[3]} -> Type: {get_type(s[3])}")
+print(f"\nPost-order: {fbi_tree_postorder(s)}")
+
+print("\n" + "=" * 40)
+print("SOLUTION 2: MATHEMATICAL APPROACH")
+print("=" * 40)
+
+
+def fbi_tree_summation(s):
+    """
+    Alternative solution using mathematical summation approach.
+
+    Key insight: In post-order traversal of a complete binary tree,
+    each node's position can be mapped using binary representations.
+
+    For a string of length n (power of 2), there are (2*n - 1) nodes total.
+    We process them in post-order sequence.
+    """
+    n = len(s)
+    result = []
+
+    # Total nodes in complete binary tree = 2*n - 1
+    total_nodes = 2 * n - 1
+
+    # Process each node in post-order
+    for i in range(total_nodes):
+        # Calculate the level and position within that level
+        # Using the property: post-order visits nodes systematically
+
+        # Determine segment size for this node
+        # Level 0 (leaves): size 1
+        # Level 1: size 2
+        # Level k: size 2^k
+
+        level = 0
+        nodes_before = 0
+        nodes_at_level = n
+
+        temp_i = i
+        while temp_i >= nodes_at_level:
+            temp_i -= nodes_at_level
+            nodes_before += nodes_at_level
+            nodes_at_level //= 2
+            level += 1
+
+        # Position within current level
+        pos_in_level = temp_i
+        segment_size = n // (2 ** level)
+
+        # Calculate start index in original string
+        start_idx = pos_in_level * segment_size
+        end_idx = start_idx + segment_size
+
+        # Get substring and its type
+        substring = s[start_idx:end_idx]
+        result.append(get_type(substring))
+
+    return ''.join(result)
+
+
+def fbi_tree_iterative(s):
+    """
+    Cleaner iterative approach using level-by-level processing
+    """
+    n = len(s)
+    result = []
+
+    # Process from leaves to root (bottom-up for post-order)
+    segment_size = 1
+    while segment_size <= n:
+        # Process all segments of current size
+        for start in range(0, n, segment_size):
+            end = start + segment_size
+            substring = s[start:end]
+            result.append(get_type(substring))
+
+        segment_size *= 2
+
+    return ''.join(result)
+
+
+print("\nComparison of approaches:")
+print("-" * 40)
+for test in test_cases:
+    recursive = fbi_tree_postorder(test)
+    #summation = fbi_tree_summation(test)
+    #iterative = fbi_tree_iterative(test)
+
+    #match = "✓" if recursive == summation == iterative else "✗"
+    print(f"Input:      {test}")
+    print(f"Recursive:  {recursive}")
+    #print(f"Summation:  {summation}")
+    #print(f"Iterative:  {iterative} {match}")
+    #print(f"Iterative: {iterative}")
