@@ -1,0 +1,193 @@
+# Definition for a binary tree node.
+class TreeNode:
+    def __init__(self, val=0, left=None, right=None):
+        self.val = val
+        self.left = left
+        self.right = right
+
+class Solution:
+    def lowestCommonAncestor(self, root: TreeNode, p: TreeNode, q: TreeNode) -> TreeNode:
+        """
+        Approach 1: Two-pass solution
+        First pass: Find LCA candidate
+        Second pass: Verify both nodes exist
+        Time: O(n), Space: O(h)
+        """
+        self.p_found = False
+        self.q_found = False
+        
+        lca = self.findLCA(root, p, q)
+        
+        # If we found both nodes, return the LCA
+        if self.p_found and self.q_found:
+            return lca
+        return None
+    
+    def findLCA(self, node, p, q):
+        if not node:
+            return None
+        
+        # Check if current node is p or q
+        left = self.findLCA(node.left, p, q)
+        right = self.findLCA(node.right, p, q)
+        
+        # Mark if we found p or q
+        if node == p:
+            self.p_found = True
+        if node == q:
+            self.q_found = True
+        
+        # Standard LCA logic
+        if node == p or node == q:
+            return node
+        
+        if left and right:
+            return node
+        
+        return left if left else right
+    
+    def lowestCommonAncestorOnePass(self, root: TreeNode, p: TreeNode, q: TreeNode) -> TreeNode:
+        """
+        Approach 2: One-pass solution with count tracking
+        Time: O(n), Space: O(h)
+        """
+        self.count = 0
+        lca = self.findLCAWithCount(root, p, q)
+        
+        # Return LCA only if both nodes were found
+        return lca if self.count == 2 else None
+    
+    def findLCAWithCount(self, node, p, q):
+        if not node:
+            return None
+        
+        left = self.findLCAWithCount(node.left, p, q)
+        right = self.findLCAWithCount(node.right, p, q)
+        
+        # If current node matches p or q, increment count
+        if node == p or node == q:
+            self.count += 1
+            return node
+        
+        # If both children found something, current is LCA
+        if left and right:
+            return node
+        
+        # Return whichever child found something
+        return left if left else right
+
+
+class SolutionAlternative:
+    """
+    Approach 3: Using helper to return (LCA, count) tuple
+    More explicit tracking
+    """
+    def lowestCommonAncestor(self, root: TreeNode, p: TreeNode, q: TreeNode) -> TreeNode:
+        lca, count = self.helper(root, p, q)
+        return lca if count == 2 else None
+    
+    def helper(self, node, p, q):
+        """
+        Returns: (lca_candidate, count_of_nodes_found)
+        """
+        if not node:
+            return None, 0
+        
+        left_lca, left_count = self.helper(node.left, p, q)
+        right_lca, right_count = self.helper(node.right, p, q)
+        
+        # Count current node if it matches
+        current_count = left_count + right_count
+        if node == p or node == q:
+            current_count += 1
+        
+        # Determine LCA candidate
+        lca = None
+        if node == p or node == q:
+            lca = node
+        elif left_lca and right_lca:
+            lca = node
+        elif left_lca:
+            lca = left_lca
+        elif right_lca:
+            lca = right_lca
+        
+        return lca, current_count
+
+
+# Helper function to build tree and find node references
+def build_tree_and_find_nodes(values, p_val, q_val):
+    """Build tree from level-order and return root, p, q node references"""
+    if not values:
+        return None, None, None
+    
+    root = TreeNode(values[0])
+    queue = [root]
+    nodes = {values[0]: root}
+    i = 1
+    
+    while queue and i < len(values):
+        node = queue.pop(0)
+        
+        # Left child
+        if i < len(values) and values[i] is not None:
+            node.left = TreeNode(values[i])
+            nodes[values[i]] = node.left
+            queue.append(node.left)
+        i += 1
+        
+        # Right child
+        if i < len(values) and values[i] is not None:
+            node.right = TreeNode(values[i])
+            nodes[values[i]] = node.right
+            queue.append(node.right)
+        i += 1
+    
+    p = nodes.get(p_val)
+    q = nodes.get(q_val)
+    return root, p, q
+
+
+# Example usage
+if __name__ == "__main__":
+    sol = Solution()
+    sol_alt = SolutionAlternative()
+    
+    # Example 1: Both nodes exist
+    # Tree: [3,5,1,6,2,0,8,null,null,7,4]
+    #           3
+    #         /   \
+    #        5     1
+    #       / \   / \
+    #      6   2 0   8
+    #         / \
+    #        7   4
+    print("Example 1: Both nodes exist (p=5, q=1)")
+    root, p, q = build_tree_and_find_nodes([3,5,1,6,2,0,8,None,None,7,4], 5, 1)
+    result = sol.lowestCommonAncestor(root, p, q)
+    print(f"LCA value: {result.val if result else None}")  # Expected: 3
+    
+    # Example 2: Both nodes exist (p=5, q=4)
+    print("\nExample 2: Both nodes exist (p=5, q=4)")
+    root, p, q = build_tree_and_find_nodes([3,5,1,6,2,0,8,None,None,7,4], 5, 4)
+    result = sol.lowestCommonAncestor(root, p, q)
+    print(f"LCA value: {result.val if result else None}")  # Expected: 5
+    
+    # Example 3: One node doesn't exist
+    print("\nExample 3: Node q doesn't exist (p=5, q=10)")
+    root, p, _ = build_tree_and_find_nodes([3,5,1,6,2,0,8,None,None,7,4], 5, 1)
+    fake_q = TreeNode(10)  # Node that doesn't exist in tree
+    result = sol.lowestCommonAncestor(root, p, fake_q)
+    print(f"LCA value: {result.val if result else None}")  # Expected: None
+    
+    # Example 4: Using alternative solution
+    print("\nExample 4: Alternative solution (p=5, q=4)")
+    root, p, q = build_tree_and_find_nodes([3,5,1,6,2,0,8,None,None,7,4], 5, 4)
+    result = sol_alt.lowestCommonAncestor(root, p, q)
+    print(f"LCA value: {result.val if result else None}")  # Expected: 5
+    
+    # Example 5: Single node tree
+    print("\nExample 5: Single node tree [1], p=1, q=1")
+    root = TreeNode(1)
+    result = sol.lowestCommonAncestor(root, root, root)
+    print(f"LCA value: {result.val if result else None}")  # Expected: 1
