@@ -1,0 +1,113 @@
+# Definition for a binary tree node.
+class TreeNode:
+    def __init__(self, val=0, left=None, right=None):
+        self.val = val
+        self.left = left
+        self.right = right
+
+class Solution:
+    def upsideDownBinaryTree(self, root: TreeNode) -> TreeNode:
+        """
+        Approach 1: Recursive
+        Time: O(n), Space: O(h) where h is height
+        """
+        if not root or not root.left:
+            return root
+        
+        # Recursively flip the left subtree
+        new_root = self.upsideDownBinaryTree(root.left)
+        
+        # Make transformations:
+        # root.left becomes the new parent
+        # root becomes the right child
+        # root.right becomes the left child
+        root.left.left = root.right
+        root.left.right = root
+        
+        # Clear the original connections
+        root.left = None
+        root.right = None
+        
+        return new_root
+    
+    def upsideDownBinaryTreeIterative(self, root: TreeNode) -> TreeNode:
+        """
+        Approach 2: Iterative
+        Time: O(n), Space: O(1)
+        """
+        curr = root
+        prev = None
+        prev_right = None
+        
+        while curr:
+            # Save next node
+            next_node = curr.left
+            
+            # Rewire connections
+            curr.left = prev_right
+            prev_right = curr.right
+            curr.right = prev
+            
+            # Move to next iteration
+            prev = curr
+            curr = next_node
+        
+        return prev
+
+
+# Helper function to visualize the tree
+def print_tree(root, level=0, prefix="Root: "):
+    if root:
+        print(" " * (level * 4) + prefix + str(root.val))
+        if root.left or root.right:
+            if root.left:
+                print_tree(root.left, level + 1, "L--- ")
+            else:
+                print(" " * ((level + 1) * 4) + "L--- None")
+            if root.right:
+                print_tree(root.right, level + 1, "R--- ")
+            else:
+                print(" " * ((level + 1) * 4) + "R--- None")
+
+
+# Example usage
+if __name__ == "__main__":
+    # Example 1: [1,2,3,4,5]
+    #       1
+    #      / \
+    #     2   3
+    #    / \
+    #   4   5
+    root = TreeNode(1)
+    root.left = TreeNode(2)
+    root.right = TreeNode(3)
+    root.left.left = TreeNode(4)
+    root.left.right = TreeNode(5)
+    
+    print("Original Tree:")
+    print_tree(root)
+    
+    sol = Solution()
+    new_root = sol.upsideDownBinaryTree(root)
+    
+    print("\nUpside Down Tree:")
+    print_tree(new_root)
+    # Expected:
+    #       4
+    #      / \
+    #     5   2
+    #        / \
+    #       3   1
+    
+    # Example 2: Empty tree
+    print("\n" + "="*50)
+    print("Example 2: Empty tree")
+    result = sol.upsideDownBinaryTreeIterative(None)
+    print(f"Result: {result}")
+    
+    # Example 3: Single node
+    print("\n" + "="*50)
+    print("Example 3: Single node [1]")
+    single = TreeNode(1)
+    result = sol.upsideDownBinaryTreeIterative(single)
+    print_tree(result)
