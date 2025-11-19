@@ -1,0 +1,170 @@
+class Solution:
+    def canPartitionKSubsets(self, nums, k):
+        """
+        Determines if array can be partitioned into k equal sum subsets.
+        
+        Approach: Backtracking with optimizations
+        - Sort in descending order for early pruning
+        - Use bitmask to track used elements
+        - Memoize states to avoid recomputation
+        
+        Time: O(k * 2^n) where n = len(nums)
+        Space: O(2^n) for memoization
+        """
+        total = sum(nums)
+        
+        # If total sum not divisible by k, impossible
+        if total % k != 0:
+            return False
+        
+        target = total // k
+        nums.sort(reverse=True)  # Sort descending for pruning
+        
+        # If largest element > target, impossible
+        if nums[0] > target:
+            return False
+        
+        n = len(nums)
+        memo = {}
+        
+        def backtrack(mask, current_sum):
+            """
+            mask: bitmask representing which elements are used
+            current_sum: sum of current subset being built
+            """
+            # If all elements used, we successfully partitioned
+            if mask == (1 << n) - 1:
+                return True
+            
+            # Check memo
+            if mask in memo:
+                return memo[mask]
+            
+            # If current subset complete, start new subset
+            if current_sum == target:
+                result = backtrack(mask, 0)
+                memo[mask] = result
+                return result
+            
+            # Try adding each unused element to current subset
+            for i in range(n):
+                # Skip if already used
+                if mask & (1 << i):
+                    continue
+                
+                # Skip if adding this element exceeds target
+                if current_sum + nums[i] > target:
+                    continue
+                
+                # Try using this element
+                if backtrack(mask | (1 << i), current_sum + nums[i]):
+                    memo[mask] = True
+                    return True
+            
+            memo[mask] = False
+            return False
+        
+        return backtrack(0, 0)
+
+
+# Alternative solution with different backtracking approach
+class SolutionBuckets:
+    def canPartitionKSubsets(self, nums, k):
+        """
+        Alternative approach: Build k buckets simultaneously
+        Often faster for smaller k values
+        
+        Time: O(k^n) in worst case
+        Space: O(n) for recursion stack
+        """
+        total = sum(nums)
+        
+        if total % k != 0:
+            return False
+        
+        target = total // k
+        nums.sort(reverse=True)
+        
+        if nums[0] > target:
+            return False
+        
+        used = [False] * len(nums)
+        
+        def backtrack(bucket_idx, bucket_sum, start):
+            """
+            bucket_idx: which bucket we're filling (0 to k-1)
+            bucket_sum: current sum in this bucket
+            start: index to start searching from
+            """
+            # All buckets filled successfully
+            if bucket_idx == k:
+                return True
+            
+            # Current bucket is full, move to next bucket
+            if bucket_sum == target:
+                return backtrack(bucket_idx + 1, 0, 0)
+            
+            # Try adding each unused number to current bucket
+            for i in range(start, len(nums)):
+                if used[i]:
+                    continue
+                
+                if bucket_sum + nums[i] > target:
+                    continue
+                
+                # Use this number
+                used[i] = True
+                if backtrack(bucket_idx, bucket_sum + nums[i], i + 1):
+                    return True
+                used[i] = False
+                
+                # Pruning: if this is first element in bucket and failed,
+                # no point trying other elements
+                if bucket_sum == 0:
+                    break
+            
+            return False
+        
+        return backtrack(0, 0, 0)
+
+
+# Test cases
+def test_solution():
+    sol = Solution()
+    sol2 = SolutionBuckets()
+    
+    test_cases = [
+        ([4, 3, 2, 3, 5, 2, 1], 4, True),  # [5], [1,4], [2,3], [2,3]
+        ([1, 2, 3, 4], 3, False),
+        ([10, 10, 10, 7, 7, 7, 7, 7, 7, 6, 6, 6], 3, True),
+        ([1, 1, 1, 1, 2, 2, 2, 2], 4, True),
+        ([5, 5, 5, 5, 16], 2, False),
+        ([2, 2, 2, 2, 3, 4, 5], 4, False),
+    ]
+    
+    print("Testing Bitmask Solution:")
+    print("-" * 60)
+    for i, (nums, k, expected) in enumerate(test_cases, 1):
+        result = sol.canPartitionKSubsets(nums.copy(), k)
+        status = "✓" if result == expected else "✗"
+        print(f"Test {i}: {status}")
+        print(f"  nums = {nums}, k = {k}")
+        print(f"  Expected: {expected}, Got: {result}")
+        if result:
+            print(f"  Sum per subset: {sum(nums) // k}")
+        print()
+    
+    print("\n" + "=" * 60)
+    print("Testing Buckets Solution:")
+    print("-" * 60)
+    for i, (nums, k, expected) in enumerate(test_cases, 1):
+        result = sol2.canPartitionKSubsets(nums.copy(), k)
+        status = "✓" if result == expected else "✗"
+        print(f"Test {i}: {status}")
+        print(f"  nums = {nums}, k = {k}")
+        print(f"  Expected: {expected}, Got: {result}")
+        print()
+
+
+if __name__ == "__main__":
+    test_solution()
