@@ -1,0 +1,292 @@
+"""
+LeetCode 364: Nested List Weight Sum II
+
+Problem:
+Given a nested list of integers, return the sum of all integers weighted by their depth.
+Each element is either an integer or a list whose elements may also be integers or other lists.
+
+Key Difference from Problem 339:
+- In 339: deeper levels have HIGHER weight (depth 1 = weight 1, depth 2 = weight 2)
+- In 364: deeper levels have LOWER weight (depth 1 = max_depth, depth 2 = max_depth - 1)
+
+Example 1:
+Input: [[1,1],2,[1,1]]
+Output: 8
+Explanation: 
+- Max depth = 2
+- Four 1's at depth 2, weight = 2 - 2 + 1 = 1
+- One 2 at depth 1, weight = 2 - 1 + 1 = 2
+- Sum = 1*1 + 1*1 + 1*1 + 1*1 + 2*2 = 8
+
+Example 2:
+Input: [1,[4,[6]]]
+Output: 17
+Explanation:
+- Max depth = 3
+- One 1 at depth 1, weight = 3 - 1 + 1 = 3
+- One 4 at depth 2, weight = 3 - 2 + 1 = 2
+- One 6 at depth 3, weight = 3 - 3 + 1 = 1
+- Sum = 1*3 + 4*2 + 6*1 = 3 + 8 + 6 = 17
+"""
+
+# This is the interface that allows for creating nested lists.
+class NestedInteger:
+    def __init__(self, value=None):
+        """
+        If value is not specified, initializes an empty list.
+        Otherwise initializes a single integer equal to value.
+        """
+        if value is None:
+            self._list = []
+            self._integer = None
+        else:
+            self._integer = value
+            self._list = None
+    
+    def isInteger(self):
+        """
+        @return True if this NestedInteger holds a single integer, rather than a nested list.
+        :rtype bool
+        """
+        return self._integer is not None
+    
+    def add(self, elem):
+        """
+        Set this NestedInteger to hold a nested list and adds a nested integer elem to it.
+        :rtype void
+        """
+        if self._list is None:
+            self._list = []
+        self._list.append(elem)
+    
+    def setInteger(self, value):
+        """
+        Set this NestedInteger to hold a single integer equal to value.
+        :rtype void
+        """
+        self._integer = value
+        self._list = None
+    
+    def getInteger(self):
+        """
+        @return the single integer that this NestedInteger holds, if it holds a single integer
+        Return None if this NestedInteger holds a nested list
+        :rtype int
+        """
+        return self._integer
+    
+    def getList(self):
+        """
+        @return the nested list that this NestedInteger holds, if it holds a nested list
+        Return None if this NestedInteger holds a single integer
+        :rtype List[NestedInteger]
+        """
+        return self._list
+
+
+# Solution 1: Two-Pass Approach (Most Efficient)
+class Solution1:
+    def depthSumInverse(self, nestedList):
+        """
+        Two-pass solution:
+        Pass 1: Find max depth
+        Pass 2: Calculate weighted sum using (max_depth - depth + 1)
+        
+        Time: O(n) where n is total number of integers
+        Space: O(d) where d is max depth (recursion stack)
+        """
+        # Pass 1: Find maximum depth
+        max_depth = self.findMaxDepth(nestedList)
+        
+        # Pass 2: Calculate weighted sum
+        return self.calculateSum(nestedList, max_depth, 1)
+    
+    def findMaxDepth(self, nestedList, current_depth=1):
+        """Find the maximum depth of the nested list"""
+        max_depth = current_depth
+        
+        for item in nestedList:
+            if not item.isInteger():
+                # Recursively find depth of nested list
+                depth = self.findMaxDepth(item.getList(), current_depth + 1)
+                max_depth = max(max_depth, depth)
+        
+        return max_depth
+    
+    def calculateSum(self, nestedList, max_depth, current_depth):
+        """Calculate weighted sum with reversed weights"""
+        total = 0
+        weight = max_depth - current_depth + 1
+        
+        for item in nestedList:
+            if item.isInteger():
+                total += item.getInteger() * weight
+            else:
+                total += self.calculateSum(item.getList(), max_depth, current_depth + 1)
+        
+        return total
+
+
+# Solution 2: One-Pass BFS with Level Sums
+class Solution2:
+    def depthSumInverse(self, nestedList):
+        """
+        One-pass BFS solution with clever trick:
+        Instead of weight = (max_depth - depth + 1), we accumulate unweighted sums.
+        
+        Key insight:
+        - Element at depth 1 appears in (max_depth) level sums
+        - Element at depth 2 appears in (max_depth - 1) level sums
+        - This naturally gives us the inverse weighting!
+        
+        Time: O(n)
+        Space: O(n) for the queue
+        """
+        if not nestedList:
+            return 0
+        
+        queue = nestedList
+        unweighted_sum = 0
+        weighted_sum = 0
+        
+        # Process level by level
+        while queue:
+            next_level = []
+            
+            for item in queue:
+                if item.isInteger():
+                    unweighted_sum += item.getInteger()
+                else:
+                    next_level.extend(item.getList())
+            
+            # Add current unweighted sum to weighted sum
+            # This sum will be added once for each remaining level
+            weighted_sum += unweighted_sum
+            queue = next_level
+        
+        return weighted_sum
+
+
+# Solution 3: DFS with Depth Tracking
+class Solution3:
+    def depthSumInverse(self, nestedList):
+        """
+        DFS approach: Collect all (value, depth) pairs, then calculate sum.
+        
+        Time: O(n)
+        Space: O(n) to store all values with depths
+        """
+        # Collect all values with their depths
+        values_with_depth = []
+        self.collectValues(nestedList, 1, values_with_depth)
+        
+        # Find max depth
+        max_depth = max(depth for _, depth in values_with_depth) if values_with_depth else 0
+        
+        # Calculate weighted sum
+        total = 0
+        for value, depth in values_with_depth:
+            weight = max_depth - depth + 1
+            total += value * weight
+        
+        return total
+    
+    def collectValues(self, nestedList, depth, values_with_depth):
+        """Recursively collect all integer values with their depths"""
+        for item in nestedList:
+            if item.isInteger():
+                values_with_depth.append((item.getInteger(), depth))
+            else:
+                self.collectValues(item.getList(), depth + 1, values_with_depth)
+
+
+# Helper function to create nested list from regular Python list
+def create_nested_list(lst):
+    """Convert Python list to NestedInteger structure"""
+    if isinstance(lst, int):
+        return NestedInteger(lst)
+    
+    nested = NestedInteger()
+    for item in lst:
+        nested.add(create_nested_list(item))
+    return nested
+
+
+# Test cases
+def test_solutions():
+    solutions = [Solution1(), Solution2(), Solution3()]
+    
+    test_cases = [
+        {
+            'input': [[1, 1], 2, [1, 1]],
+            'expected': 8,
+            'explanation': 'Four 1s at depth 2 (weight 1), one 2 at depth 1 (weight 2)'
+        },
+        {
+            'input': [1, [4, [6]]],
+            'expected': 17,
+            'explanation': '1 at depth 1 (weight 3), 4 at depth 2 (weight 2), 6 at depth 3 (weight 1)'
+        },
+        {
+            'input': [1, [1]],
+            'expected': 3,
+            'explanation': '1 at depth 1 (weight 2), 1 at depth 2 (weight 1)'
+        },
+        {
+            'input': [[1, 1], [1, 1]],
+            'expected': 4,
+            'explanation': 'All four 1s at depth 2 (weight 1)'
+        },
+        {
+            'input': [0],
+            'expected': 0,
+            'explanation': 'Single 0 at depth 1 (weight 1)'
+        }
+    ]
+    
+    for i, test in enumerate(test_cases, 1):
+        print(f"\nTest Case {i}: {test['input']}")
+        print(f"Expected: {test['expected']}")
+        print(f"Explanation: {test['explanation']}")
+        
+        # Create nested list structure
+        nested_list = [create_nested_list(item) for item in test['input']]
+        
+        # Test all solutions
+        for j, solution in enumerate(solutions, 1):
+            result = solution.depthSumInverse(nested_list)
+            status = "✓" if result == test['expected'] else "✗"
+            print(f"  Solution {j}: {result} {status}")
+
+
+if __name__ == "__main__":
+    print("=" * 70)
+    print("LeetCode 364: Nested List Weight Sum II")
+    print("=" * 70)
+    
+    test_solutions()
+    
+    print("\n" + "=" * 70)
+    print("Solution Comparison:")
+    print("=" * 70)
+    print("""
+Solution 1 (Two-Pass):
+  ✓ Most intuitive
+  ✓ Clear separation of concerns
+  ✓ O(n) time, O(d) space
+  - Requires two passes
+  
+Solution 2 (One-Pass BFS):
+  ✓ Clever single-pass approach
+  ✓ O(n) time, O(n) space
+  ✓ Most elegant for interviews
+  - Requires understanding the mathematical trick
+  
+Solution 3 (DFS Collection):
+  ✓ Straightforward logic
+  ✓ O(n) time, O(n) space
+  - Uses more memory to store all values
+  - Good for debugging/understanding
+  
+Recommended: Solution 2 (BFS) for interviews - elegant and efficient!
+""")
