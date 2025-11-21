@@ -1,0 +1,124 @@
+from typing import List
+
+class Solution:
+    def intersectionSizeTwo(self, intervals: List[List[int]]) -> int:
+        """
+        Greedy approach: Sort intervals by end point, then by start point descending.
+        Track the two largest elements we've added to the set.
+        
+        Time Complexity: O(n log n) for sorting
+        Space Complexity: O(1) excluding output
+        """
+        # Sort by end point ascending, then by start point descending
+        # This ensures we process intervals that end earlier first,
+        # and among those, prefer longer intervals
+        intervals.sort(key=lambda x: (x[1], -x[0]))
+        
+        result = 0
+        # Track the two largest elements in our set
+        # -1 means not set yet
+        largest = second_largest = -1
+        
+        for start, end in intervals:
+            # Case 1: Current interval doesn't contain either of our two elements
+            # We need to add two new elements (the two largest possible: end-1, end)
+            if start > largest:
+                result += 2
+                second_largest = end - 1
+                largest = end
+            
+            # Case 2: Current interval contains only the second largest element
+            # We need to add one more element (the largest possible: end)
+            elif start > second_largest:
+                result += 1
+                second_largest = largest
+                largest = end
+            
+            # Case 3: Current interval already contains both elements
+            # No need to add anything
+        
+        return result
+
+
+class SolutionDetailed:
+    def intersectionSizeTwo(self, intervals: List[List[int]]) -> int:
+        """
+        More detailed version with explicit set tracking for understanding.
+        This version actually builds the set (less efficient but clearer).
+        
+        Time Complexity: O(n log n)
+        Space Complexity: O(n) for the result set
+        """
+        # Sort by end point, then by start point descending
+        intervals.sort(key=lambda x: (x[1], -x[0]))
+        
+        result_set = []
+        
+        for start, end in intervals:
+            # Count how many elements from result_set are in current interval
+            count = sum(1 for num in result_set if start <= num <= end)
+            
+            # Need to add elements to make intersection size at least 2
+            if count == 0:
+                # Add the two largest possible: end-1 and end
+                result_set.extend([end - 1, end])
+            elif count == 1:
+                # Add the largest possible: end
+                result_set.append(end)
+            # If count >= 2, we're good, no need to add anything
+        
+        return len(result_set)
+
+
+# Test cases
+if __name__ == "__main__":
+    sol = Solution()
+    sol_detailed = SolutionDetailed()
+    
+    # Test case 1
+    intervals = [[1,3],[3,7],[8,9]]
+    print(f"Input: intervals = {intervals}")
+    print(f"Output: {sol.intersectionSizeTwo(intervals)}")
+    print(f"Detailed Output: {sol_detailed.intersectionSizeTwo(intervals)}")
+    print(f"Expected: 5")
+    print(f"Explanation: nums = [2, 3, 4, 8, 9]")
+    print()
+    
+    # Test case 2
+    intervals = [[1,3],[1,4],[2,5],[3,5]]
+    print(f"Input: intervals = {intervals}")
+    print(f"Output: {sol.intersectionSizeTwo(intervals)}")
+    print(f"Detailed Output: {sol_detailed.intersectionSizeTwo(intervals)}")
+    print(f"Expected: 3")
+    print(f"Explanation: nums = [2, 3, 4]")
+    print()
+    
+    # Test case 3
+    intervals = [[1,2],[2,3],[2,4],[4,5]]
+    print(f"Input: intervals = {intervals}")
+    print(f"Output: {sol.intersectionSizeTwo(intervals)}")
+    print(f"Detailed Output: {sol_detailed.intersectionSizeTwo(intervals)}")
+    print(f"Expected: 5")
+    print(f"Explanation: nums = [1, 2, 3, 4, 5]")
+    print()
+    
+    # Test case 4: Single interval
+    intervals = [[5,10]]
+    print(f"Input: intervals = {intervals}")
+    print(f"Output: {sol.intersectionSizeTwo(intervals)}")
+    print(f"Expected: 2")
+    print()
+    
+    # Test case 5: Multiple disjoint intervals
+    intervals = [[1,2],[4,5],[7,8]]
+    print(f"Input: intervals = {intervals}")
+    print(f"Output: {sol.intersectionSizeTwo(intervals)}")
+    print(f"Expected: 6 (need 2 elements for each disjoint interval)")
+    print()
+    
+    # Test case 6: Nested intervals
+    intervals = [[1,10],[2,9],[3,8],[4,7]]
+    print(f"Input: intervals = {intervals}")
+    print(f"Output: {sol.intersectionSizeTwo(intervals)}")
+    print(f"Expected: 2")
+    print(f"Explanation: nums = [6, 7] works for all nested intervals")
